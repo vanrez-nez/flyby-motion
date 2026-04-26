@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import path from 'node:path'
 import dts from 'vite-plugin-dts'
+import react from '@vitejs/plugin-react'
 
 export default defineConfig(({ mode }) => {
   if (mode === 'demos') {
@@ -10,7 +11,7 @@ export default defineConfig(({ mode }) => {
       build: {
         outDir: 'dist-demos',
       },
-      plugins: [dts({
+      plugins: [react(), dts({
         entryRoot: 'src',
         outDir: 'dist',
         include: ['src/**/*'],
@@ -21,7 +22,7 @@ export default defineConfig(({ mode }) => {
   }
 
   return {
-    plugins: [dts({
+    plugins: [react(), dts({
       entryRoot: 'src',
       outDir: 'dist',
       include: ['src/**/*'],
