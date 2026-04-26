@@ -30,6 +30,19 @@ describe('attract', () => {
     expect(force).toEqual([0, 0]);
   });
 
+  it('returns zero when agent is within the distance epsilon', () => {
+    const a = agent2d([0, 0]);
+    const force = attract(() => [0.0005, 0], () => 10)(a, {}, 0, 0.016);
+    expect(force).toEqual([0, 0]);
+  });
+
+  it('applies force when agent is outside the distance epsilon', () => {
+    const a = agent2d([0, 0]);
+    const force = attract(() => [0.002, 0], () => 10)(a, {}, 0, 0.016);
+    expect(force[0]).toBeCloseTo(10, 5);
+    expect(force[1]).toBeCloseTo(0, 10);
+  });
+
   it('applies custom magFn', () => {
     const a = agent2d([0, 0]);
     const force = attract(() => [3, 4], () => 10)(a, {}, 0, 0);
@@ -59,6 +72,19 @@ describe('repel', () => {
     const a = agent2d([3, 3]);
     const force = repel(() => [3, 3])(a, {}, 0, 0);
     expect(force).toEqual([0, 0]);
+  });
+
+  it('returns zero when agent is within the distance epsilon', () => {
+    const a = agent2d([0.0005, 0]);
+    const force = repel(() => [0, 0], () => 10)(a, {}, 0, 0.016);
+    expect(force).toEqual([0, 0]);
+  });
+
+  it('applies force when agent is outside the distance epsilon', () => {
+    const a = agent2d([0.002, 0]);
+    const force = repel(() => [0, 0], () => 10)(a, {}, 0, 0.016);
+    expect(force[0]).toBeCloseTo(10, 5);
+    expect(force[1]).toBeCloseTo(0, 10);
   });
 
   it('applies custom magFn', () => {

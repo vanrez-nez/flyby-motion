@@ -3,6 +3,8 @@ import * as Vector3Fn from './utils/Vector3Fn';
 import { getVec } from './utils/vecDispatch';
 import type { Contributor } from './Agent';
 
+const DIST_EPSILON = 0.001;
+
 export function constant(vec: number[]): Contributor {
   return () => [...vec];
 }
@@ -42,7 +44,7 @@ export function attract(
     const dir = new Array<number>(dim).fill(0);
     Fn.subtract(dir, target, agent.position);
     const dist = Fn.length(dir);
-    if (dist === 0) return dir;
+    if (dist <= DIST_EPSILON) return dir.fill(0);
     const magnitude = magFn ? magFn(dist) : dist;
     Fn.normalize(dir, dir);
     Fn.scale(dir, dir, magnitude);
@@ -61,7 +63,7 @@ export function repel(
     const dir = new Array<number>(dim).fill(0);
     Fn.subtract(dir, agent.position, source);
     const dist = Fn.length(dir);
-    if (dist === 0) return dir;
+    if (dist <= DIST_EPSILON) return dir.fill(0);
     const magnitude = magFn ? magFn(dist) : dist;
     Fn.normalize(dir, dir);
     Fn.scale(dir, dir, magnitude);
