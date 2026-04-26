@@ -1,22 +1,14 @@
 import * as PIXI from 'pixi.js';
-import { createRoot } from 'react-dom/client';
 import {
   Agent,
-  adapters,
   compositions,
   mag,
   primitives,
   step,
 } from '../../src/index';
-import { DemoSidebar, type SidebarControl, type SidebarMetric } from '../shared/DemoSidebar';
+import { Pane } from 'tweakpane';
 
 type Mode = 'arrive' | 'attract';
-
-interface ControlState {
-  strength: number;
-  slowRadius: number;
-  damping: number;
-}
 
 const colors = {
   bg: 0x11151f,
@@ -39,26 +31,21 @@ const mount = document.querySelector<HTMLDivElement>('#app');
 if (!mount) throw new Error('Missing #app mount');
 mount.appendChild(app.canvas);
 
-const sidebarMount = document.createElement('div');
-sidebarMount.id = 'demo-controls';
-mount.appendChild(sidebarMount);
-const sidebarRoot = createRoot(sidebarMount);
-
 const world: Record<string, unknown> = {};
-const target = { x: app.screen.width * 0.68, y: app.screen.height * 0.48 };
-const initialPosition = () => [app.screen.width * 0.24, app.screen.height * 0.56];
+const center = (): [number, number] => [
+  app.screen.width * 0.5,
+  app.screen.height * 0.5,
+];
+const target = { x: app.screen.width * 0.5, y: app.screen.height * 0.5 };
 
 let mode: Mode = 'arrive';
-let controls: ControlState = {
-  strength: 1400,
-  slowRadius: 280,
-  damping: 4,
-};
-let metrics: SidebarMetric[] = [];
+let ctrlStrength = 1400;
+let ctrlSlowRadius = 280;
+let ctrlDamping = 4;
 let t = 0;
 let lastForce = [0, 0];
 let draggingTarget = false;
-let lastSidebarRender = 0;
+let lastSidebarRefresh = 0;
 
 const trailPoints: number[][] = [];
 const root = new PIXI.Container();
@@ -69,21 +56,25 @@ const radiusLayer = new PIXI.Graphics();
 app.stage.addChild(root);
 root.addChild(trailLayer, radiusLayer, vectorLayer);
 
+const agentGraphics = new PIXI.Graphics();
+root.addChild(agentGraphics);
+
+const AGENT_STYLE = {
+  radius: 14,
+  fill: colors.agent,
+  stroke: 0xffffff,
+  strokeWidth: 2,
+  dotRadius: 3,
+  dotColor: 0xffffff,
+};
+
 const agent = new Agent({
-  position: initialPosition(),
+  position: center(),
   velocity: [0, 0],
   mass: 1,
   maxSpeed: 1100,
   maxForce: 3000,
 });
-
-const agentBody = new PIXI.Graphics()
-  .circle(0, 0, 16)
-  .fill(colors.agent)
-  .circle(5, -5, 4)
-  .fill(0xffffff);
-root.addChild(agentBody);
-const syncAgent = adapters.syncPixi(agent, agentBody);
 
 const targetMarker = new PIXI.Graphics();
 targetMarker.eventMode = 'static';
@@ -124,8 +115,91 @@ window.addEventListener('resize', () => {
 
 rebuildContributor();
 resetAgent();
-metrics = buildMetrics();
-renderSidebar();
+
+const tpContainer = document.createElement('div');
+tpContainer.style.position = 'absolute';
+tpContainer.style.top = '12px';
+tpContainer.style.left = '12px';
+tpContainer.style.zIndex = '10';
+mount.appendChild(tpContainer);
+
+const pane = new Pane({ title: 'flyby-motion / arrive', expanded: true, container: tpContainer });
+
+// --- Mode control (list binding on a proxy) ---
+const modeProxy = { mode: 'arrive' as Mode };
+const modeBinding = pane.addBinding(modeProxy, 'mode', {
+  label: 'mode',
+  options: {
+    Arrive: 'arrive',
+    'Raw attract': 'attract',
+  },
+});
+modeBinding.on('change', (ev) => {
+  setMode(ev.value);
+});
+
+// --- Force folder ---
+const forceFolder = pane.addFolder({ title: 'Force' });
+
+const strengthBinding = forceFolder.addBinding({ strength: ctrlStrength }, 'strength', {
+  min: 100, max: 2400, step: 25, label: 'strength',
+});
+strengthBinding.on('change', (ev) => {
+  ctrlStrength = ev.value;
+  rebuildContributor();
+});
+
+const slowRadiusBinding = forceFolder.addBinding(
+  { slowRadius: ctrlSlowRadius }, 'slowRadius', {
+    min: 80, max: 520, step: 5, label: 'slow radius',
+  }
+);
+slowRadiusBinding.on('change', (ev) => {
+  ctrlSlowRadius = ev.value;
+  rebuildContributor();
+});
+
+const dampingBinding = forceFolder.addBinding(
+  { damping: ctrlDamping }, 'damping', {
+    min: 0, max: 12, step: 0.1, label: 'damping',
+  }
+);
+dampingBinding.on('change', (ev) => {
+  ctrlDamping = ev.value;
+  rebuildContributor();
+});
+
+// --- Metrics monitors ---
+const metricsFolder = pane.addFolder({ title: 'Metrics' });
+
+const metricState = {
+  speed: '0.0',
+  force: '0.0',
+  distance: '0.0',
+  agentPos: { x: 0, y: 0 },
+  targetPos: { x: 0, y: 0 },
+};
+
+const speedMonitor = metricsFolder.addBinding(metricState, 'speed', { readonly: true, label: 'speed' });
+const forceMonitor = metricsFolder.addBinding(metricState, 'force', { readonly: true, label: 'force' });
+const distMonitor = metricsFolder.addBinding(metricState, 'distance', { readonly: true, label: 'distance' });
+const agentPosMonitor = metricsFolder.addBinding(metricState, 'agentPos', { label: 'agent', disabled: true });
+const targetPosMonitor = metricsFolder.addBinding(metricState, 'targetPos', { label: 'target', disabled: true });
+
+pane.addButton({ title: 'Reset' }).on('click', () => resetAgent());
+updateDisabled();
+
+function setMode(nextMode: Mode): void {
+  mode = nextMode;
+  rebuildContributor();
+  updateDisabled();
+}
+
+function updateDisabled(): void {
+  const arriveOnly = mode !== 'arrive';
+  slowRadiusBinding.disabled = arriveOnly;
+  dampingBinding.disabled = arriveOnly;
+}
 
 app.ticker.add((ticker) => {
   const dt = Math.min(ticker.deltaMS / 1000, 1 / 30);
@@ -138,110 +212,52 @@ app.ticker.add((ticker) => {
   updateMetrics();
 });
 
-function renderSidebar(): void {
-  sidebarRoot.render(
-    <DemoSidebar
-      title="flyby-motion / arrive"
-      subtitle="Drag the target and compare controlled arrival against raw attraction."
-      modes={[
-        { value: 'arrive', label: 'Arrive' },
-        { value: 'attract', label: 'Raw attract' },
-      ]}
-      activeMode={mode}
-      onModeChange={setMode}
-      controls={sidebarControls()}
-      onControlChange={setControl}
-      metrics={metrics}
-      actions={[{ label: 'Reset', onClick: resetAgent }]}
-      hint="Velocity is blue. Total force is red. Press R to reset."
-    />,
-  );
-}
-
-function sidebarControls(): SidebarControl[] {
-  const arriveOnly = mode !== 'arrive';
-  return [
-    { id: 'strength', label: 'strength', value: controls.strength, min: 100, max: 2400, step: 25 },
-    {
-      id: 'slowRadius',
-      label: 'slow radius',
-      value: controls.slowRadius,
-      min: 80,
-      max: 520,
-      step: 5,
-      disabled: arriveOnly,
-    },
-    {
-      id: 'damping',
-      label: 'damping',
-      value: controls.damping,
-      min: 0,
-      max: 12,
-      step: 0.1,
-      disabled: arriveOnly,
-    },
-  ];
-}
-
-function setMode(nextMode: Mode): void {
-  mode = nextMode;
-  rebuildContributor();
-  renderSidebar();
-}
-
-function setControl(id: string, value: number): void {
-  if (!(id in controls)) return;
-  controls = { ...controls, [id]: value };
-  rebuildContributor();
-  renderSidebar();
-}
-
 function updateMetrics(): void {
-  if (t - lastSidebarRender < 0.08) return;
-  lastSidebarRender = t;
-  metrics = buildMetrics();
-  renderSidebar();
-}
+  if (t - lastSidebarRefresh < 0.08) return;
+  lastSidebarRefresh = t;
 
-function buildMetrics(): SidebarMetric[] {
-  return [
-    { label: 'speed', value: Math.hypot(agent.velocity[0], agent.velocity[1]).toFixed(1) },
-    { label: 'force', value: Math.hypot(lastForce[0], lastForce[1]).toFixed(1) },
-    { label: 'distance', value: distance(agent.position, [target.x, target.y]).toFixed(1) },
-    { label: 'object', value: formatPoint(agent.position) },
-    { label: 'target', value: formatPoint([target.x, target.y]) },
-  ];
+  metricState.speed = Math.hypot(agent.velocity[0], agent.velocity[1]).toFixed(1);
+  metricState.force = Math.hypot(lastForce[0], lastForce[1]).toFixed(1);
+  metricState.distance = distance(agent.position, [target.x, target.y]).toFixed(1);
+  metricState.agentPos = { x: agent.position[0], y: agent.position[1] };
+  metricState.targetPos = { x: target.x, y: target.y };
+
+  speedMonitor.refresh();
+  forceMonitor.refresh();
+  distMonitor.refresh();
+  agentPosMonitor.refresh();
+  targetPosMonitor.refresh();
 }
 
 function rebuildContributor(): void {
   agent.clear();
-  const targetFn = () => [target.x, target.y];
+  const targetFn = () => [target.x, target.y] as [number, number];
 
   if (mode === 'arrive') {
-    agent.add(compositions.arrive(targetFn, {
-      k: controls.strength,
-      slowR: controls.slowRadius,
-      damp: controls.damping,
-    }), { label: 'arrive' });
+    agent.add(
+      compositions.arrive(targetFn, {
+        k: ctrlStrength,
+        slowR: ctrlSlowRadius,
+        damp: ctrlDamping,
+      }),
+      { label: 'arrive' },
+    );
   } else {
     agent.add(
-      primitives.attract(targetFn, mag.constant(controls.strength)),
+      primitives.attract(targetFn, mag.constant(ctrlStrength)),
       { label: 'raw attract' },
     );
   }
 }
 
 function resetAgent(): void {
-  const [x, y] = initialPosition();
+  const [x, y] = center();
   agent.position[0] = x;
   agent.position[1] = y;
   agent.velocity[0] = 0;
   agent.velocity[1] = 0;
   lastForce = [0, 0];
   trailPoints.length = 0;
-  syncAgent();
-  metrics = buildMetrics();
-  renderSidebar();
 }
 
 function moveTarget(x: number, y: number): void {
@@ -255,15 +271,7 @@ function stopDrag(): void {
 }
 
 function constrainAgent(): void {
-  const pad = 18;
-  if (agent.position[0] < pad || agent.position[0] > app.screen.width - pad) {
-    agent.position[0] = clamp(agent.position[0], pad, app.screen.width - pad);
-    agent.velocity[0] *= -0.35;
-  }
-  if (agent.position[1] < pad || agent.position[1] > app.screen.height - pad) {
-    agent.position[1] = clamp(agent.position[1], pad, app.screen.height - pad);
-    agent.velocity[1] *= -0.35;
-  }
+  // Unbounded viewport — agent is free to leave the screen.
 }
 
 function addTrailPoint(): void {
@@ -278,17 +286,41 @@ function drawScene(): void {
   drawTarget();
   drawTrail();
   drawVectors();
+  drawAgent();
+}
+
+function drawAgent(): void {
+  const g = agentGraphics;
+  g.clear();
+
+  const x = agent.position[0];
+  const y = agent.position[1];
+  const {
+    radius,
+    fill,
+    stroke,
+    strokeWidth,
+    dotRadius,
+    dotColor,
+  } = AGENT_STYLE;
+
+  g.circle(x, y, radius)
+    .fill(fill)
+    .stroke({ color: stroke, width: strokeWidth });
+
+  g.circle(x, y, dotRadius).fill(dotColor);
 }
 
 function drawTarget(): void {
   radiusLayer.clear();
   if (mode === 'arrive') {
     radiusLayer
-      .circle(target.x, target.y, controls.slowRadius)
+      .circle(target.x, target.y, ctrlSlowRadius)
       .stroke({ color: colors.slowRing, width: 1, alpha: 0.28 });
   }
 
-  targetMarker.clear()
+  targetMarker
+    .clear()
     .circle(target.x, target.y, 18)
     .fill({ color: colors.target, alpha: 0.12 })
     .stroke({ color: colors.target, width: 4, alpha: 0.95 });
@@ -302,14 +334,38 @@ function drawTrail(): void {
     trailLayer
       .moveTo(a[0], a[1])
       .lineTo(b[0], b[1])
-      .stroke({ color: colors.trail, width: 2, alpha: i / trailPoints.length * 0.45 });
+      .stroke({
+        color: colors.trail,
+        width: 2,
+        alpha: (i / trailPoints.length) * 0.45,
+      });
   }
 }
 
 function drawVectors(): void {
   vectorLayer.clear();
-  drawArrow(vectorLayer, agent.position, agent.velocity, colors.velocity, 0.16, 64);
-  drawArrow(vectorLayer, agent.position, lastForce, colors.force, 0.04, 70);
+
+  const vLen = Math.hypot(agent.velocity[0], agent.velocity[1]);
+  if (vLen > 0.01) {
+    const vNx = agent.velocity[0] / vLen;
+    const vNy = agent.velocity[1] / vLen;
+    const vStart: [number, number] = [
+      agent.position[0] + vNx * AGENT_STYLE.radius,
+      agent.position[1] + vNy * AGENT_STYLE.radius,
+    ];
+    drawArrow(vectorLayer, vStart, agent.velocity, colors.velocity, 0.22, 140);
+  }
+
+  const fLen = Math.hypot(lastForce[0], lastForce[1]);
+  if (fLen > 0.01) {
+    const fNx = lastForce[0] / fLen;
+    const fNy = lastForce[1] / fLen;
+    const fStart: [number, number] = [
+      agent.position[0] + fNx * AGENT_STYLE.radius,
+      agent.position[1] + fNy * AGENT_STYLE.radius,
+    ];
+    drawArrow(vectorLayer, fStart, lastForce, colors.force, 0.08, 120);
+  }
 }
 
 function drawArrow(
