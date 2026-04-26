@@ -1,0 +1,27 @@
+{
+  "name": "flyby-motion",
+  "version": "0.0.0",
+  "description": "A lightweight library for motion-driven DOM interactions.",
+  "type": "module",
+  "main": "./dist/flyby-motion.umd.js",
+  "module": "./dist/flyby-motion.es.js",
+  "exports": {
+    ".": {
+      "import": "./dist/flyby-motion.es.js",
+      "require": "./dist/flyby-motion.umd.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "vite --mode demos",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "pixi.js": "^8.18.1",
+    "three": "^0.184.0",
+    "vite": "^8.0.10"
+  }
+}

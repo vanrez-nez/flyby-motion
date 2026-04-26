@@ -1,0 +1,75 @@
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #0f0f1a;
+  color: #e2e2f5;
+  font-family: system-ui, sans-serif;
+}
+
+#app {
+  display: contents;
+}
+
+.landing {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+
+.landing__title {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+  color: #646cff;
+}
+
+.landing__subtitle {
+  color: #9ca3af;
+  margin-bottom: 2.5rem;
+}
+
+.landing__buttons {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+}
+
+.landing__buttons-btn {
+  text-decoration: none;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  color: #fff;
+  font-weight: 600;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: inline-block;
+}
+
+.landing__buttons-btn--2d {
+  background: linear-gradient(135deg, #e94560, #ff6b6b);
+  box-shadow: 0 4px 15px rgba(233, 69, 96, 0.3);
+}
+
+.landing__buttons-btn--2d:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(233, 69, 96, 0.4);
+}
+
+.landing__buttons-btn--3d {
+  background: linear-gradient(135deg, #646cff, #a78bfa);
+  box-shadow: 0 4px 15px rgba(100, 108, 255, 0.3);
+}
+
+.landing__buttons-btn--3d:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(100, 108, 255, 0.4);
+}
+
+.landing__note {
+  margin-top: 2.5rem;
+  font-size: 0.85rem;
+  color: #555;
+}
