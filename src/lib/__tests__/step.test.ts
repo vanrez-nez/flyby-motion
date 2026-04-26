@@ -10,12 +10,32 @@ describe('step', () => {
     expect(agent.velocity).toEqual([0, 0]);
   });
 
-  it('throws RangeError for dt = 0', () => {
-    expect(() => step(new Agent(), {}, 0, 0)).toThrow(RangeError);
+  it('does nothing for dt = 0', () => {
+    const agent = new Agent({ position: [1, 2], velocity: [3, 4] });
+    let calls = 0;
+    agent.add(() => {
+      calls++;
+      return [10, 0];
+    });
+
+    expect(() => step(agent, {}, 0, 0)).not.toThrow();
+    expect(calls).toBe(0);
+    expect(agent.position).toEqual([1, 2]);
+    expect(agent.velocity).toEqual([3, 4]);
   });
 
-  it('throws RangeError for dt < 0', () => {
-    expect(() => step(new Agent(), {}, 0, -0.016)).toThrow(RangeError);
+  it('does nothing for dt < 0', () => {
+    const agent = new Agent({ position: [1, 2], velocity: [3, 4] });
+    let calls = 0;
+    agent.add(() => {
+      calls++;
+      return [10, 0];
+    });
+
+    expect(() => step(agent, {}, 0, -0.016)).not.toThrow();
+    expect(calls).toBe(0);
+    expect(agent.position).toEqual([1, 2]);
+    expect(agent.velocity).toEqual([3, 4]);
   });
 
   it('constant force produces parabolic position', () => {

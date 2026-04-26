@@ -54,10 +54,7 @@ let controls: ControlState = {
   slowRadius: 280,
   damping: 4,
 };
-let metrics: SidebarMetric[] = [
-  { label: 'speed', value: '0.0' },
-  { label: 'force', value: '0.0' },
-];
+let metrics: SidebarMetric[] = [];
 let t = 0;
 let lastForce = [0, 0];
 let draggingTarget = false;
@@ -127,6 +124,7 @@ window.addEventListener('resize', () => {
 
 rebuildContributor();
 resetAgent();
+metrics = buildMetrics();
 renderSidebar();
 
 app.ticker.add((ticker) => {
@@ -201,11 +199,18 @@ function setControl(id: string, value: number): void {
 function updateMetrics(): void {
   if (t - lastSidebarRender < 0.08) return;
   lastSidebarRender = t;
-  metrics = [
+  metrics = buildMetrics();
+  renderSidebar();
+}
+
+function buildMetrics(): SidebarMetric[] {
+  return [
     { label: 'speed', value: Math.hypot(agent.velocity[0], agent.velocity[1]).toFixed(1) },
     { label: 'force', value: Math.hypot(lastForce[0], lastForce[1]).toFixed(1) },
+    { label: 'distance', value: distance(agent.position, [target.x, target.y]).toFixed(1) },
+    { label: 'object', value: formatPoint(agent.position) },
+    { label: 'target', value: formatPoint([target.x, target.y]) },
   ];
-  renderSidebar();
 }
 
 function rebuildContributor(): void {
@@ -235,6 +240,8 @@ function resetAgent(): void {
   lastForce = [0, 0];
   trailPoints.length = 0;
   syncAgent();
+  metrics = buildMetrics();
+  renderSidebar();
 }
 
 function moveTarget(x: number, y: number): void {
@@ -337,6 +344,10 @@ function drawArrow(
 
 function distance(a: number[], b: number[]): number {
   return Math.hypot(a[0] - b[0], a[1] - b[1]);
+}
+
+function formatPoint(point: number[]): string {
+  return `${point[0].toFixed(1)}, ${point[1].toFixed(1)}`;
 }
 
 function clamp(value: number, min: number, max: number): number {

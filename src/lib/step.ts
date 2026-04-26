@@ -2,7 +2,7 @@ import { getVec } from './utils/vecDispatch';
 import type { Agent, World } from './Agent';
 
 export function step(agent: Agent, world: World, t: number, dt: number): void {
-  if (dt <= 0) throw new RangeError(`dt must be positive, got ${dt}`);
+  if (dt <= 0) return;
 
   agent.emit('step:before', agent, world, t, dt);
 

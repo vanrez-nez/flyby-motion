@@ -126,6 +126,7 @@
   color: #e9eef8;
   font-size: 15px;
   font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
 .demo-sidebar__actions {
