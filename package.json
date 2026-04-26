@@ -18,9 +18,12 @@
   "scripts": {
     "dev": "vite --mode demos",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
+    "vitest": "^3.0.0",
     "@types/three": "^0.184.0",
     "pixi.js": "^8.18.1",
     "three": "^0.184.0",

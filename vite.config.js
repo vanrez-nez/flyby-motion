@@ -28,6 +28,9 @@ export default defineConfig(({ mode }) => {
       exclude: ['**/*.test.ts', '**/*.spec.ts'],
       insertTypesEntry: true,
     })],
+    test: {
+      environment: 'node',
+    },
     build: {
       lib: {
         entry: path.resolve(__dirname, 'src/index.ts'),
