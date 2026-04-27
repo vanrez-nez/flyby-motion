@@ -21,6 +21,7 @@ export type DemoControl =
       type?: 'number';
       id: string;
       label?: string;
+      folder?: string;
       value: number;
       min: number;
       max: number;
@@ -30,12 +31,14 @@ export type DemoControl =
       type: 'boolean';
       id: string;
       label?: string;
+      folder?: string;
       value: boolean;
     }
   | {
       type: 'options';
       id: string;
       label?: string;
+      folder?: string;
       value: string;
       options: Record<string, string>;
     };
@@ -45,6 +48,7 @@ export type DemoControlValues = Record<string, number | boolean | string>;
 export interface DemoScene {
   target: { x: number; y: number };
   source: { x: number; y: number };
+  mouse: { x: number; y: number; active: boolean };
   leader: Agent;
   center: () => [number, number];
   screen: () => { width: number; height: number };
@@ -63,10 +67,12 @@ export interface FeatureMode {
   marker?: 'target' | 'source' | 'leader';
   presentation?: 'attract' | 'reject' | 'none';
   radiusControl?: string;
+  trackPointer?: boolean;
   agentCount?: number;
   maxSpeed?: number;
   maxForce?: number;
   initialVelocity?: (index: number, count: number, scene: DemoScene, values: DemoControlValues) => [number, number];
+  configureAgent?: (entry: DemoAgentEntry, scene: DemoScene, values: DemoControlValues) => void;
   afterStep?: (entry: DemoAgentEntry, scene: DemoScene, values: DemoControlValues, t: number, dt: number) => void;
   drawOverlay?: (
     graphics: PIXI.Graphics,
@@ -115,6 +121,7 @@ export async function mountFeatureDemo(config: FeatureDemoConfig): Promise<void>
   const scene: DemoScene = {
     target: { x: app.screen.width * 0.62, y: app.screen.height * 0.46 },
     source: { x: app.screen.width * 0.5, y: app.screen.height * 0.5 },
+    mouse: { x: app.screen.width * 0.5, y: app.screen.height * 0.5, active: false },
     leader: new Agent({ position: center(), velocity: [0, 0], maxSpeed: 900, maxForce: 2400 }),
     center,
     screen: () => ({ width: app.screen.width, height: app.screen.height }),
@@ -145,9 +152,16 @@ export async function mountFeatureDemo(config: FeatureDemoConfig): Promise<void>
 
   app.stage.eventMode = 'static';
   app.stage.hitArea = app.screen;
-  app.stage.on('pointerdown', (event) => moveActiveMarker(event.global.x, event.global.y));
+  app.stage.on('pointerdown', (event) => {
+    updateTrackedPointer(event.global.x, event.global.y);
+    moveActiveMarker(event.global.x, event.global.y);
+  });
   app.stage.on('pointermove', (event) => {
+    updateTrackedPointer(event.global.x, event.global.y);
     if (event.buttons) moveActiveMarker(event.global.x, event.global.y);
+  });
+  app.canvas.addEventListener('pointerleave', () => {
+    scene.mouse.active = false;
   });
 
   window.addEventListener('resize', () => {
@@ -197,23 +211,28 @@ export async function mountFeatureDemo(config: FeatureDemoConfig): Promise<void>
       reset();
     });
 
-    const folder = pane.addFolder({ title: config.title });
-    activeMode.controls.forEach((control) => {
-      const proxy = { [control.id]: control.value };
-      const params = control.type === 'boolean'
-        ? { label: control.label ?? control.id }
-        : control.type === 'options'
-          ? { label: control.label ?? control.id, options: control.options }
-          : {
-              min: control.min,
-              max: control.max,
-              step: control.step,
-              label: control.label ?? control.id,
-            };
+    const controlsByFolder = groupControlsByFolder(activeMode.controls, config.title);
+    controlsByFolder.forEach((controls, title) => {
+      const folder = pane?.addFolder({ title });
+      if (!folder) return;
 
-      folder.addBinding(proxy, control.id, params).on('change', (ev) => {
-        values[control.id] = ev.value as number | boolean | string;
-        rebuildForces();
+      controls.forEach((control) => {
+        const proxy = { [control.id]: control.value };
+        const params = control.type === 'boolean'
+          ? { label: control.label ?? control.id }
+          : control.type === 'options'
+            ? { label: control.label ?? control.id, options: control.options }
+            : {
+                min: control.min,
+                max: control.max,
+                step: control.step,
+                label: control.label ?? control.id,
+              };
+
+        folder.addBinding(proxy, control.id, params).on('change', (ev) => {
+          values[control.id] = ev.value as number | boolean | string;
+          rebuildForces();
+        });
       });
     });
 
@@ -234,6 +253,9 @@ export async function mountFeatureDemo(config: FeatureDemoConfig): Promise<void>
     scene.target.y = cy;
     scene.source.x = cx;
     scene.source.y = cy;
+    scene.mouse.x = cx;
+    scene.mouse.y = cy;
+    scene.mouse.active = false;
     scene.leader.position[0] = cx;
     scene.leader.position[1] = cy;
     scene.leader.velocity[0] = numberValue(values.leaderSpeed, 220);
@@ -259,6 +281,7 @@ export async function mountFeatureDemo(config: FeatureDemoConfig): Promise<void>
       agent.on('force:applied', (force) => {
         entry.force = force as number[];
       });
+      activeMode.configureAgent?.(entry, scene, values);
       root.addChild(entry.trailLayer, entry.graphics);
       entries.push(entry);
     }
@@ -277,6 +300,8 @@ export async function mountFeatureDemo(config: FeatureDemoConfig): Promise<void>
   }
 
   function moveActiveMarker(x: number, y: number): void {
+    if (activeMode.trackPointer) return;
+
     const marker = activeMode.marker ?? 'target';
     if (marker === 'source') {
       scene.source.x = clamp(x, 30, app.screen.width - 30);
@@ -288,6 +313,13 @@ export async function mountFeatureDemo(config: FeatureDemoConfig): Promise<void>
       scene.target.x = clamp(x, 30, app.screen.width - 30);
       scene.target.y = clamp(y, 30, app.screen.height - 30);
     }
+  }
+
+  function updateTrackedPointer(x: number, y: number): void {
+    if (!activeMode.trackPointer) return;
+    scene.mouse.x = clamp(x, 0, app.screen.width);
+    scene.mouse.y = clamp(y, 0, app.screen.height);
+    scene.mouse.active = true;
   }
 
   function draw(): void {
@@ -332,6 +364,15 @@ interface InternalAgentEntry extends DemoAgentEntry {
 
 function controlsToValues(controls: DemoControl[]): DemoControlValues {
   return Object.fromEntries(controls.map((control) => [control.id, control.value]));
+}
+
+function groupControlsByFolder(controls: DemoControl[], fallbackTitle: string): Map<string, DemoControl[]> {
+  const grouped = new Map<string, DemoControl[]>();
+  controls.forEach((control) => {
+    const title = control.folder ?? fallbackTitle;
+    grouped.set(title, [...(grouped.get(title) ?? []), control]);
+  });
+  return grouped;
 }
 
 function stopCanvasPassthrough(element: HTMLElement): void {

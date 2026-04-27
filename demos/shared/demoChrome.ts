@@ -4,6 +4,7 @@ export type DemoKey =
   | 'forces'
   | 'behaviors'
   | 'modifiers'
+  | 'custom'
   | 'three';
 
 const GITHUB_URL = 'https://github.com/vanrez-nez/flyby-motion';
@@ -16,6 +17,7 @@ const links: Array<{
   { key: 'forces', label: 'Forces', href: '/demos/forces/index.html' },
   { key: 'behaviors', label: 'Behaviors', href: '/demos/behaviors/index.html' },
   { key: 'modifiers', label: 'Modifiers', href: '/demos/modifiers/index.html' },
+  { key: 'custom', label: 'Custom', href: '/demos/custom/index.html' },
 ];
 
 export function mountDemoChrome(active?: DemoKey): void {
