@@ -8,7 +8,7 @@ A force-based motion library for JavaScript. Single- and multi-agent state evolv
 
 ### What this library is
 - A force accumulator and semi-implicit Euler integrator for kinematic agents.
-- A vocabulary of preset forces (attractors, repulsors, dampers, oscillators, ...).
+- A vocabulary of composable forces (attractors, repulsors, dampers, oscillators, ...).
 - A composition model where every contribution reduces to a force vector.
 - 2D and 3D shipped as parallel modules, not as a vector-generic abstraction.
 
@@ -38,7 +38,7 @@ Three layers, strictly separated:
 ┌────────────────────────────────────────────────────────┐
 │  L3 — Extensions   events · debug · spatial            │
 ├────────────────────────────────────────────────────────┤
-│  L2 — Vocabulary   presets · forces · falloff ·    │
+│  L2 — Vocabulary   forces · falloff ·              │
 │                    modifiers · behaviors          │
 ├────────────────────────────────────────────────────────┤
 │  L1 — Kernel       Agent · Force · step · Vec    │
@@ -287,5 +287,5 @@ Things that, if they start happening, mean the design is drifting:
 - A primitive with more than ~10 lines of logic. Probably should be a composition of two simpler forces.
 - A modifier that needs to read agent state. Modifiers operate on forces, not agents — if it needs agent state, it's a force wrapping a force, which is fine, but should be named that way.
 - An extension that needs the kernel to expose new internals. The kernel should be stable. If an extension needs more, the request needs justifying against the invariants in §2.
-- A "convenience" preset that users start treating as primitive. If `arrive` becomes more popular than `attract + damp`, the docs are failing — users should know they're composing, not invoking magic.
+- A convenience behavior that users start treating as primitive. If `arrive` hides `attract + damp`, the docs are failing — users should know they're composing, not invoking magic.
 - The word "priority" appearing in a feature request. The force set is commutative. Priority is the camel's nose for ordering, types, and replace-semantics, all of which break the model.

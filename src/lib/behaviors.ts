@@ -20,16 +20,16 @@ export function arrive(
 }
 
 /**
- * Flee: repel(sourceFn) + damp.
- * Agent moves away from source with decaying speed.
+ * Flee: range-limited repel(sourceFn) + damp.
+ * Agent moves away from source, then damping lets it settle outside range.
  */
 export function flee(
   sourceFn: () => number[],
-  opts: { strength?: number; damp?: number } = {},
+  opts: { strength?: number; range?: number; damp?: number } = {},
 ): Force {
-  const { strength = 1, damp = 0.5 } = opts;
+  const { strength = 1, range = 200, damp = 0.5 } = opts;
   return sum(
-    repel(sourceFn, falloff.constant(strength)),
+    repel(sourceFn, falloff.within(falloff.constant(strength), range)),
     dampFn(damp),
   );
 }

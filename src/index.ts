@@ -4,7 +4,6 @@
 export { Agent, getForceLabel } from './lib/Agent';
 export type { Force, World, AgentOptions } from './lib/Agent';
 export { step } from './lib/step';
-export * as presets from './lib/presets';
 export * as forces from './lib/forces';
 export { falloff } from './lib/falloff';
 export type { FalloffFn } from './lib/falloff';

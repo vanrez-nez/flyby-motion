@@ -83,6 +83,13 @@ describe('flee', () => {
     // velocity shouldn't grow unboundedly
     expect(Math.abs(v2 - v1)).toBeLessThan(5);
   });
+
+  it('returns only damping outside range', () => {
+    const a = new Agent({ position: [300, 0], velocity: [10, 0] });
+    const force = flee(() => [0, 0], { strength: 100, range: 100, damp: 2 })(a, {}, 0, 0.016);
+    expect(force[0]).toBeCloseTo(-20, 10);
+    expect(force[1]).toBeCloseTo(0, 10);
+  });
 });
 
 describe('orbit', () => {

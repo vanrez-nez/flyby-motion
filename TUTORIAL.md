@@ -1,16 +1,18 @@
 # flyby-motion Tutorial
 
-This tutorial walks through `flyby-motion` from the simplest possible use to the underlying force model. You can stop after the first section and still build useful things. Read further when you need more control.
+This tutorial walks through `flyby-motion` from the simplest useful behavior to custom force functions.
 
 ## How the library is organized
 
-There are two layers, and you choose which one you want.
+There are four public building blocks, and they all feed the same `Agent` + `step(...)` loop.
 
-The **presets layer** is for casual use. One line of code, sensible defaults, no terminology to learn. Pick a preset that names what you want — follow, snap, float, flee — and use it.
+The **forces layer** is the engine. A force returns a vector each frame.
 
-The **forces layer** is the real engine underneath. Every preset is built from it. When a preset doesn't quite do what you need, drop down here. You'll find a small set of building blocks that compose into anything the presets do, and a lot they don't.
+The **falloff layer** shapes forces that depend on distance.
 
-Both layers use the same `Agent` and `step(...)` loop. The presets are not a parallel system. They're shortcuts.
+The **behaviors layer** bundles common force combinations like arrival, fleeing, orbiting, and pursuit.
+
+The **modifiers layer** transforms forces: scale them, gate them, time-window them, or sum them.
 
 ## The mental model
 
@@ -20,7 +22,7 @@ Every frame, the library answers one question for each agent:
 
 It sums those forces, turns them into acceleration, then into velocity, then into position. That's the whole engine. There are no tweens, no keyframes, no start/end times. Forces just exist, and the agent moves under them.
 
-This is why behaviors compose without conflict. Two forces don't "fight" the way two tweens do — they add. An idle floating force plus a follow-the-cursor force gives you a thing that floats *while* following.
+This is why behaviors compose without conflict. Two forces don't "fight" the way two tweens do — they add. An oscillating force plus an arrival behavior gives you a thing that floats *while* moving toward a target.
 
 ## Position and velocity
 
@@ -89,101 +91,9 @@ The library does not render. Copy `agent.position` into your scene, DOM, canvas,
 
 ---
 
-## Layer 1: Presets
+## Layer 1: Forces
 
-The fast path. One line, defaults handled for you.
-
-```ts
-import { presets } from 'flyby-motion';
-
-agent.add(presets.follow(() => cursor));
-```
-
-That's a working follower. The agent eases toward the cursor and settles when it arrives, without overshoot. Tweak by passing options; ignore them if defaults work.
-
-### `presets.follow(targetFn, opts?)`
-
-Smooth follow, settles on arrival. Best default for cursor following, draggable handles, "move to here" UI.
-
-```ts
-agent.add(presets.follow(() => cursor, {
-  strength: 800,   // how hard to pull
-  ease: 120,       // distance over which it slows down
-}));
-```
-
-### `presets.snapTo(targetFn, opts?)`
-
-Sharper than `follow`. Arrives faster, less easing. Use for snappy, responsive feel.
-
-```ts
-agent.add(presets.snapTo(() => target, { strength: 1500 }));
-```
-
-### `presets.flee(sourceFn, opts?)`
-
-Pushes away from a source, then comes to rest. Self-stopping.
-
-```ts
-agent.add(presets.flee(() => threat, {
-  strength: 700,
-  range: 200,    // only flees when source is within this distance
-}));
-```
-
-### `presets.float(opts?)`
-
-Idle floating motion — gentle drift on two axes. Compose this with anything else.
-
-```ts
-agent.add(presets.float({ amplitude: 20, freq: 0.4 }));
-```
-
-### `presets.orbit(centerFn, opts?)`
-
-Circles a point at approximately the requested radius.
-
-```ts
-agent.add(presets.orbit(() => center, { radius: 100 }));
-```
-
-The radius is approximate because orbit shape emerges from force balance, not from a constraint. Strong perturbations from other forces will deform it.
-
-### `presets.repelFrom(sourceFn, opts?)`
-
-Personal-space behavior. Pushes away when the source gets close, ignores it otherwise.
-
-```ts
-agent.add(presets.repelFrom(() => mouse, { range: 100, strength: 500 }));
-```
-
-### `presets.drift(opts?)`
-
-Constant directional motion with terminal velocity.
-
-```ts
-agent.add(presets.drift({ direction: [1, 0], speed: 50 }));
-```
-
-### Combining presets
-
-Presets stack. Add as many as you want.
-
-```ts
-agent.add(presets.float({ amplitude: 15 }));
-agent.add(presets.follow(() => cursor));
-agent.add(presets.repelFrom(() => obstacle, { range: 80 }));
-```
-
-The agent will float idly, follow the cursor, and dodge around the obstacle — all at once, without you writing any glue. This is the point of forces composing: there's no "current animation" to interrupt, just a list of things pushing on the agent.
-
-When presets stop being enough, drop to the next layer.
-
----
-
-## Layer 2: Forces
-
-Underneath every preset there's a force. A **force** is just a function that returns a vector each frame:
+A **force** is just a function that returns a vector each frame:
 
 ```ts
 type Force = (agent, world, t, dt) => number[];
@@ -191,7 +101,7 @@ type Force = (agent, world, t, dt) => number[];
 
 You add forces to an agent. The library sums them. That's it.
 
-The library ships four kinds of things at this layer:
+The library ships four force-building namespaces:
 
 - **`forces`** — the building blocks (attract, repel, damp, oscillate, …)
 - **`falloff`** — curves that shape how force strength varies with distance
@@ -244,7 +154,7 @@ A sinusoidal force along an axis.
 agent.add(forces.oscillate([0, 1], 30, 0.5));
 ```
 
-Pushes up and down with amplitude 30, twice per second. Two perpendicular oscillators at different frequencies are how `presets.float` is built.
+Pushes up and down with amplitude 30, twice per second. Combine two perpendicular oscillators at different frequencies for idle floating motion.
 
 #### `forces.constant(vec)`
 
@@ -269,6 +179,10 @@ In 3D the perpendicular direction isn't unique — pass a reference axis (usuall
 ```ts
 agent.add(forces.tangentialAround([0, 1, 0], 150));
 ```
+
+## Layer 2: Falloff
+
+Falloff functions shape attraction and repulsion by distance.
 
 ### `falloff`
 
@@ -310,13 +224,17 @@ forces.repel(() => mouse, falloff.within(falloff.constant(500), 100));
 
 Wraps another falloff and returns zero *inside* `minR`. Use for dead zones — no effect when too close.
 
+## Layer 3: Behaviors
+
+Behaviors are named force combinations with explicit parameters.
+
 ### `behaviors`
 
 ```ts
 import { behaviors } from 'flyby-motion';
 ```
 
-Behaviors are tuned bundles of forces. They're what most presets are made of, exposed at the forces layer so you can configure them more precisely than presets allow.
+Behaviors are tuned bundles of forces. They are conveniences, but they stay explicit about their real parameters.
 
 #### `behaviors.arrive(targetFn, opts?)`
 
@@ -334,11 +252,19 @@ Equivalent to `forces.attract(targetFn, falloff.arrive(strength, slowR))` plus `
 
 #### `behaviors.flee(sourceFn, opts?)`
 
-Push away with damping. Self-stopping.
+Push away while the source is inside `range`; outside that distance, damping lets the agent settle.
+
+```ts
+agent.add(behaviors.flee(() => threat, {
+  strength: 700,
+  range: 200,
+  damp: 1.5,
+}));
+```
 
 #### `behaviors.orbit(centerFn, opts?)`
 
-Attract + tangential + damping. Note: there is no radius parameter. Orbit shape emerges from the balance of forces. If you want a specific radius, use `presets.orbit` which tunes the parameters for you.
+Attract + tangential + damping. There is no radius parameter. Orbit shape emerges from the balance of forces.
 
 #### `behaviors.pursue(leaderFn, opts?)`
 
@@ -350,6 +276,10 @@ agent.add(behaviors.pursue(() => ({ position: leader.pos, velocity: leader.vel }
   lookahead: 0.3,
 }));
 ```
+
+## Layer 4: Modifiers
+
+Modifiers transform existing forces.
 
 ### `modifiers`
 
@@ -431,7 +361,7 @@ If your custom force ends up looking like "sometimes return X, sometimes return 
 `agent.add(force)` returns the same force back, so you can keep a handle:
 
 ```ts
-const click = agent.add(presets.snapTo(() => target));
+const click = agent.add(behaviors.arrive(() => target));
 
 // later:
 agent.remove(click);
@@ -447,12 +377,11 @@ Forces can be added and removed mid-frame. Changes take effect on the next step.
 
 A rough heuristic:
 
-- **Presets** if you want a named behavior with a sensible default. Cursor follow, snap, flee, float, orbit at a radius.
-- **Behaviors** if you want a named pattern with full parameter control. Same patterns as presets, but you choose every knob.
-- **Forces + falloff + modifiers** if you're composing something custom. Combining flee with idle drift, gating an attractor by distance, time-windowing an effect.
+- **Behaviors** if you want a named pattern with full parameter control.
+- **Forces + falloff + modifiers** if you're composing something custom. Combining flee with idle float, gating an attractor by distance, time-windowing an effect.
 - **Custom force functions** if your motion depends on state the library doesn't model — game logic, animation phase, external sensors.
 
-You can mix layers freely. A custom force coexists with presets coexists with behaviors. Everything ends up in the same sum.
+You can mix layers freely. A custom force coexists with behaviors and modifiers. Everything ends up in the same sum.
 
 ## Tuning advice
 
@@ -464,18 +393,17 @@ If motion feels sluggish: decrease damping, increase strength, or raise `maxForc
 
 If motion explodes: cap `maxSpeed` and `maxForce`. Check whether two forces are fighting each other (an attract and a repel at similar strengths near the same point will get loud).
 
-If an agent stops moving when it shouldn't: damping may have killed its velocity. Either lower damping or add a sustaining force (oscillator, drift, or a constant push).
+If an agent stops moving when it shouldn't: damping may have killed its velocity. Either lower damping or add a sustaining force like an oscillator or a constant push.
 
 ## A learning order
 
 If you're working through this end to end, this is roughly the right order to play with things:
 
-1. `presets.follow` and `presets.snapTo` — get a feel for "agent goes to a place."
-2. `presets.float` on top of either — see how forces combine.
-3. `forces.damp` and `forces.constant` — the simplest pieces of the next layer.
-4. `forces.attract` with different `falloff` curves — understand how strength shaping changes feel.
-5. `behaviors.arrive` and `behaviors.orbit` — named patterns with full control.
-6. `modifiers.gate` and `modifiers.during` — conditional and time-bounded forces.
-7. Custom force functions — when nothing built in fits.
+1. `behaviors.arrive` — get a feel for "agent goes to a place."
+2. `forces.damp` and `forces.constant` — the simplest low-level pieces.
+3. `forces.attract` with different `falloff` curves — understand how strength shaping changes feel.
+4. `behaviors.flee`, `behaviors.orbit`, and `behaviors.pursue` — named patterns with full control.
+5. `modifiers.gate` and `modifiers.during` — conditional and time-bounded forces.
+6. Custom force functions — when nothing built in fits.
 
 By the time you reach step 7, the library should feel like a small set of pieces rather than a list of features.

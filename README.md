@@ -7,7 +7,7 @@
 ```ts
 import {
   Agent,
-  presets,
+  behaviors,
   step,
 } from 'flyby-motion';
 
@@ -20,7 +20,11 @@ const agent = new Agent({
 });
 
 const target = [300, 200];
-agent.add(presets.follow(() => target));
+agent.add(behaviors.arrive(() => target, {
+  strength: 800,
+  slowR: 120,
+  damp: 2,
+}));
 
 let t = 0;
 let last = performance.now();
@@ -97,77 +101,6 @@ Advances one agent by one frame.
 
 Order: emit `step:before`, snapshot forces, sum forces, clamp by `maxForce`, emit `force:applied`, update velocity, clamp by `maxSpeed`, update position, emit `step:after`.
 
-## Presets
-
-Import as:
-
-```ts
-import { presets } from 'flyby-motion';
-```
-
-Presets are friendly one-line behaviors with tuned defaults.
-
-### `presets.follow(targetFn, opts?)`
-
-Smooth follow behavior that settles on arrival.
-
-- `targetFn`: Returns the current target position.
-- `strength`: Pull strength. Defaults to `800`.
-- `ease`: Slowdown distance. Defaults to `120`.
-- `damp`: Velocity damping. Defaults to `2`.
-
-### `presets.snapTo(targetFn, opts?)`
-
-Sharper arrival than `follow`.
-
-- `strength`: Pull strength. Defaults to `1500`.
-- `ease`: Slowdown distance. Defaults to `60`.
-- `damp`: Velocity damping. Defaults to `5`.
-
-### `presets.flee(sourceFn, opts?)`
-
-Range-limited flee behavior that comes to rest.
-
-- `sourceFn`: Returns the source position.
-- `strength`: Push-away strength. Defaults to `700`.
-- `range`: Active distance. Defaults to `200`.
-- `damp`: Velocity damping. Defaults to `1.5`.
-
-### `presets.float(opts?)`
-
-Idle floating motion from two oscillating forces.
-
-- `amplitude`: Base force amplitude. Defaults to `20`.
-- `freq`: Base cycles per second. Defaults to `0.4`.
-- `phase`: Phase offset in radians. Defaults to `0`.
-
-### `presets.orbit(centerFn, opts?)`
-
-Radius-seeking 2D orbit preset.
-
-- `centerFn`: Returns the orbit center.
-- `radius`: Desired orbit radius. Defaults to `100`.
-- `strength`: Radial correction strength. Defaults to `12`.
-- `speed`: Tangential drive speed. Defaults to `180`.
-- `damp`: Velocity damping. Defaults to `2`.
-- `clockwise`: Orbit direction. Defaults to `false`.
-
-### `presets.repelFrom(sourceFn, opts?)`
-
-Personal-space behavior. Pushes away only inside range.
-
-- `sourceFn`: Returns the source position.
-- `range`: Active distance. Defaults to `100`.
-- `strength`: Push-away strength. Defaults to `500`.
-
-### `presets.drift(opts?)`
-
-Constant directional motion with damping-limited terminal speed.
-
-- `direction`: Direction vector. Defaults to `[1, 0]`.
-- `speed`: Target terminal speed. Defaults to `50`.
-- `damp`: Velocity damping. Defaults to `2`.
-
 ## Forces
 
 Import as:
@@ -226,9 +159,10 @@ Equivalent to attraction with arrival falloff plus damping.
 
 ### `behaviors.flee(sourceFn, opts?)`
 
-Equivalent to repel plus damping.
+Equivalent to range-limited repel plus damping.
 
 - `strength`: Repulsion strength. Defaults to `1`.
+- `range`: Active threat distance. Defaults to `200`.
 - `damp`: Velocity damping. Defaults to `0.5`.
 
 ### `behaviors.orbit(centerFn, opts?)`
