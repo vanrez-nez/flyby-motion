@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { mountDemoChrome } from '../shared/demoChrome'
 
 const scene = new THREE.Scene()
 scene.background = new THREE.Color(0x1a1a2e)
@@ -9,7 +10,10 @@ camera.position.z = 2
 const renderer = new THREE.WebGLRenderer({ antialias: true })
 renderer.setSize(window.innerWidth, window.innerHeight)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-document.querySelector('#app').appendChild(renderer.domElement)
+const mount = document.querySelector<HTMLDivElement>('#app')
+if (!mount) throw new Error('Missing #app mount')
+mount.appendChild(renderer.domElement)
+mountDemoChrome('three')
 
 const geometry = new THREE.BoxGeometry(1, 1, 1)
 const material = new THREE.MeshStandardMaterial({ color: 0x646cff })

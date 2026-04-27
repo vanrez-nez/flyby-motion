@@ -1,0 +1,63 @@
+.demo-chrome {
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 14px;
+  background: rgba(0, 0, 0, 0.75);
+  color: rgba(255, 255, 255, 0.78);
+  font: 500 11px/1.2 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.demo-chrome a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.demo-chrome a:hover,
+.demo-chrome a[aria-current="page"] {
+  color: #fff;
+}
+
+.demo-chrome__header {
+  top: 0;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.demo-chrome__title {
+  flex: 0 0 auto;
+  letter-spacing: 0;
+}
+
+.demo-chrome__nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+  text-align: right;
+}
+
+.demo-chrome__footer {
+  bottom: 0;
+  justify-content: center;
+}
+
+@media (max-width: 560px) {
+  .demo-chrome {
+    min-height: 36px;
+    padding: 0 10px;
+    font-size: 10px;
+  }
+
+  .demo-chrome__header {
+    gap: 10px;
+  }
+
+  .demo-chrome__nav {
+    gap: 8px;
+  }
+}

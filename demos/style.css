@@ -58,6 +58,16 @@ html, body {
   box-shadow: 0 8px 25px rgba(233, 69, 96, 0.4);
 }
 
+.landing__buttons-btn--repel {
+  background: linear-gradient(135deg, #4dd8a8, #75a7ff);
+  box-shadow: 0 4px 15px rgba(77, 216, 168, 0.3);
+}
+
+.landing__buttons-btn--repel:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(117, 167, 255, 0.4);
+}
+
 .landing__buttons-btn--3d {
   background: linear-gradient(135deg, #646cff, #a78bfa);
   box-shadow: 0 4px 15px rgba(100, 108, 255, 0.3);

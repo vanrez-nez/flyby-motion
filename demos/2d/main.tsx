@@ -7,22 +7,21 @@ import {
   step,
 } from '../../src/index';
 import { Pane } from 'tweakpane';
+import {
+  demoColors,
+  drawAgentDot,
+  drawMarker,
+  drawMotionVectors,
+  drawRadiusRing,
+  drawTrail,
+} from '../shared/drawables';
+import { mountDemoChrome } from '../shared/demoChrome';
 
 type Mode = 'arrive' | 'attract';
 
-const colors = {
-  bg: 0x11151f,
-  target: 0xffc857,
-  agent: 0x4dd8a8,
-  force: 0xff5c7c,
-  velocity: 0x75a7ff,
-  trail: 0x8bd7ff,
-  slowRing: 0xffc857,
-};
-
 const app = new PIXI.Application();
 await app.init({
-  backgroundColor: colors.bg,
+  backgroundColor: demoColors.bg,
   antialias: true,
   resizeTo: window,
 });
@@ -30,6 +29,7 @@ await app.init({
 const mount = document.querySelector<HTMLDivElement>('#app');
 if (!mount) throw new Error('Missing #app mount');
 mount.appendChild(app.canvas);
+mountDemoChrome('arrive');
 
 const world: Record<string, unknown> = {};
 const center = (): [number, number] => [
@@ -61,7 +61,7 @@ root.addChild(agentGraphics);
 
 const AGENT_STYLE = {
   radius: 14,
-  fill: colors.agent,
+  fill: demoColors.agent,
   stroke: 0xffffff,
   strokeWidth: 2,
   dotRadius: 3,
@@ -118,7 +118,7 @@ resetAgent();
 
 const tpContainer = document.createElement('div');
 tpContainer.style.position = 'absolute';
-tpContainer.style.top = '12px';
+tpContainer.style.top = '44px';
 tpContainer.style.left = '12px';
 tpContainer.style.zIndex = '10';
 mount.appendChild(tpContainer);
@@ -284,7 +284,7 @@ function addTrailPoint(): void {
 
 function drawScene(): void {
   drawTarget();
-  drawTrail();
+  drawTrailLayer();
   drawVectors();
   drawAgent();
 }
@@ -293,117 +293,38 @@ function drawAgent(): void {
   const g = agentGraphics;
   g.clear();
 
-  const x = agent.position[0];
-  const y = agent.position[1];
-  const {
-    radius,
-    fill,
-    stroke,
-    strokeWidth,
-    dotRadius,
-    dotColor,
-  } = AGENT_STYLE;
-
-  g.circle(x, y, radius)
-    .fill(fill)
-    .stroke({ color: stroke, width: strokeWidth });
-
-  g.circle(x, y, dotRadius).fill(dotColor);
+  drawAgentDot(g, agent.position, AGENT_STYLE);
 }
 
 function drawTarget(): void {
   radiusLayer.clear();
   if (mode === 'arrive') {
-    radiusLayer
-      .circle(target.x, target.y, ctrlSlowRadius)
-      .stroke({ color: colors.slowRing, width: 1, alpha: 0.28 });
+    drawRadiusRing(radiusLayer, target.x, target.y, ctrlSlowRadius);
   }
 
   targetMarker
-    .clear()
-    .circle(target.x, target.y, 18)
-    .fill({ color: colors.target, alpha: 0.12 })
-    .stroke({ color: colors.target, width: 4, alpha: 0.95 });
+    .clear();
+  drawMarker(targetMarker, target.x, target.y, demoColors.target);
 }
 
-function drawTrail(): void {
+function drawTrailLayer(): void {
   trailLayer.clear();
-  for (let i = 1; i < trailPoints.length; i++) {
-    const a = trailPoints[i - 1];
-    const b = trailPoints[i];
-    trailLayer
-      .moveTo(a[0], a[1])
-      .lineTo(b[0], b[1])
-      .stroke({
-        color: colors.trail,
-        width: 2,
-        alpha: (i / trailPoints.length) * 0.45,
-      });
-  }
+  drawTrail(trailLayer, trailPoints);
 }
 
 function drawVectors(): void {
   vectorLayer.clear();
-
-  const vLen = Math.hypot(agent.velocity[0], agent.velocity[1]);
-  if (vLen > 0.01) {
-    const vNx = agent.velocity[0] / vLen;
-    const vNy = agent.velocity[1] / vLen;
-    const vStart: [number, number] = [
-      agent.position[0] + vNx * AGENT_STYLE.radius,
-      agent.position[1] + vNy * AGENT_STYLE.radius,
-    ];
-    drawArrow(vectorLayer, vStart, agent.velocity, colors.velocity, 0.22, 140);
-  }
-
-  const fLen = Math.hypot(lastForce[0], lastForce[1]);
-  if (fLen > 0.01) {
-    const fNx = lastForce[0] / fLen;
-    const fNy = lastForce[1] / fLen;
-    const fStart: [number, number] = [
-      agent.position[0] + fNx * AGENT_STYLE.radius,
-      agent.position[1] + fNy * AGENT_STYLE.radius,
-    ];
-    drawArrow(vectorLayer, fStart, lastForce, colors.force, 0.08, 120);
-  }
-}
-
-function drawArrow(
-  graphics: PIXI.Graphics,
-  origin: number[],
-  vector: number[],
-  color: number,
-  scale: number,
-  maxLength: number,
-): void {
-  const len = Math.hypot(vector[0], vector[1]);
-  if (len < 0.01) return;
-
-  const length = Math.min(len * scale, maxLength);
-  const nx = vector[0] / len;
-  const ny = vector[1] / len;
-  const endX = origin[0] + nx * length;
-  const endY = origin[1] + ny * length;
-  const sideX = -ny;
-  const sideY = nx;
-
-  graphics
-    .moveTo(origin[0], origin[1])
-    .lineTo(endX, endY)
-    .stroke({ color, width: 3, alpha: 0.9 })
-    .moveTo(endX, endY)
-    .lineTo(endX - nx * 12 + sideX * 6, endY - ny * 12 + sideY * 6)
-    .moveTo(endX, endY)
-    .lineTo(endX - nx * 12 - sideX * 6, endY - ny * 12 - sideY * 6)
-    .stroke({ color, width: 3, alpha: 0.9 });
+  drawMotionVectors(
+    vectorLayer,
+    agent.position,
+    AGENT_STYLE.radius,
+    agent.velocity,
+    lastForce,
+  );
 }
 
 function distance(a: number[], b: number[]): number {
   return Math.hypot(a[0] - b[0], a[1] - b[1]);
-}
-
-function formatPoint(point: number[]): string {
-  return `${point[0].toFixed(1)}, ${point[1].toFixed(1)}`;
 }
 
 function clamp(value: number, min: number, max: number): number {
