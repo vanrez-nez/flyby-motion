@@ -123,7 +123,7 @@ tpContainer.style.left = '12px';
 tpContainer.style.zIndex = '10';
 mount.appendChild(tpContainer);
 
-const pane = new Pane({ title: 'flyby-motion / arrive', expanded: true, container: tpContainer });
+const pane = new Pane({ title: 'Settings', expanded: true, container: tpContainer });
 
 // --- Mode control (list binding on a proxy) ---
 const modeProxy = { mode: 'arrive' as Mode };

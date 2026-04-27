@@ -122,7 +122,7 @@ tpContainer.style.left = '12px';
 tpContainer.style.zIndex = '10';
 mount.appendChild(tpContainer);
 
-const pane = new Pane({ title: 'flyby-motion / repel & flee', expanded: true, container: tpContainer });
+const pane = new Pane({ title: 'Settings', expanded: true, container: tpContainer });
 
 const modeProxy = { mode: 'repel' as 'repel' | 'flee' };
 const modeBinding = pane.addBinding(modeProxy, 'mode', {
