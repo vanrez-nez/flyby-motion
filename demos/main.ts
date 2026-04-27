@@ -17,6 +17,9 @@ app.innerHTML = `
     <a href="/demos/orbit/index.html" class="landing__buttons-btn landing__buttons-btn--2d">
       Orbit Demo
     </a>
+    <a href="/demos/pursue/index.html" class="landing__buttons-btn landing__buttons-btn--2d">
+      Pursue Demo
+    </a>
     <a href="/demos/3d/index.html" class="landing__buttons-btn landing__buttons-btn--3d">
       3D Demo
     </a>
