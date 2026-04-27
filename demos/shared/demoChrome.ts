@@ -1,6 +1,6 @@
 import './demoChrome.css';
 
-type DemoKey = 'arrive' | 'repel' | 'three';
+type DemoKey = 'arrive' | 'repel' | 'orbit' | 'three';
 
 const GITHUB_URL = 'https://github.com/vanrez-nez/flyby-motion';
 
@@ -11,6 +11,7 @@ const links: Array<{
 }> = [
   { key: 'arrive', label: 'Arrive / Attract', href: '/demos/2d/index.html' },
   { key: 'repel', label: 'Repel / Flee', href: '/demos/repel/index.html' },
+  { key: 'orbit', label: 'Orbit', href: '/demos/orbit/index.html' },
 ];
 
 export function mountDemoChrome(active?: DemoKey): void {
