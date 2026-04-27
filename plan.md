@@ -36,7 +36,7 @@ Three layers, strictly separated:
 
 ```
 ┌────────────────────────────────────────────────────────┐
-│  L3 — Extensions   events · debug · adapters · spatial │
+│  L3 — Extensions   events · debug · spatial            │
 ├────────────────────────────────────────────────────────┤
 │  L2 — Vocabulary   primitives · magnitudes ·           │
 │                    combinators · compositions          │
@@ -62,7 +62,7 @@ These invariants are the abstraction. Adding contributor types, priorities, or l
 - Produces a force? → **L2**
 - Modifies the integration loop or agent state shape? → **L1**, and only with a strong reason
 - Observes the system without producing forces? → **L3**
-- Depends on a user data structure (renderer, scene)? → **L3 adapter**
+- Depends on a user data structure (renderer, scene)? → **user-land wiring**
 
 ---
 
@@ -202,13 +202,6 @@ Recommendation: ship lifecycle events in core. Ship predicate events as a separa
 
 `flyby/spatial`: `Grid`, `QuadTree` (2D), `Octree` (3D). Each implements `query(point, radius) => Agent[]`. Group behaviors take the index via `world.neighbors`. Kernel knows nothing about this.
 
-### Framework adapters
-
-Pure wiring. Don't add features. Sync `agent.position` ↔ renderer's transform.
-- `flyby/three` — Three.js `Object3D`
-- `flyby/pixi` — PIXI `DisplayObject`
-- `flyby/dom` — CSS `transform`
-
 ---
 
 ## 6. Module Layout
@@ -238,10 +231,6 @@ flyby-motion/
 │   │   ├── spatial-2d.ts
 │   │   ├── spatial-3d.ts
 │   │   └── debug.ts
-│   └── adapters/
-│       ├── three.ts
-│       ├── pixi.ts
-│       └── dom.ts
 └── package.json (exports map: flyby-motion/2d, flyby-motion/3d, ...)
 ```
 
