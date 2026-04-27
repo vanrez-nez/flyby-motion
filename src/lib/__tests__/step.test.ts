@@ -3,7 +3,7 @@ import { Agent } from '../Agent';
 import { step } from '../step';
 
 describe('step', () => {
-  it('runs without error on Agent with zero contributors', () => {
+  it('runs without error on Agent with zero forces', () => {
     const agent = new Agent();
     expect(() => step(agent, {}, 0, 0.016)).not.toThrow();
     expect(agent.position).toEqual([0, 0]);
@@ -52,7 +52,7 @@ describe('step', () => {
     expect(agent.position[1]).toBeCloseTo(0, 10);
   });
 
-  it('snapshots contributors — removal during step does not skip current step', () => {
+  it('snapshots forces — removal during step does not skip current step', () => {
     const agent = new Agent();
     let calls = 0;
     const c = agent.add((_a, _w, _t, _dt) => {

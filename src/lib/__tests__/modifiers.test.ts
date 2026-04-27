@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { Agent } from '../Agent';
-import { constant, damp } from '../primitives';
-import { scale, gate, during, fadeIn, fadeOut, combined } from '../combinators';
+import { constant, damp } from '../forces';
+import { scale, gate, during, fadeIn, fadeOut, sum } from '../modifiers';
 
 const agent = () => new Agent({ position: [0, 0], velocity: [2, 0] });
 const W = {};
@@ -126,27 +126,27 @@ describe('fadeOut', () => {
   });
 });
 
-describe('combined', () => {
-  it('sums forces from all contributors', () => {
-    const f = combined(constant([3, 0]), constant([0, 4]))(agent(), W, 0, 0.016);
+describe('sum', () => {
+  it('sums forces from all forces', () => {
+    const f = sum(constant([3, 0]), constant([0, 4]))(agent(), W, 0, 0.016);
     expect(f[0]).toBeCloseTo(3, 10);
     expect(f[1]).toBeCloseTo(4, 10);
   });
 
-  it('combined with zero contributors returns zero', () => {
-    const f = combined()(agent(), W, 0, 0.016);
+  it('sum with zero forces returns zero', () => {
+    const f = sum()(agent(), W, 0, 0.016);
     expect(f).toEqual([0, 0]);
   });
 
-  it('combined passes world, t, dt through to each contributor', () => {
+  it('sum passes world, t, dt through to each force', () => {
     const recorded: number[] = [];
     const recorder = (_a: Agent, _w: unknown, t: number) => { recorded.push(t); return [0, 0]; };
-    combined(recorder, recorder)(agent(), W, 42, 0.016);
+    sum(recorder, recorder)(agent(), W, 42, 0.016);
     expect(recorded).toEqual([42, 42]);
   });
 
   it('composes with scale and gate', () => {
-    const f = combined(
+    const f = sum(
       scale(constant([2, 0]), 3),
       gate(() => false, constant([999, 0])),
       constant([0, 1]),
@@ -155,9 +155,9 @@ describe('combined', () => {
     expect(f[1]).toBeCloseTo(1, 10);
   });
 
-  it('velocity-dependent contributor still receives agent', () => {
+  it('velocity-dependent force still receives agent', () => {
     const a = new Agent({ velocity: [4, 0] });
-    const f = combined(damp(1))(a, W, 0, 0.016);
+    const f = sum(damp(1))(a, W, 0, 0.016);
     expect(f[0]).toBeCloseTo(-4, 10);
   });
 });

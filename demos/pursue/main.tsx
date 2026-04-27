@@ -1,7 +1,7 @@
 import * as PIXI from 'pixi.js';
 import {
   Agent,
-  compositions,
+  behaviors,
   step,
 } from '../../src/index';
 import { Pane } from 'tweakpane';
@@ -136,7 +136,7 @@ const strengthBinding = forceFolder.addBinding({ strength: ctrlStrength }, 'stre
 });
 strengthBinding.on('change', (ev) => {
   ctrlStrength = ev.value;
-  rebuildContributors();
+  rebuildForces();
 });
 
 const slowRadiusBinding = forceFolder.addBinding({ slowRadius: ctrlSlowRadius }, 'slowRadius', {
@@ -144,7 +144,7 @@ const slowRadiusBinding = forceFolder.addBinding({ slowRadius: ctrlSlowRadius },
 });
 slowRadiusBinding.on('change', (ev) => {
   ctrlSlowRadius = ev.value;
-  rebuildContributors();
+  rebuildForces();
 });
 
 const dampingBinding = forceFolder.addBinding({ damping: ctrlDamping }, 'damping', {
@@ -152,7 +152,7 @@ const dampingBinding = forceFolder.addBinding({ damping: ctrlDamping }, 'damping
 });
 dampingBinding.on('change', (ev) => {
   ctrlDamping = ev.value;
-  rebuildContributors();
+  rebuildForces();
 });
 
 const lookaheadBinding = forceFolder.addBinding({ lookahead: ctrlLookahead }, 'lookahead', {
@@ -160,7 +160,7 @@ const lookaheadBinding = forceFolder.addBinding({ lookahead: ctrlLookahead }, 'l
 });
 lookaheadBinding.on('change', (ev) => {
   ctrlLookahead = ev.value;
-  rebuildContributors();
+  rebuildForces();
 });
 
 const leaderBinding = pane.addBinding({ leaderSpeed: ctrlLeaderSpeed }, 'leaderSpeed', {
@@ -172,7 +172,7 @@ leaderBinding.on('change', (ev) => {
 
 pane.addButton({ title: 'Reset' }).on('click', () => resetAgents());
 
-rebuildContributors();
+rebuildForces();
 resetAgents();
 
 app.ticker.add((ticker) => {
@@ -192,17 +192,17 @@ app.ticker.add((ticker) => {
   drawPrediction();
 });
 
-function rebuildContributors(): void {
+function rebuildForces(): void {
   pursuers.forEach(({ agent }) => {
     agent.clear();
     agent.add(
-      compositions.pursue(
+      behaviors.pursue(
         () => ({
           position: leader.position,
           velocity: leader.velocity,
         }),
         {
-          k: ctrlStrength,
+          strength: ctrlStrength,
           slowR: ctrlSlowRadius,
           damp: ctrlDamping,
           lookahead: ctrlLookahead,

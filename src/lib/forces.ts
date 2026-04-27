@@ -1,15 +1,15 @@
 import * as Vector2Fn from './utils/Vector2Fn';
 import * as Vector3Fn from './utils/Vector3Fn';
 import { getVec } from './utils/vecDispatch';
-import type { Contributor } from './Agent';
+import type { Force } from './Agent';
 
 const DIST_EPSILON = 0.001;
 
-export function constant(vec: number[]): Contributor {
+export function constant(vec: number[]): Force {
   return () => [...vec];
 }
 
-export function damp(coefficient: number): Contributor {
+export function damp(coefficient: number): Force {
   return (agent) => {
     const dim = agent.velocity.length;
     const Fn = getVec(dim);
@@ -23,7 +23,7 @@ export function oscillate(
   amplitude: number,
   freq: number,
   phase = 0,
-): Contributor {
+): Force {
   return (agent, _world, t) => {
     const dim = agent.position.length;
     const Fn = getVec(dim);
@@ -35,8 +35,8 @@ export function oscillate(
 
 export function attract(
   targetFn: () => number[],
-  magFn?: (distance: number) => number,
-): Contributor {
+  falloffFn?: (distance: number) => number,
+): Force {
   return (agent) => {
     const target = targetFn();
     const dim = agent.position.length;
@@ -45,7 +45,7 @@ export function attract(
     Fn.subtract(dir, target, agent.position);
     const dist = Fn.length(dir);
     if (dist <= DIST_EPSILON) return dir.fill(0);
-    const magnitude = magFn ? magFn(dist) : dist;
+    const magnitude = falloffFn ? falloffFn(dist) : dist;
     Fn.normalize(dir, dir);
     Fn.scale(dir, dir, magnitude);
     return dir;
@@ -54,8 +54,8 @@ export function attract(
 
 export function repel(
   sourceFn: () => number[],
-  magFn?: (distance: number) => number,
-): Contributor {
+  falloffFn?: (distance: number) => number,
+): Force {
   return (agent) => {
     const source = sourceFn();
     const dim = agent.position.length;
@@ -64,7 +64,7 @@ export function repel(
     Fn.subtract(dir, agent.position, source);
     const dist = Fn.length(dir);
     if (dist <= DIST_EPSILON) return dir.fill(0);
-    const magnitude = magFn ? magFn(dist) : dist;
+    const magnitude = falloffFn ? falloffFn(dist) : dist;
     Fn.normalize(dir, dir);
     Fn.scale(dir, dir, magnitude);
     return dir;
@@ -72,7 +72,7 @@ export function repel(
 }
 
 /** 2D: force perpendicular to velocity (counter-clockwise). */
-export function tangential(k: number): Contributor {
+export function tangential(k: number): Force {
   return (agent) => {
     const v = agent.velocity;
     const speed = Vector2Fn.length(v);
@@ -82,7 +82,7 @@ export function tangential(k: number): Contributor {
 }
 
 /** 3D: force perpendicular to velocity, in the plane defined by velocity × axis. */
-export function tangentialAround(axis: number[], k: number): Contributor {
+export function tangentialAround(axis: number[], k: number): Force {
   return (agent) => {
     const v = agent.velocity;
     const out = [0, 0, 0];

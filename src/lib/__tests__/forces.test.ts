@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { Agent } from '../Agent';
 import { step } from '../step';
-import { attract, repel, damp, oscillate, constant, tangential, tangentialAround } from '../primitives';
+import { attract, repel, damp, oscillate, constant, tangential, tangentialAround } from '../forces';
 
 // Helpers
 const agent2d = (pos = [0, 0], vel = [0, 0]) =>
@@ -43,7 +43,7 @@ describe('attract', () => {
     expect(force[1]).toBeCloseTo(0, 10);
   });
 
-  it('applies custom magFn', () => {
+  it('applies custom falloff function', () => {
     const a = agent2d([0, 0]);
     const force = attract(() => [3, 4], () => 10)(a, {}, 0, 0);
     // direction unit = [3/5, 4/5], magnitude = 10
@@ -87,7 +87,7 @@ describe('repel', () => {
     expect(force[1]).toBeCloseTo(0, 10);
   });
 
-  it('applies custom magFn', () => {
+  it('applies custom falloff function', () => {
     const a = agent2d([3, 4]);
     const force = repel(() => [0, 0], () => 10)(a, {}, 0, 0);
     // direction unit = [3/5, 4/5], magnitude = 10
@@ -216,7 +216,7 @@ describe('integration: attract + damp converges toward target', () => {
   it('agent moves toward target and does not overshoot badly', () => {
     const target = [100, 0];
     const a = agent2d([0, 0]);
-    // default magFn = linear distance, damp(2) = overdamped spring
+    // default falloff = linear distance, damp(2) = overdamped spring
     a.add(attract(() => target));
     a.add(damp(2));
     for (let i = 0; i < 300; i++) step(a, {}, i * 0.016, 0.016);

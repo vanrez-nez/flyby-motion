@@ -1,7 +1,7 @@
 import { EventEmitter } from './utils/EventEmitter';
 
 export type World = Record<string, unknown>;
-export type Contributor = (agent: Agent, world: World, t: number, dt: number) => number[];
+export type Force = (agent: Agent, world: World, t: number, dt: number) => number[];
 
 export interface AgentOptions {
   position?: number[];
@@ -11,7 +11,7 @@ export interface AgentOptions {
   maxForce?: number;
 }
 
-const metaMap = new WeakMap<Contributor, { label?: string }>();
+const metaMap = new WeakMap<Force, { label?: string }>();
 
 export class Agent extends EventEmitter {
   position: number[];
@@ -19,7 +19,7 @@ export class Agent extends EventEmitter {
   mass: number;
   maxSpeed: number;
   maxForce: number;
-  contributors: Set<Contributor>;
+  forces: Set<Force>;
 
   constructor(opts: AgentOptions = {}) {
     super();
@@ -29,32 +29,32 @@ export class Agent extends EventEmitter {
     this.mass = opts.mass ?? 1;
     this.maxSpeed = opts.maxSpeed ?? Infinity;
     this.maxForce = opts.maxForce ?? Infinity;
-    this.contributors = new Set();
+    this.forces = new Set();
   }
 
-  add(c: Contributor, opts?: { label?: string }): Contributor {
-    this.contributors.add(c);
-    if (opts?.label) metaMap.set(c, { label: opts.label });
-    this.emit('contributor:added', c);
-    return c;
+  add(force: Force, opts?: { label?: string }): Force {
+    this.forces.add(force);
+    if (opts?.label) metaMap.set(force, { label: opts.label });
+    this.emit('force:added', force);
+    return force;
   }
 
-  remove(c: Contributor): boolean {
-    metaMap.delete(c);
-    const removed = this.contributors.delete(c);
-    if (removed) this.emit('contributor:removed', c);
+  remove(force: Force): boolean {
+    metaMap.delete(force);
+    const removed = this.forces.delete(force);
+    if (removed) this.emit('force:removed', force);
     return removed;
   }
 
   clear(): void {
-    for (const c of this.contributors) {
-      metaMap.delete(c);
-      this.emit('contributor:removed', c);
+    for (const force of this.forces) {
+      metaMap.delete(force);
+      this.emit('force:removed', force);
     }
-    this.contributors.clear();
+    this.forces.clear();
   }
 }
 
-export function getContributorLabel(c: Contributor): string | undefined {
-  return metaMap.get(c)?.label;
+export function getForceLabel(force: Force): string | undefined {
+  return metaMap.get(force)?.label;
 }

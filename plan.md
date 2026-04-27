@@ -8,7 +8,7 @@ A force-based motion library for JavaScript. Single- and multi-agent state evolv
 
 ### What this library is
 - A force accumulator and semi-implicit Euler integrator for kinematic agents.
-- A vocabulary of preset force contributors (attractors, repulsors, dampers, oscillators, …).
+- A vocabulary of preset forces (attractors, repulsors, dampers, oscillators, ...).
 - A composition model where every contribution reduces to a force vector.
 - 2D and 3D shipped as parallel modules, not as a vector-generic abstraction.
 
@@ -21,8 +21,8 @@ A force-based motion library for JavaScript. Single- and multi-agent state evolv
 
 ### Deliberately rejected
 - Typed contributions (force vs constraint vs replace). Everything is a force.
-- Per-contributor priority or ordering. The contributor set is a commutative bag.
-- Contributors that mutate other contributors or agent state directly.
+- Per-force priority or ordering. The force set is a commutative bag.
+- Forces that mutate other forces or agent state directly.
 - Built-in spatial indexing in the kernel (provided as an extension).
 - Multiple integration schemes. Semi-implicit Euler only.
 
@@ -38,10 +38,10 @@ Three layers, strictly separated:
 ┌────────────────────────────────────────────────────────┐
 │  L3 — Extensions   events · debug · spatial            │
 ├────────────────────────────────────────────────────────┤
-│  L2 — Vocabulary   primitives · magnitudes ·           │
-│                    combinators · compositions          │
+│  L2 — Vocabulary   presets · forces · falloff ·    │
+│                    modifiers · behaviors          │
 ├────────────────────────────────────────────────────────┤
-│  L1 — Kernel       Agent · Contributor · step · Vec    │
+│  L1 — Kernel       Agent · Force · step · Vec    │
 └────────────────────────────────────────────────────────┘
 ```
 
@@ -50,12 +50,12 @@ L1 is closed for modification once stable. L2 and L3 are open. L3 may depend on 
 ### Kernel invariants
 
 1. The only operation on contributions is vector addition.
-2. Every contributor has the signature `(agent, world, t, dt) => Vector`.
-3. Contributor invocation order does not affect the final force.
-4. The kernel never inspects contributor identity, type, or metadata.
-5. Agent state is mutated only by the integrator, never by contributors directly.
+2. Every force has the signature `(agent, world, t, dt) => Vector`.
+3. Force invocation order does not affect the final force.
+4. The kernel never inspects force identity, type, or metadata.
+5. Agent state is mutated only by the integrator, never by forces directly.
 
-These invariants are the abstraction. Adding contributor types, priorities, or letting contributors mutate state collapses the model. Extensions that need to break invariants do so in user space, not in the kernel.
+These invariants are the abstraction. Adding force types, priorities, or letting forces mutate state collapses the model. Extensions that need to break invariants do so in user space, not in the kernel.
 
 ### Litmus test for "where does this go"
 
@@ -84,18 +84,18 @@ class Agent {
   mass: number
   maxSpeed: number
   maxForce: number
-  contributors: Set<Contributor>
+  forces: Set<Force>
 
-  add(c: Contributor): Contributor       // returns input as handle
-  remove(c: Contributor): boolean
+  add(c: Force): Force       // returns input as handle
+  remove(c: Force): boolean
   clear(): void
 }
 ```
 
-### Contributor
+### Force
 
 ```ts
-type Contributor = (agent: Agent, world: World, t: number, dt: number) => Vec
+type Force = (agent: Agent, world: World, t: number, dt: number) => Vec
 ```
 
 Pure function. Reads `agent` (read-only by convention), `world` (free-form shared state), `t` (absolute time), `dt` (frame delta). Returns a force vector in world space.
@@ -111,18 +111,18 @@ One integration step. The library does not own the loop — the consumer calls `
 The free-function form is intentional: it makes explicit that the kernel is stateless w.r.t. agent collections. A method form `agent.update(...)` is fine cosmetically and can be added as a thin wrapper, but the canonical API is the free function.
 
 ### World
-The `world` argument is passed through to every contributor untouched. The kernel does not read it. By convention it holds shared dynamic state (mouse, neighbor index, anything contributors need). Its shape is the consumer's problem.
+The `world` argument is passed through to every force untouched. The kernel does not read it. By convention it holds shared dynamic state (mouse, neighbor index, anything forces need). Its shape is the consumer's problem.
 
 ---
 
 ## 4. Vocabulary (L2)
 
-### Primitives — the closed set
+### Forces - the closed set
 
 These are the algebraic basis. Everything else in L2 is built from them.
 
-- `attract(targetFn, magFn?)` — pull toward dynamic point
-- `repel(sourceFn, magFn?)` — push from dynamic point
+- `attract(targetFn, falloffFn?)` — pull toward dynamic point
+- `repel(sourceFn, falloffFn?)` — push from dynamic point
 - `damp(coefficient)` — velocity-opposing
 - `oscillate(direction, amplitude, freq, phase?)` — time-coupled
 - `constant(vec)` — directional constant force
@@ -133,34 +133,34 @@ These are the algebraic basis. Everything else in L2 is built from them.
 
 Targets are always thunks: `() => world.mouse`, `() => leader.position.add(leader.velocity.scale(0.3))`. This collapses pursuit, offset-pursuit, and path-following into `attract` with different thunks.
 
-### Magnitude curves
+### Falloff curves
 
 Scalar functions of distance. Composable.
 
-`mag.constant(k)`, `mag.linear(k)`, `mag.invSquare(k, eps)`, `mag.arrive(k, slowR)`, `mag.exponential(k, falloff)`, `mag.rangeLimit(fn, maxR)`, `mag.deadZone(fn, minR)`.
+`falloff.constant(k)`, `falloff.linear(k)`, `falloff.invSquare(k, eps)`, `falloff.arrive(k, slowR)`, `falloff.exponential(k, rate)`, `falloff.within(fn, maxR)`, `falloff.beyond(fn, minR)`.
 
-The `attract(target, magFn)` factoring is what keeps the API from exploding into `attract`/`attractInRange`/`attractWithDeadZone`/etc. Users compose curves; primitives stay primitive.
+The `attract(target, falloffFn)` factoring is what keeps the API from exploding into `attract`/`attractInRange`/`attractWithDeadZone`/etc. Users compose curves; forces stay primitive.
 
-### Combinators — force-on-force operators
+### Modifiers - force-on-force operators
 
 - `scale(c, k)` — multiply contribution
 - `gate(predicate, c)` — fire only when predicate holds
 - `during(start, end, c)` — time-windowed
-- `fadeIn(duration, c)`, `fadeOut(duration, c)` — local-time envelope on a contributor's lifetime
-- `combined(...cs)` — sum into one contributor (for handle management)
+- `fadeIn(duration, force)`, `fadeOut(duration, force)` — local-time envelope on a force's lifetime
+- `sum(...forces)` — sum into one force (for handle management)
 
-Combinators take contributors and return contributors. They never reach into agent or kernel state.
+Modifiers take forces and return forces. They never reach into agent or kernel state.
 
-### Compositions — named conveniences
+### Behaviors - named conveniences
 
-These are not primitives. They're load-bearing patterns shipped as conveniences:
+These are not forces. They're load-bearing patterns shipped as conveniences:
 
-- `arrive(targetFn, opts)` = `attract(targetFn, mag.arrive(...)) + damp(...)`
+- `arrive(targetFn, opts)` = `attract(targetFn, falloff.arrive(...)) + damp(...)`
 - `orbit(centerFn, opts)` = `attract(...) + tangential(...)`
 - `flee(sourceFn, opts)` = `repel(...) + damp(...)`
 - `pursue(leaderFn, opts)` = `attract` with extrapolated thunk
 
-Documented as `attract + damp` etc. so users understand they're not privileged. A user who wants different damping curves composes primitives directly.
+Documented as `attract + damp` etc. so users understand they're not privileged. A user who wants different damping curves composes forces directly.
 
 ---
 
@@ -172,7 +172,7 @@ There are three different things people mean by "events" in a system like this, 
 
 **Lifecycle events.** Useful, kernel-adjacent, low-cost. Fired by `Agent` and the step cycle.
 - `step:before`, `step:after`
-- `contributor:added`, `contributor:removed`
+- `force:added`, `force:removed`
 - `force:applied` *(debug-only, opt-in — emits per-step total force)*
 
 These are mechanical and cheap to implement. Ship as a small `EventEmitter` mixin on `Agent` (~15 lines). Type-safe, no external dependency.
@@ -188,15 +188,15 @@ predicates.on(agent, () => agent.velocity.magnitude() < 0.1, 'rest', handler)
 ```
 Implemented as a `step:after` listener that tracks predicate state across frames. Pure user-space.
 
-**"Tick" events.** "Run this every frame." *Discouraged.* If the work produces a force, it's a contributor. If it has a side effect, it's a `step:after` handler. Inventing a separate "tick" channel duplicates the contributor concept and confuses readers.
+**"Tick" events.** "Run this every frame." *Discouraged.* If the work produces a force, it belongs in the force set. If it has a side effect, it's a `step:after` handler. Inventing a separate "tick" channel duplicates the force concept and confuses readers.
 
 Recommendation: ship lifecycle events in core. Ship predicate events as a separate small package. Document the third pattern as anti-pattern in the design notes.
 
 ### Debug / inspector
 
-- Force visualizer — per-contributor force arrows rendered over agents
+- Force visualizer — per-force arrows rendered over agents
 - State recorder — ring buffer of recent positions/velocities for trajectory inspection
-- Contributor labeling — `agent.add(arrive(...), { label: 'click-target' })`. Labels are extension metadata; kernel ignores them.
+- Force labeling — `agent.add(arrive(...), { label: 'click-target' })`. Labels are extension metadata; kernel ignores them.
 
 ### Spatial index
 
@@ -211,20 +211,20 @@ flyby-motion/
 ├── src/
 │   ├── 2d/
 │   │   ├── kernel.ts          // Agent, step, Vec2
-│   │   ├── primitives.ts      // attract, repel, damp, oscillate, ...
-│   │   ├── magnitudes.ts      // mag.* curves
-│   │   ├── compositions.ts    // arrive, orbit, flee, pursue
-│   │   ├── combinators.ts     // scale, gate, during, fadeIn, fadeOut
+│   │   ├── forces.ts      // attract, repel, damp, oscillate, ...
+│   │   ├── falloff.ts         // falloff.* curves
+│   │   ├── behaviors.ts    // arrive, orbit, flee, pursue
+│   │   ├── modifiers.ts     // scale, gate, during, fadeIn, fadeOut
 │   │   └── index.ts
 │   ├── 3d/
 │   │   ├── kernel.ts          // Agent, step, Vec3
-│   │   ├── primitives.ts      // includes tangentialAround
-│   │   ├── magnitudes.ts      // ideally re-exported from shared
-│   │   ├── compositions.ts
-│   │   ├── combinators.ts
+│   │   ├── forces.ts      // includes tangentialAround
+│   │   ├── falloff.ts         // ideally re-exported from shared
+│   │   ├── behaviors.ts
+│   │   ├── modifiers.ts
 │   │   └── index.ts
 │   ├── shared/
-│   │   └── magnitudes.ts      // dimension-agnostic curves
+│   │   └── falloff.ts         // dimension-agnostic curves
 │   ├── extensions/
 │   │   ├── events.ts
 │   │   ├── predicates.ts
@@ -234,19 +234,19 @@ flyby-motion/
 └── package.json (exports map: flyby-motion/2d, flyby-motion/3d, ...)
 ```
 
-Magnitude curves and combinators are dimension-agnostic; ideally shared. If TS generics get awkward, duplicate — duplication is cheaper than wrong abstraction.
+Falloff curves and modifiers are dimension-agnostic; ideally shared. If TS generics get awkward, duplicate — duplication is cheaper than wrong abstraction.
 
 ---
 
 ## 7. Build & Release Plan
 
-**Phase 0 — Spike (1 day).** Write the kernel and four primitives in a single file, no module boundaries, against one real demo (the breathing-shape-with-click case). Validate the contributor signature and `step` shape against actual usage. Goal is to kill bad assumptions before they're load-bearing.
+**Phase 0 — Spike (1 day).** Write the kernel and four forces in a single file, no module boundaries, against one real demo (the breathing-shape-with-click case). Validate the force signature and `step` shape against actual usage. Goal is to kill bad assumptions before they're load-bearing.
 
-**Phase 1 — Core (2D only).** Lock the kernel API. Ship full primitives, magnitudes, combinators, compositions. No events, no extensions. The 2D module should stand alone.
+**Phase 1 — Core (2D only).** Lock the kernel API. Ship full forces, falloff, modifiers, behaviors. No events, no extensions. The 2D module should stand alone.
 
-**Phase 2 — 3D.** Port kernel and vocabulary. Reconcile dimension-agnostic primitives. Decide and document `tangentialAround` semantics. No new features.
+**Phase 2 — 3D.** Port kernel and vocabulary. Reconcile dimension-agnostic forces. Decide and document `tangentialAround` semantics. No new features.
 
-**Phase 3 — Extensions.** Lifecycle events. Debug visualizer. `flyby/predicates`. One adapter (Three.js is the obvious first).
+**Phase 3 — Extensions.** Lifecycle events. Debug visualizer. `flyby/predicates`.
 
 **Phase 4 — Group behaviors.** Spatial index. `align`, `cohere`, `separate`. Flocking demo as the validation case.
 
@@ -260,9 +260,9 @@ These are open and worth resolving explicitly because they propagate.
 
 1. **Mutable vs immutable vectors.** Mutable is faster (no per-frame allocation), error-prone in user code. Immutable is cleaner, slower. Likely answer: mutable internally, immutable-feeling at API boundaries via cloning.
 2. **`world` shape.** Free-form `any` (max flexibility, zero structure) or typed interface (`{ time, neighbors?, ... }`)? Likely answer: free-form, with a `World` helper class shipped for consumers who want structure.
-3. **Contributor identity / labels.** Optional `c.label`, `c.id` for debug and dynamic mutation? Kernel ignores; extensions consume. Likely yes, but as opt-in metadata.
+3. **Force identity / labels.** Optional `c.label`, `c.id` for debug and dynamic mutation? Kernel ignores; extensions consume. Likely yes, but as opt-in metadata.
 4. **dt clamping.** Caller's responsibility or kernel-clamped? Likely caller's. Document the convention; provide a helper.
-5. **Removal during iteration.** Should `agent.remove(c)` inside a contributor be safe? Likely yes — snapshot the contributor set at top of `step`, defer mutations to end. Cheap, prevents the most common foot-gun.
+5. **Removal during iteration.** Should `agent.remove(force)` inside a force be safe? Likely yes — snapshot the force set at top of `step`, defer mutations to end. Cheap, prevents the most common foot-gun.
 6. **Determinism.** Same inputs → same outputs across runs (for replay, testing)? Likely yes. `Set` iteration is insertion-ordered in modern engines, and `step` is otherwise pure given inputs. Document and test.
 7. **`step(agent, ...)` vs `agent.step(...)`.** Cosmetic. Free function is the canonical, method form ships as a thin wrapper if at all.
 
@@ -270,9 +270,9 @@ These are open and worth resolving explicitly because they propagate.
 
 ## 9. Test Discipline
 
-The hard thing to test in this kind of library is *whether contributors compose the way the docs claim*. Three test types matter:
+The hard thing to test in this kind of library is *whether forces compose the way the docs claim*. Three test types matter:
 
-- **Algebraic.** `attract + zero == attract`. `damp(a) + damp(b) == damp(a+b)` (within float tolerance). `scale(c, 0)` == zero contributor. Confirms that the commutative/distributive properties the design promises actually hold.
+- **Algebraic.** `attract + zero == attract`. `damp(a) + damp(b) == damp(a+b)` (within float tolerance). `scale(force, 0)` == zero force. Confirms that the commutative/distributive properties the design promises actually hold.
 - **Trajectory.** Given setup X, after N steps the agent is within tolerance of expected position. Catches integrator bugs and vector op bugs.
 - **Visual.** Demos any human can eyeball as right or wrong. For motion, this catches what unit tests can't — feel, smoothness, perceived correctness.
 
@@ -284,8 +284,8 @@ Algebraic and trajectory tests in CI. Visual demos in the docs site, runnable, b
 
 Things that, if they start happening, mean the design is drifting:
 
-- A primitive with more than ~10 lines of logic. Probably should be a composition of two simpler primitives.
-- A combinator that needs to read agent state. Combinators operate on contributors, not agents — if it needs agent state, it's a contributor wrapping a contributor, which is fine, but should be named that way.
+- A primitive with more than ~10 lines of logic. Probably should be a composition of two simpler forces.
+- A modifier that needs to read agent state. Modifiers operate on forces, not agents — if it needs agent state, it's a force wrapping a force, which is fine, but should be named that way.
 - An extension that needs the kernel to expose new internals. The kernel should be stable. If an extension needs more, the request needs justifying against the invariants in §2.
 - A "convenience" preset that users start treating as primitive. If `arrive` becomes more popular than `attract + damp`, the docs are failing — users should know they're composing, not invoking magic.
-- The word "priority" appearing in a feature request. The contributor bag is commutative. Priority is the camel's nose for ordering, types, and replace-semantics, all of which break the model.
+- The word "priority" appearing in a feature request. The force set is commutative. Priority is the camel's nose for ordering, types, and replace-semantics, all of which break the model.

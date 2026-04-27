@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { Agent } from '../Agent';
 import { step } from '../step';
-import { arrive, flee, orbit, pursue } from '../compositions';
+import { arrive, flee, orbit, pursue } from '../behaviors';
 
 const run = (agent: Agent, steps: number, dt = 0.016) => {
   for (let i = 0; i < steps; i++) step(agent, {}, i * dt, dt);
@@ -13,16 +13,16 @@ const dist = (a: number[], b: number[]) =>
 
 describe('arrive', () => {
   // Start agent inside the slow-radius so the converging spring is active from t=0.
-  // k=5, slowR=100, damp=0.5 → underdamped spring inside slowR, time constant ~7s.
+  // strength=5, slowR=100, damp=0.5 -> underdamped spring inside slowR, time constant ~7s.
   const setup = () => {
     const a = new Agent({ position: [40, 0] });
-    a.add(arrive(() => [0, 0], { k: 5, slowR: 100, damp: 0.5 }));
+    a.add(arrive(() => [0, 0], { strength: 5, slowR: 100, damp: 0.5 }));
     return a;
   };
 
   it('velocity decreases to near-zero (agent slows and stops)', () => {
     const a = setup();
-    run(a, 1500); // ~24s — well beyond the ~7s time constant
+    run(a, 1500); // ~24s, well beyond the ~7s time constant
     expect(speed(a.velocity)).toBeLessThan(0.5);
   });
 
@@ -34,7 +34,7 @@ describe('arrive', () => {
 
   it('distance to target decreases monotonically over long run', () => {
     const a = new Agent({ position: [40, 0] });
-    a.add(arrive(() => [0, 0], { k: 5, slowR: 100, damp: 0.5 }));
+    a.add(arrive(() => [0, 0], { strength: 5, slowR: 100, damp: 0.5 }));
     const d0 = dist(a.position, [0, 0]);
     run(a, 500);
     const d1 = dist(a.position, [0, 0]);
@@ -47,9 +47,8 @@ describe('arrive', () => {
   it('supports dynamic targets', () => {
     let target = [40, 0];
     const a = new Agent({ position: [0, 0] });
-    a.add(arrive(() => target, { k: 5, slowR: 100, damp: 0.5 }));
+    a.add(arrive(() => target, { strength: 5, slowR: 100, damp: 0.5 }));
     run(a, 400);
-    const x0 = a.position[0];
     target = [0, 40]; // shift target to y-axis
     run(a, 400);
     // agent should have turned — now moving toward y-axis target
@@ -62,21 +61,21 @@ describe('flee', () => {
     const source = [0, 0];
     const a = new Agent({ position: [10, 0] });
     const d0 = dist(a.position, source);
-    a.add(flee(() => source, { k: 1, damp: 0.5 }));
+    a.add(flee(() => source, { strength: 1, damp: 0.5 }));
     run(a, 200);
     expect(dist(a.position, source)).toBeGreaterThan(d0);
   });
 
   it('agent moves in correct direction (away from source)', () => {
     const a = new Agent({ position: [5, 0] });
-    a.add(flee(() => [0, 0], { k: 2, damp: 0.5 }));
+    a.add(flee(() => [0, 0], { strength: 2, damp: 0.5 }));
     run(a, 100);
     expect(a.position[0]).toBeGreaterThan(5);
   });
 
   it('velocity stabilizes (damp prevents runaway)', () => {
     const a = new Agent({ position: [5, 0] });
-    a.add(flee(() => [0, 0], { k: 1, damp: 2 }));
+    a.add(flee(() => [0, 0], { strength: 1, damp: 2 }));
     run(a, 200);
     const v1 = speed(a.velocity);
     run(a, 200);
@@ -102,7 +101,6 @@ describe('orbit', () => {
 
   it('agent moves in both x and y (circular motion, not linear)', () => {
     const a = setup();
-    const x0 = a.position[0];
     run(a, 300);
     // After many steps both axes should be non-trivially occupied
     expect(Math.abs(a.position[1])).toBeGreaterThan(1);
@@ -118,11 +116,11 @@ describe('orbit', () => {
 });
 
 describe('pursue', () => {
-  // pursue uses mag.arrive internally, so it converges like arrive.
+  // pursue uses falloff.arrive internally, so it converges like arrive.
   it('agent catches a stationary target (inside slowR)', () => {
     const leader = { position: [40, 0], velocity: [0, 0] };
     const a = new Agent({ position: [0, 0] });
-    a.add(pursue(() => leader, { k: 5, slowR: 100, damp: 0.5, lookahead: 0 }));
+    a.add(pursue(() => leader, { strength: 5, slowR: 100, damp: 0.5, lookahead: 0 }));
     run(a, 1200);
     expect(dist(a.position, leader.position)).toBeLessThan(10);
   });
@@ -134,11 +132,11 @@ describe('pursue', () => {
     const aDirect = new Agent({ position: [40, 0] });
     aDirect.add(pursue(
       () => ({ position: [...leader.position], velocity: [0, 0] }),
-      { k: 5, slowR: 100, damp: 0.5, lookahead: 0 },
+      { strength: 5, slowR: 100, damp: 0.5, lookahead: 0 },
     ));
 
     const aPursuit = new Agent({ position: [40, 0] });
-    aPursuit.add(pursue(() => leader, { k: 5, slowR: 100, damp: 0.5, lookahead: 0.5 }));
+    aPursuit.add(pursue(() => leader, { strength: 5, slowR: 100, damp: 0.5, lookahead: 0.5 }));
 
     for (let i = 0; i < 300; i++) {
       leader.position = [leader.position[0], leader.position[1] + 5 * 0.016];

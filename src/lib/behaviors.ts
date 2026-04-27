@@ -1,20 +1,20 @@
-import { attract, repel, damp as dampFn, tangential } from './primitives';
-import { mag } from './magnitudes';
-import { combined } from './combinators';
+import { attract, repel, damp as dampFn, tangential } from './forces';
+import { falloff } from './falloff';
+import { sum } from './modifiers';
 import { getVec } from './utils/vecDispatch';
-import type { Contributor } from './Agent';
+import type { Force } from './Agent';
 
 /**
- * Arrive: attract(targetFn, mag.arrive) + damp.
+ * Arrive: attract(targetFn, falloff.arrive) + damp.
  * Agent slows as it approaches the target and stops inside slowR.
  */
 export function arrive(
   targetFn: () => number[],
-  opts: { k?: number; slowR?: number; damp?: number } = {},
-): Contributor {
-  const { k = 1, slowR = 100, damp = 1 } = opts;
-  return combined(
-    attract(targetFn, mag.arrive(k, slowR)),
+  opts: { strength?: number; slowR?: number; damp?: number } = {},
+): Force {
+  const { strength = 1, slowR = 100, damp = 1 } = opts;
+  return sum(
+    attract(targetFn, falloff.arrive(strength, slowR)),
     dampFn(damp),
   );
 }
@@ -25,26 +25,26 @@ export function arrive(
  */
 export function flee(
   sourceFn: () => number[],
-  opts: { k?: number; damp?: number } = {},
-): Contributor {
-  const { k = 1, damp = 0.5 } = opts;
-  return combined(
-    repel(sourceFn, mag.constant(k)),
+  opts: { strength?: number; damp?: number } = {},
+): Force {
+  const { strength = 1, damp = 0.5 } = opts;
+  return sum(
+    repel(sourceFn, falloff.constant(strength)),
     dampFn(damp),
   );
 }
 
 /**
- * Orbit: attract(centerFn, mag.constant) + tangential + damp.
+ * Orbit: attract(centerFn, falloff.constant) + tangential + damp.
  * Agent circles the center. Works for 2D agents; for 3D use attract + tangentialAround.
  */
 export function orbit(
   centerFn: () => number[],
   opts: { attractK?: number; tangentK?: number; damp?: number } = {},
-): Contributor {
+): Force {
   const { attractK = 1, tangentK = 1, damp = 0 } = opts;
-  return combined(
-    attract(centerFn, mag.constant(attractK)),
+  return sum(
+    attract(centerFn, falloff.constant(attractK)),
     tangential(tangentK),
     dampFn(damp),
   );
@@ -57,10 +57,10 @@ export function orbit(
  */
 export function pursue(
   leaderFn: () => { position: number[]; velocity: number[] },
-  opts: { k?: number; slowR?: number; damp?: number; lookahead?: number } = {},
-): Contributor {
-  const { k = 5, slowR = 50, damp = 1, lookahead = 0.3 } = opts;
-  const magFn = mag.arrive(k, slowR);
+  opts: { strength?: number; slowR?: number; damp?: number; lookahead?: number } = {},
+): Force {
+  const { strength = 5, slowR = 50, damp = 1, lookahead = 0.3 } = opts;
+  const falloffFn = falloff.arrive(strength, slowR);
 
   const extrapolated = () => {
     const leader = leaderFn();
@@ -72,8 +72,8 @@ export function pursue(
     return ahead;
   };
 
-  return combined(
-    attract(extrapolated, magFn),
+  return sum(
+    attract(extrapolated, falloffFn),
     dampFn(damp),
   );
 }

@@ -1,7 +1,8 @@
 import * as PIXI from 'pixi.js';
 import {
   Agent,
-  primitives,
+  falloff,
+  forces,
   step,
 } from '../../src/index';
 import { Pane } from 'tweakpane';
@@ -158,12 +159,12 @@ let t = 0;
 
 strengthBinding.on('change', (ev) => {
   ctrlStrength = ev.value;
-  rebuildContributors();
+  rebuildForces();
 });
 
 dampBinding.on('change', (ev) => {
   ctrlDamp = ev.value;
-  rebuildContributors();
+  rebuildForces();
 });
 
 threatRadBinding.on('change', (ev) => {
@@ -172,33 +173,30 @@ threatRadBinding.on('change', (ev) => {
 
 modeBinding.on('change', (ev) => {
   ctrlMode = ev.value;
-  rebuildContributors();
+  rebuildForces();
   updateModeControls();
 });
 
 updateModeControls();
 
-function rebuildContributors(): void {
+function rebuildForces(): void {
   agents.forEach(({ agent }, i) => {
     agent.clear();
     const sourceFn = () => [threat.x, threat.y] as [number, number];
-    const threatMagnitude = (distance: number) => {
-      if (distance > ctrlThreatRadius) return 0;
-      return ctrlStrength;
-    };
+    const threatMagnitude = falloff.within(falloff.constant(ctrlStrength), ctrlThreatRadius);
 
     if (ctrlMode === 'repel') {
       agent.add(
-        primitives.repel(sourceFn, threatMagnitude),
+        forces.repel(sourceFn, threatMagnitude),
         { label: 'repel' },
       );
       agents[i].color = demoColors.agent;
     } else {
       agent.add(
-        primitives.repel(sourceFn, threatMagnitude),
+        forces.repel(sourceFn, threatMagnitude),
         { label: 'flee' },
       );
-      agent.add(primitives.damp(ctrlDamp), { label: 'damp' });
+      agent.add(forces.damp(ctrlDamp), { label: 'damp' });
       agents[i].color = demoColors.agentAlt;
     }
   });
@@ -228,7 +226,7 @@ function moveThreat(x: number, y: number): void {
   threat.y = y;
 }
 
-rebuildContributors();
+rebuildForces();
 resetAgents();
 
 app.ticker.add((ticker) => {

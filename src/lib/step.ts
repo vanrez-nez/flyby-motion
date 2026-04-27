@@ -6,15 +6,15 @@ export function step(agent: Agent, world: World, t: number, dt: number): void {
 
   agent.emit('step:before', agent, world, t, dt);
 
-  const snapshot = [...agent.contributors];
+  const snapshot = [...agent.forces];
   const dim = agent.position.length;
   const Fn = getVec(dim);
 
   const totalForce = new Array<number>(dim).fill(0);
   const tmp = new Array<number>(dim).fill(0);
 
-  for (const c of snapshot) {
-    Fn.add(totalForce, totalForce, c(agent, world, t, dt));
+  for (const force of snapshot) {
+    Fn.add(totalForce, totalForce, force(agent, world, t, dt));
   }
 
   const forceMag = Fn.length(totalForce);

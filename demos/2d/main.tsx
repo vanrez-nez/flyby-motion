@@ -1,9 +1,9 @@
 import * as PIXI from 'pixi.js';
 import {
   Agent,
-  compositions,
-  mag,
-  primitives,
+  behaviors,
+  falloff,
+  forces,
   step,
 } from '../../src/index';
 import { Pane } from 'tweakpane';
@@ -113,7 +113,7 @@ window.addEventListener('resize', () => {
   target.y = clamp(target.y, 40, app.screen.height - 40);
 });
 
-rebuildContributor();
+rebuildForces();
 resetAgent();
 
 const tpContainer = document.createElement('div');
@@ -146,7 +146,7 @@ const strengthBinding = forceFolder.addBinding({ strength: ctrlStrength }, 'stre
 });
 strengthBinding.on('change', (ev) => {
   ctrlStrength = ev.value;
-  rebuildContributor();
+  rebuildForces();
 });
 
 const slowRadiusBinding = forceFolder.addBinding(
@@ -156,7 +156,7 @@ const slowRadiusBinding = forceFolder.addBinding(
 );
 slowRadiusBinding.on('change', (ev) => {
   ctrlSlowRadius = ev.value;
-  rebuildContributor();
+  rebuildForces();
 });
 
 const dampingBinding = forceFolder.addBinding(
@@ -166,7 +166,7 @@ const dampingBinding = forceFolder.addBinding(
 );
 dampingBinding.on('change', (ev) => {
   ctrlDamping = ev.value;
-  rebuildContributor();
+  rebuildForces();
 });
 
 // --- Metrics monitors ---
@@ -191,7 +191,7 @@ updateDisabled();
 
 function setMode(nextMode: Mode): void {
   mode = nextMode;
-  rebuildContributor();
+  rebuildForces();
   updateDisabled();
 }
 
@@ -229,14 +229,14 @@ function updateMetrics(): void {
   targetPosMonitor.refresh();
 }
 
-function rebuildContributor(): void {
+function rebuildForces(): void {
   agent.clear();
   const targetFn = () => [target.x, target.y] as [number, number];
 
   if (mode === 'arrive') {
     agent.add(
-      compositions.arrive(targetFn, {
-        k: ctrlStrength,
+      behaviors.arrive(targetFn, {
+        strength: ctrlStrength,
         slowR: ctrlSlowRadius,
         damp: ctrlDamping,
       }),
@@ -244,7 +244,7 @@ function rebuildContributor(): void {
     );
   } else {
     agent.add(
-      primitives.attract(targetFn, mag.constant(ctrlStrength)),
+      forces.attract(targetFn, falloff.constant(ctrlStrength)),
       { label: 'raw attract' },
     );
   }

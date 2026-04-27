@@ -53,56 +53,56 @@ describe('EventEmitter (on / off / emit)', () => {
   });
 });
 
-describe('contributor events', () => {
-  it('contributor:added fires on agent.add()', () => {
+describe('force events', () => {
+  it('force:added fires on agent.add()', () => {
     const a = new Agent();
     const fn = vi.fn();
-    a.on('contributor:added', fn);
+    a.on('force:added', fn);
     const c = () => [0, 0];
     a.add(c);
     expect(fn).toHaveBeenCalledWith(c);
   });
 
-  it('contributor:removed fires on agent.remove()', () => {
+  it('force:removed fires on agent.remove()', () => {
     const a = new Agent();
     const fn = vi.fn();
     const c = () => [0, 0];
     a.add(c);
-    a.on('contributor:removed', fn);
+    a.on('force:removed', fn);
     a.remove(c);
     expect(fn).toHaveBeenCalledWith(c);
   });
 
-  it('contributor:removed does not fire for unknown contributor', () => {
+  it('force:removed does not fire for unknown force', () => {
     const a = new Agent();
     const fn = vi.fn();
-    a.on('contributor:removed', fn);
+    a.on('force:removed', fn);
     a.remove(() => [0, 0]); // not in set
     expect(fn).not.toHaveBeenCalled();
   });
 
-  it('contributor:removed fires for each on agent.clear()', () => {
+  it('force:removed fires for each on agent.clear()', () => {
     const a = new Agent();
     const fn = vi.fn();
     const c1 = () => [0, 0];
     const c2 = () => [1, 0];
     a.add(c1);
     a.add(c2);
-    a.on('contributor:removed', fn);
+    a.on('force:removed', fn);
     a.clear();
     expect(fn).toHaveBeenCalledTimes(2);
   });
 });
 
 describe('step lifecycle events', () => {
-  it('step:before fires before contributors run', () => {
+  it('step:before fires before forces run', () => {
     const order: string[] = [];
     const a = new Agent();
     a.on('step:before', () => order.push('before'));
-    a.add(() => { order.push('contributor'); return [0, 0]; });
+    a.add(() => { order.push('force-fn'); return [0, 0]; });
     step(a, W, 0, 0.016);
     expect(order[0]).toBe('before');
-    expect(order[1]).toBe('contributor');
+    expect(order[1]).toBe('force-fn');
   });
 
   it('step:after fires after integration', () => {
@@ -126,8 +126,8 @@ describe('step lifecycle events', () => {
     step(a, W, 0, 0.016);
     expect(forces.length).toBe(1);
     // clamped to maxForce=1
-    const mag = Math.sqrt(forces[0][0] ** 2 + forces[0][1] ** 2);
-    expect(mag).toBeCloseTo(1, 5);
+    const magnitude = Math.sqrt(forces[0][0] ** 2 + forces[0][1] ** 2);
+    expect(magnitude).toBeCloseTo(1, 5);
   });
 
   it('force:applied receives a copy (not the internal array)', () => {
@@ -150,14 +150,14 @@ describe('step lifecycle events', () => {
     expect(calls[0][3]).toBe(0.032);
   });
 
-  it('event order: step:before → contributors → force:applied → step:after', () => {
+  it('event order: step:before -> forces -> force:applied -> step:after', () => {
     const order: string[] = [];
     const a = new Agent();
     a.on('step:before', () => order.push('before'));
-    a.add(() => { order.push('contributor'); return [0, 0]; });
-    a.on('force:applied', () => order.push('force'));
+    a.add(() => { order.push('force-fn'); return [0, 0]; });
+    a.on('force:applied', () => order.push('force-event'));
     a.on('step:after', () => order.push('after'));
     step(a, W, 0, 0.016);
-    expect(order).toEqual(['before', 'contributor', 'force', 'after']);
+    expect(order).toEqual(['before', 'force-fn', 'force-event', 'after']);
   });
 });

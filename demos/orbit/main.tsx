@@ -1,7 +1,7 @@
 import * as PIXI from 'pixi.js';
 import {
   Agent,
-  compositions,
+  behaviors,
   step,
 } from '../../src/index';
 import { Pane } from 'tweakpane';
@@ -137,7 +137,7 @@ const attractionBinding = forceFolder.addBinding({ attraction: ctrlAttraction },
 });
 attractionBinding.on('change', (ev) => {
   ctrlAttraction = ev.value;
-  rebuildContributors();
+  rebuildForces();
 });
 
 const tangentBinding = forceFolder.addBinding({ tangent: ctrlTangent }, 'tangent', {
@@ -145,7 +145,7 @@ const tangentBinding = forceFolder.addBinding({ tangent: ctrlTangent }, 'tangent
 });
 tangentBinding.on('change', (ev) => {
   ctrlTangent = ev.value;
-  rebuildContributors();
+  rebuildForces();
 });
 
 const dampingBinding = forceFolder.addBinding({ damping: ctrlDamping }, 'damping', {
@@ -153,12 +153,12 @@ const dampingBinding = forceFolder.addBinding({ damping: ctrlDamping }, 'damping
 });
 dampingBinding.on('change', (ev) => {
   ctrlDamping = ev.value;
-  rebuildContributors();
+  rebuildForces();
 });
 
 pane.addButton({ title: 'Reset' }).on('click', () => resetAgents());
 
-rebuildContributors();
+rebuildForces();
 resetAgents();
 
 app.ticker.add((ticker) => {
@@ -174,11 +174,11 @@ app.ticker.add((ticker) => {
   drawCenter();
 });
 
-function rebuildContributors(): void {
+function rebuildForces(): void {
   agents.forEach(({ agent }) => {
     agent.clear();
     agent.add(
-      compositions.orbit(
+      behaviors.orbit(
         () => [orbitCenter.x, orbitCenter.y],
         {
           attractK: ctrlAttraction,
