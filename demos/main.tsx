@@ -9,6 +9,7 @@ import { Forces3DDemo } from './3d/forces';
 import { Behaviors3DDemo } from './3d/behaviors';
 import { Modifiers3DDemo } from './3d/modifiers';
 import { Custom3DDemo } from './3d/custom';
+import './shared/colors.css';
 import './style.css';
 import './shared/markdown.css';
 import 'highlight.js/styles/github-dark.css';

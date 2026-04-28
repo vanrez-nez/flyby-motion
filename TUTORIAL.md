@@ -1,4 +1,4 @@
-# flyby-motion Tutorial
+# How to use it
 
 This tutorial walks through `flyby-motion` from the simplest useful behavior to custom force functions.
 

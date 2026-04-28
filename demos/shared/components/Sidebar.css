@@ -2,12 +2,12 @@
   position: relative;
   z-index: 30;
   display: flex;
-  background: rgba(0, 0, 0, 0.94);
-  color: rgba(255, 255, 255, 0.86);
+  background: var(--surface);
+  color: var(--foreground);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+  border: 1px solid var(--border-muted);
+  box-shadow: 0 10px 40px var(--shadow);
   transition: margin 220ms ease;
 }
 
@@ -20,13 +20,13 @@
 .demo-sidebar--right .demo-sidebar__handle {
   flex: 0 0 6px;
   cursor: ew-resize;
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  border-right: 1px solid var(--border-muted);
   background: transparent;
 }
 
 .demo-sidebar--right .demo-sidebar__handle:hover,
 .demo-sidebar--right .demo-sidebar__handle:focus-visible {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--surface-active);
   outline: none;
 }
 
@@ -43,12 +43,12 @@
 .demo-sidebar--bottom .demo-sidebar__handle {
   flex: 0 0 8px;
   cursor: ns-resize;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--border-muted);
 }
 
 .demo-sidebar--bottom .demo-sidebar__handle:hover,
 .demo-sidebar--bottom .demo-sidebar__handle:focus-visible {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--surface-active);
   outline: none;
 }
 
@@ -68,7 +68,7 @@
   font-size: 22px;
   line-height: 1;
   background: transparent;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text-muted);
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -76,8 +76,8 @@
 }
 
 .demo-sidebar__close:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
+  background: var(--surface-active);
+  color: var(--text-primary);
 }
 
 .demo-sidebar__content {
@@ -87,7 +87,7 @@
   overflow: auto;
   padding: 16px 18px 24px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+  scrollbar-color: var(--border) transparent;
 }
 
 .demo-sidebar__content::-webkit-scrollbar {
@@ -96,7 +96,7 @@
 }
 
 .demo-sidebar__content::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.18);
+  background: var(--border);
   border-radius: 4px;
 }
 
@@ -121,11 +121,11 @@
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-muted);
   user-select: none;
 }
 
-.demo-sidebar__source > summary:hover { color: #fff; }
+.demo-sidebar__source > summary:hover { color: var(--text-primary); }
 
 .demo-sidebar__source pre {
   margin: 6px 0 14px;
@@ -143,13 +143,13 @@
   line-height: 1;
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   letter-spacing: 0.04em;
-  color: #fff;
-  background: rgba(0, 0, 0, 0.94);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-primary);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 999px;
   cursor: pointer;
   display: none;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 6px 24px var(--shadow);
   backdrop-filter: blur(8px);
 }
 

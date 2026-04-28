@@ -1,0 +1,17 @@
+:root {
+  --background: #000000;
+  --foreground: #e2e2f5;
+  --accent: white;
+  --border: rgba(255, 255, 255, 0.1);
+  --border-muted: rgba(255, 255, 255, 0.06);
+  --surface: rgba(15, 15, 15, 0.94);
+  --surface-elevated: rgba(255, 255, 255, 0.1);
+  --surface-active: rgba(255, 255, 255, 0.08);
+  --text-primary: #ffffff;
+  --text-muted: rgba(255, 255, 255, 0.6);
+  --text-dimmed: rgba(255, 255, 255, 0.78);
+  --text-highlight: white;
+  --text-link: #75a7ff;
+  --text-link-hover: #9dbfff;
+  --shadow: rgba(0, 0, 0, 0.45);
+}

@@ -3,29 +3,31 @@
 .markdown-body h3,
 .markdown-body h4 {
   margin: 1.5em 0 1em;
-  color: #fff;
+  color: var(--text-primary);
   font-weight: 600;
   letter-spacing: -0.01em;
   line-height: 1.25;
+}
+
+.markdown-body h1:first-child {
+  margin-top: 0;
 }
 
 .markdown-body h1 { font-size: 2.25em; }
 .markdown-body h2 {
   font-size: 1.5em;
   margin-top: 2.5rem;
-  color: #fff;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  padding-bottom: 6px;
+  color: var(--text-primary);
   margin-bottom: 12px;
 }
-.markdown-body h3 { font-size: 1.25em; margin-top: 2rem; color: #fff; }
-.markdown-body h4 { font-size: 1em; margin-top: 1.5rem; color: #fff; }
+.markdown-body h3 { font-size: 1.25em; margin-top: 2rem; color: var(--text-primary); }
+.markdown-body h4 { font-size: 1em; margin-top: 1.5rem; color: var(--text-primary); }
 
 .markdown-body p {
   margin: 0 0 1.5em;
   font-size: 1rem;
   line-height: 1.6;
-  color: rgba(255, 255, 255, 0.78);
+  color: var(--text-dimmed);
 }
 
 .markdown-body ul,
@@ -34,25 +36,37 @@
   padding-left: 1.625em;
   font-size: 1rem;
   line-height: 1.6;
-  color: rgba(255, 255, 255, 0.78);
+  color: var(--text-dimmed);
 }
 
 .markdown-body li { margin-bottom: 6px; }
 
+.markdown-body blockquote {
+  margin: 1.5em 0;
+  padding: 0.5em 1.5em;
+  border-left: 4px solid var(--accent);
+  background: var(--surface-active);
+  color: var(--text-dimmed);
+}
+
+.markdown-body blockquote p {
+  margin: 0;
+}
+
 .markdown-body code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.875em;
-  background: rgba(255, 255, 255, 0.07);
+  background: var(--surface-elevated);
   padding: 2px 5px;
   border-radius: 4px;
-  color: #ffd6a5;
+  color: var(--text-highlight);
 }
 
 .markdown-body pre {
   margin: 14px 0;
   padding: 14px;
-  background: rgba(0, 0, 0, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--surface);
+  border: 1px solid var(--border-muted);
   border-radius: 6px;
   overflow-x: auto;
 }
@@ -70,7 +84,7 @@
 }
 
 .markdown-body a {
-  color: #75a7ff;
+  color: var(--text-link);
   text-decoration: none;
 }
 
@@ -79,8 +93,8 @@
 .markdown-body kbd {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 11px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
   border-bottom-width: 2px;
   padding: 1px 5px;
   border-radius: 4px;
