@@ -2,9 +2,9 @@ import {
   behaviors,
   forces,
   modifiers,
-} from '../../src/index';
-import { mountThreeDemo, type ThreeMode } from '../3d/mountThreeDemo';
-import { mountDemoSidebar } from '../shared/demoSidebar';
+} from '../../../src/index';
+import { mountThreeDemo, type ThreeMode } from '../mountThreeDemo';
+import { mountDemoSidebar } from '../../shared/demoSidebar';
 import sidebarMarkdown from './info.md?raw';
 import sidebarSource from './main.ts?raw';
 

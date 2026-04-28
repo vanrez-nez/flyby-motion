@@ -1,12 +1,12 @@
-import { forces } from '../../src/index';
+import { forces } from '../../../src/index';
 import {
   cloneControls,
   directionMap,
   falloffControls,
   makeFalloff,
-} from './modeUtils';
-import { mountThreeDemo, type ThreeMode } from './mountThreeDemo';
-import { mountDemoSidebar } from '../shared/demoSidebar';
+} from '../modeUtils';
+import { mountThreeDemo, type ThreeMode } from '../mountThreeDemo';
+import { mountDemoSidebar } from '../../shared/demoSidebar';
 import sidebarMarkdown from './info.md?raw';
 import sidebarSource from './main.ts?raw';
 

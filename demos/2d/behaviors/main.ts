@@ -1,6 +1,6 @@
-import { behaviors } from '../../src/index';
-import { mountFeatureDemo, type FeatureMode } from '../shared/twoDDemo';
-import { mountDemoSidebar } from '../shared/demoSidebar';
+import { behaviors } from '../../../src/index';
+import { mountFeatureDemo, type FeatureMode } from '../../shared/twoDDemo';
+import { mountDemoSidebar } from '../../shared/demoSidebar';
 import sidebarMarkdown from './info.md?raw';
 import sidebarSource from './main.ts?raw';
 

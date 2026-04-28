@@ -21,30 +21,30 @@ import './tpTheme.css';
 
 export type DemoControl =
   | {
-      type?: 'number';
-      id: string;
-      label?: string;
-      folder?: string;
-      value: number;
-      min: number;
-      max: number;
-      step: number;
-    }
+    type?: 'number';
+    id: string;
+    label?: string;
+    folder?: string;
+    value: number;
+    min: number;
+    max: number;
+    step: number;
+  }
   | {
-      type: 'boolean';
-      id: string;
-      label?: string;
-      folder?: string;
-      value: boolean;
-    }
+    type: 'boolean';
+    id: string;
+    label?: string;
+    folder?: string;
+    value: boolean;
+  }
   | {
-      type: 'options';
-      id: string;
-      label?: string;
-      folder?: string;
-      value: string;
-      options: Record<string, string>;
-    };
+    type: 'options';
+    id: string;
+    label?: string;
+    folder?: string;
+    value: string;
+    options: Record<string, string>;
+  };
 
 export type DemoControlValues = Record<string, number | boolean | string>;
 
@@ -250,11 +250,11 @@ export async function mountFeatureDemo(config: FeatureDemoConfig): Promise<void>
           : control.type === 'options'
             ? { label: control.label ?? control.id, options: control.options }
             : {
-                min: control.min,
-                max: control.max,
-                step: control.step,
-                label: control.label ?? control.id,
-              };
+              min: control.min,
+              max: control.max,
+              step: control.step,
+              label: control.label ?? control.id,
+            };
 
         folder.addBinding(proxy, control.id, params).on('change', (ev) => {
           values[control.id] = ev.value as number | boolean | string;
