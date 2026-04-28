@@ -1,4 +1,5 @@
 import React, { ReactNode } from 'react';
+import { DemoFooter } from './components/DemoFooter';
 import './DemoBase.css';
 
 export type DemoKey =
@@ -27,15 +28,15 @@ const threeDLinks: Array<{ key: DemoKey; label: string; href: string }> = [
   { key: 'three-custom', label: 'Custom', href: '/3d/custom' },
 ];
 
-const DemoChromeHeader: React.FC<{ active?: DemoKey }> = ({ active }) => {
+const DemoHeader: React.FC<{ active?: DemoKey }> = ({ active }) => {
   const links = active?.startsWith('three-') ? threeDLinks : twoDLinks;
 
   return (
-    <header className="demo-chrome demo-chrome__header">
-      <a className="demo-chrome__title" href="/">
+    <header className="demo-ui demo-ui__header">
+      <a className="demo-ui__title" href="/">
         Flyby Library
       </a>
-      <nav className="demo-chrome__nav" aria-label="Demo navigation">
+      <nav className="demo-ui__nav" aria-label="Demo navigation">
         {links.map((link) => (
           <a
             key={link.key}
@@ -50,15 +51,6 @@ const DemoChromeHeader: React.FC<{ active?: DemoKey }> = ({ active }) => {
   );
 };
 
-const DemoChromeFooter: React.FC = () => {
-  return (
-    <footer className="demo-chrome demo-chrome__footer">
-      <a href={GITHUB_URL} target="_blank" rel="noreferrer">
-        GitHub
-      </a>
-    </footer>
-  );
-};
 
 export interface DemoBaseProps {
   activeDemo?: DemoKey;
@@ -70,7 +62,7 @@ export const DemoBase: React.FC<DemoBaseProps> = ({ activeDemo, sidebar, childre
   return (
     <div className="demo-base">
       <div className="demo-base__header">
-        <DemoChromeHeader active={activeDemo} />
+        <DemoHeader active={activeDemo} />
       </div>
       
       <div className="demo-base__body">
@@ -86,7 +78,7 @@ export const DemoBase: React.FC<DemoBaseProps> = ({ activeDemo, sidebar, childre
       </div>
 
       <div className="demo-base__footer">
-        <DemoChromeFooter />
+        <DemoFooter />
       </div>
     </div>
   );

@@ -1,4 +1,8 @@
 
+* {
+  box-sizing: border-box;
+}
+
 html {
   margin: 0;
   padding: 0;
@@ -52,7 +56,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 80px 20px;
+  padding: 80px 20px 120px;
   box-sizing: border-box;
 }
 
@@ -127,6 +131,10 @@ body {
   grid-template-columns: 200px 1fr;
   gap: 40px;
   align-items: start;
+}
+
+.landing__tutorial .markdown-body {
+  min-width: 0;
 }
 
 @media (max-width: 900px) {
@@ -215,4 +223,13 @@ body {
   margin-top: 2.5rem;
   font-size: 0.85rem;
   color: var(--text-muted);
+}
+
+.landing__footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: var(--background);
 }

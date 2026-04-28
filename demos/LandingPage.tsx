@@ -2,6 +2,7 @@ import React from 'react';
 import { DemoKey } from './shared/DemoBase';
 import { useMarkdown, getMarkdownSections } from './shared/hooks/useMarkdown';
 import { MarkdownNav } from './shared/components/MarkdownNav';
+import { DemoFooter } from './shared/components/DemoFooter';
 import tutorialMarkdown from '../TUTORIAL.md?raw';
 
 export const LandingPage: React.FC = () => {
@@ -10,7 +11,7 @@ export const LandingPage: React.FC = () => {
 
   return (
     <div className="landing">
-      <h1 className="landing__title">&gt;&gt;flyby-motion</h1>
+      <h1 className="landing__title">JS Flyby Library</h1>
       <p className="landing__subtitle">Choose a demo to explore:</p>
       <div className="landing__buttons">
         <a href="/2d/forces" className="landing__buttons-btn landing__buttons-btn--2d">
@@ -22,11 +23,15 @@ export const LandingPage: React.FC = () => {
       </div>
       <div className="landing__tutorial">
         <MarkdownNav sections={sections} />
-        <article 
-          className="markdown-body" 
-          dangerouslySetInnerHTML={{ __html: html }} 
+        <article
+          className="markdown-body"
+          dangerouslySetInnerHTML={{ __html: html }}
         />
       </div>
+      
+      <footer className="landing__footer">
+        <DemoFooter />
+      </footer>
     </div>
   );
 };

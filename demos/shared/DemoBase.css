@@ -42,38 +42,39 @@
   z-index: 20;
 }
 
-/* Ported from demoChrome.css */
-.demo-chrome {
+/* Ported from demoUi.css */
+.demo-ui {
   display: flex;
   align-items: center;
   min-height: 32px;
   padding: 0 14px;
-  background: var(--surface);
+  background: var(--background);
   color: var(--text-secondary);
   font: 500 11px/1.2 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-.demo-chrome a {
+.demo-ui a {
   color: inherit;
   text-decoration: none;
 }
 
-.demo-chrome a:hover,
-.demo-chrome a[aria-current="page"] {
+.demo-ui a:hover,
+.demo-ui a[aria-current="page"] {
   color: var(--text-primary);
 }
 
-.demo-chrome__header {
+.demo-ui__header {
   justify-content: space-between;
   gap: 16px;
+  border-bottom: 1px solid var(--border);
 }
 
-.demo-chrome__title {
+.demo-ui__title {
   flex: 0 0 auto;
   letter-spacing: 0;
 }
 
-.demo-chrome__nav {
+.demo-ui__nav {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
@@ -81,22 +82,23 @@
   text-align: right;
 }
 
-.demo-chrome__footer {
-  justify-content: center;
+.demo-ui__footer {
+  justify-content: space-between;
+  border-top: 1px solid var(--border);
 }
 
 @media (max-width: 560px) {
-  .demo-chrome {
+  .demo-ui {
     min-height: 36px;
     padding: 0 10px;
     font-size: 10px;
   }
 
-  .demo-chrome__header {
+  .demo-ui__header {
     gap: 10px;
   }
 
-  .demo-chrome__nav {
+  .demo-ui__nav {
     gap: 8px;
   }
 }
