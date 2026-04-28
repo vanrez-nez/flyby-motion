@@ -7,6 +7,7 @@ import {
   type Force,
 } from '../../src/index';
 import { mountDemoChrome, type DemoKey } from '../shared/demoChrome';
+import '../shared/tpTheme.css';
 import { mirrorVectorAcrossBounds, type Bounds3 } from '../shared/mirrorBounds';
 import { stopCanvasPassthrough } from '../shared/stopPassthrough';
 import {
@@ -76,15 +77,24 @@ const PLAY_BOUNDS: Bounds3 = {
 const WORLD: Record<string, unknown> = {};
 
 export async function mountThreeDemo(config: ThreeDemoConfig): Promise<void> {
+  // Returns the current play-area size, which excludes the sidebar when open.
+  function playSize(): { w: number; h: number } {
+    const style = getComputedStyle(document.documentElement);
+    const w = parseFloat(style.getPropertyValue('--demo-play-width')) || window.innerWidth;
+    const h = parseFloat(style.getPropertyValue('--demo-play-height')) || window.innerHeight;
+    return { w, h };
+  }
+
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(colors.bg);
   scene.fog = new THREE.Fog(colors.bg, 12, 34);
 
-  const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 100);
+  const { w: initW, h: initH } = playSize();
+  const camera = new THREE.PerspectiveCamera(55, initW / initH, 0.1, 100);
   camera.position.set(14, 11, 16);
 
   const renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(initW, initH);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   const mount = document.querySelector<HTMLDivElement>('#app');
   if (!mount) throw new Error('Missing #app mount');
@@ -179,11 +189,14 @@ export async function mountThreeDemo(config: ThreeDemoConfig): Promise<void> {
     if (event.key.toLowerCase() === 'r') reset();
   });
 
-  window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
+  const onResize = () => {
+    const { w, h } = playSize();
+    camera.aspect = w / h;
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-  });
+    renderer.setSize(w, h);
+  };
+  window.addEventListener('resize', onResize);
+  window.addEventListener('playgroundresize', onResize);
 
   mountPane();
   reset();

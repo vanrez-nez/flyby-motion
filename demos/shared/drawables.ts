@@ -2,7 +2,7 @@ import * as PIXI from 'pixi.js';
 import { Vector2Fn } from '../../src/index';
 
 export const demoColors = {
-  bg: 0x11151f,
+  bg: 0x000000,
   target: 0xffc857,
   agent: 0x4dd8a8,
   agentAlt: 0x75a7ff,

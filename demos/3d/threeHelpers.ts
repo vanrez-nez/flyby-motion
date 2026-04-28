@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { Vector3Fn } from '../../src/index';
 
 export const colors = {
-  bg: 0x11151f,
+  bg: 0x000000,
   grid: 0x6b7280,
   agent: 0x4dd8a8,
   agentAlt: 0x75a7ff,

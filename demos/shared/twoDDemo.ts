@@ -17,6 +17,7 @@ import {
 import { mountDemoChrome, type DemoKey } from './demoChrome';
 import { stopCanvasPassthrough } from './stopPassthrough';
 import './twoDDemo.css';
+import './tpTheme.css';
 
 export type DemoControl =
   | {
@@ -104,15 +105,26 @@ const WORLD: Record<string, unknown> = {};
 
 export async function mountFeatureDemo(config: FeatureDemoConfig): Promise<void> {
   const app = new PIXI.Application();
-  await app.init({
-    backgroundColor: demoColors.bg,
-    antialias: true,
-    resizeTo: window,
-  });
+
+  // A wrapper div that is constrained to the play area (excludes sidebar).
+  // PIXI's resizeTo watches this element instead of the full window.
+  const playArea = document.createElement('div');
+  playArea.id = 'play-area';
+  playArea.style.position = 'absolute';
+  playArea.style.inset = '0';
+  playArea.style.width = 'var(--demo-play-width, 100%)';
+  playArea.style.height = 'var(--demo-play-height, 100%)';
 
   const mount = document.querySelector<HTMLDivElement>('#app');
   if (!mount) throw new Error('Missing #app mount');
-  mount.appendChild(app.canvas);
+  mount.appendChild(playArea);
+
+  await app.init({
+    backgroundColor: demoColors.bg,
+    antialias: true,
+    resizeTo: playArea,
+  });
+  playArea.appendChild(app.canvas);
   mountDemoChrome(config.active);
 
   const center = (): [number, number] => [
@@ -177,10 +189,12 @@ export async function mountFeatureDemo(config: FeatureDemoConfig): Promise<void>
     scene.mouse.active = false;
   });
 
-  window.addEventListener('resize', () => {
+  const onResize = () => {
     app.stage.hitArea = app.screen;
     clampMarkers(scene, app.screen.width, app.screen.height);
-  });
+  };
+  window.addEventListener('resize', onResize);
+  window.addEventListener('playgroundresize', onResize);
 
   window.addEventListener('keydown', (event) => {
     if (event.key.toLowerCase() === 'r') reset();

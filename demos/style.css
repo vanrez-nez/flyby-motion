@@ -5,7 +5,7 @@ html, body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #0f0f1a;
+  background: #000000;
   color: #e2e2f5;
   font-family: system-ui, sans-serif;
 }
@@ -44,38 +44,43 @@ html, body {
   border-radius: 12px;
   color: #fff;
   font-weight: 600;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background: #000;
+  border: 2px solid transparent;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
   display: inline-block;
 }
 
 .landing__buttons-btn--2d {
-  background: linear-gradient(135deg, #e94560, #ff6b6b);
-  box-shadow: 0 4px 15px rgba(233, 69, 96, 0.3);
+  border-color: #e94560;
+  box-shadow: 0 4px 15px rgba(233, 69, 96, 0.25);
 }
 
 .landing__buttons-btn--2d:hover {
+  background: rgba(233, 69, 96, 0.08);
   transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(233, 69, 96, 0.4);
+  box-shadow: 0 8px 25px rgba(233, 69, 96, 0.35);
 }
 
 .landing__buttons-btn--repel {
-  background: linear-gradient(135deg, #4dd8a8, #75a7ff);
-  box-shadow: 0 4px 15px rgba(77, 216, 168, 0.3);
+  border-color: #4dd8a8;
+  box-shadow: 0 4px 15px rgba(77, 216, 168, 0.25);
 }
 
 .landing__buttons-btn--repel:hover {
+  background: rgba(77, 216, 168, 0.08);
   transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(117, 167, 255, 0.4);
+  box-shadow: 0 8px 25px rgba(77, 216, 168, 0.35);
 }
 
 .landing__buttons-btn--3d {
-  background: linear-gradient(135deg, #646cff, #a78bfa);
-  box-shadow: 0 4px 15px rgba(100, 108, 255, 0.3);
+  border-color: #646cff;
+  box-shadow: 0 4px 15px rgba(100, 108, 255, 0.25);
 }
 
 .landing__buttons-btn--3d:hover {
+  background: rgba(100, 108, 255, 0.08);
   transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(100, 108, 255, 0.4);
+  box-shadow: 0 8px 25px rgba(100, 108, 255, 0.35);
 }
 
 .landing__note {

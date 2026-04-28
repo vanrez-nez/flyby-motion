@@ -179,17 +179,26 @@ function applyLayout(root: HTMLElement, reopen: HTMLElement, layout: SidebarLayo
   root.classList.toggle('demo-sidebar--closed', !layout.open);
   reopen.classList.toggle('is-visible', !layout.open);
 
+  let playWidth = window.innerWidth;
+  let playHeight = window.innerHeight;
+
   if (portrait) {
     const max = Math.floor(window.innerHeight * MAX_BOTTOM_HEIGHT_RATIO);
     const height = clamp(layout.bottomHeight, MIN_BOTTOM_HEIGHT, max);
     root.style.height = `${height}px`;
     root.style.width = '';
+    if (layout.open) playHeight = window.innerHeight - height;
   } else {
     const max = Math.floor(window.innerWidth * MAX_RIGHT_WIDTH_RATIO);
     const width = clamp(layout.rightWidth, MIN_RIGHT_WIDTH, max);
     root.style.width = `${width}px`;
     root.style.height = '';
+    if (layout.open) playWidth = window.innerWidth - width;
   }
+
+  document.documentElement.style.setProperty('--demo-play-width', `${playWidth}px`);
+  document.documentElement.style.setProperty('--demo-play-height', `${playHeight}px`);
+  window.dispatchEvent(new CustomEvent('playgroundresize', { detail: { playWidth, playHeight } }));
 }
 
 function enableResize(
