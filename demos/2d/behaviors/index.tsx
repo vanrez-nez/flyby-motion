@@ -1,8 +1,9 @@
+import React from 'react';
 import { behaviors } from '../../../src/index';
-import { mountFeatureDemo, type FeatureMode } from '../../shared/twoDDemo';
-import { mountDemoSidebar } from '../../shared/demoSidebar';
+import { type FeatureMode } from '../../shared/components/TwoDFeatureDemo';
+import { TwoDFeatureDemo } from '../../shared/components/TwoDFeatureDemo';
 import sidebarMarkdown from './info.md?raw';
-import sidebarSource from './main.ts?raw';
+import sidebarSource from './index.tsx?raw';
 
 const modes: FeatureMode[] = [
   {
@@ -97,14 +98,15 @@ const modes: FeatureMode[] = [
   },
 ];
 
-await mountFeatureDemo({
-  active: 'behaviors',
-  title: 'Behaviors',
-  modes,
-});
-
-mountDemoSidebar({
-  storageKey: 'flyby:sidebar:behaviors',
-  markdown: sidebarMarkdown,
-  sources: [{ label: 'demos/behaviors/main.ts', language: 'typescript', code: sidebarSource }],
-});
+export const Behaviors2DDemo: React.FC = () => {
+  return (
+    <TwoDFeatureDemo
+      config={{ active: 'behaviors', title: 'Behaviors', modes }}
+      sidebarConfig={{
+        storageKey: 'flyby:sidebar:behaviors',
+        markdown: sidebarMarkdown,
+        sources: [{ label: 'demos/behaviors/index.tsx', language: 'tsx', code: sidebarSource }]
+      }}
+    />
+  );
+};

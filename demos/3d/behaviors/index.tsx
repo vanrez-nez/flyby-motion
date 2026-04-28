@@ -1,12 +1,13 @@
+import React from 'react';
 import {
   behaviors,
   forces,
   modifiers,
 } from '../../../src/index';
-import { mountThreeDemo, type ThreeMode } from '../../shared/mountThreeDemo';
-import { mountDemoSidebar } from '../../shared/demoSidebar';
+import { type ThreeMode } from '../../shared/components/ThreeFeatureDemo';
+import { ThreeFeatureDemo } from '../../shared/components/ThreeFeatureDemo';
 import sidebarMarkdown from './info.md?raw';
-import sidebarSource from './main.ts?raw';
+import sidebarSource from './index.tsx?raw';
 
 const modes: ThreeMode[] = [
   {
@@ -98,14 +99,15 @@ const modes: ThreeMode[] = [
   },
 ];
 
-await mountThreeDemo({
-  active: 'three-behaviors',
-  paneTitle: '3D Behaviors',
-  modes,
-});
-
-mountDemoSidebar({
-  storageKey: 'flyby:sidebar:three-behaviors',
-  markdown: sidebarMarkdown,
-  sources: [{ label: 'demos/3d-behaviors/main.ts', language: 'typescript', code: sidebarSource }],
-});
+export const Behaviors3DDemo: React.FC = () => {
+  return (
+    <ThreeFeatureDemo
+      config={{ active: 'three-behaviors', paneTitle: '3D Behaviors', modes }}
+      sidebarConfig={{
+        storageKey: 'flyby:sidebar:three-behaviors',
+        markdown: sidebarMarkdown,
+        sources: [{ label: 'demos/3d-behaviors/index.tsx', language: 'tsx', code: sidebarSource }]
+      }}
+    />
+  );
+};

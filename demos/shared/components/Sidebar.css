@@ -1,5 +1,5 @@
 .demo-sidebar {
-  position: fixed;
+  position: relative;
   z-index: 30;
   display: flex;
   background: rgba(0, 0, 0, 0.94);
@@ -8,13 +8,10 @@
   backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.06);
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
-  transition: transform 220ms ease;
+  transition: margin 220ms ease;
 }
 
 .demo-sidebar--right {
-  top: 32px;
-  right: 0;
-  bottom: 32px;
   flex-direction: row;
   border-right: none;
   border-radius: 8px 0 0 8px;
@@ -34,13 +31,10 @@
 }
 
 .demo-sidebar--right.demo-sidebar--closed {
-  transform: translateX(105%);
+  margin-right: calc(-1 * var(--sidebar-width));
 }
 
 .demo-sidebar--bottom {
-  left: 0;
-  right: 0;
-  bottom: 0;
   flex-direction: column;
   border-bottom: none;
   border-radius: 8px 8px 0 0;
@@ -59,7 +53,7 @@
 }
 
 .demo-sidebar--bottom.demo-sidebar--closed {
-  transform: translateY(105%);
+  margin-bottom: calc(-1 * var(--sidebar-height));
 }
 
 .demo-sidebar__close {

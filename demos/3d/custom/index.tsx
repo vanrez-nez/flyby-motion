@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   falloff,
   forces,
@@ -5,10 +6,10 @@ import {
   Vector3Fn,
   type Force,
 } from '../../../src/index';
-import { mountThreeDemo, type ThreeMode } from '../../shared/mountThreeDemo';
-import { mountDemoSidebar } from '../../shared/demoSidebar';
+import { type ThreeMode } from '../../shared/components/ThreeFeatureDemo';
+import { ThreeFeatureDemo } from '../../shared/components/ThreeFeatureDemo';
 import sidebarMarkdown from './info.md?raw';
-import sidebarSource from './main.ts?raw';
+import sidebarSource from './index.tsx?raw';
 
 const modes: ThreeMode[] = [
   {
@@ -144,17 +145,18 @@ const modes: ThreeMode[] = [
   },
 ];
 
-await mountThreeDemo({
-  active: 'three-custom',
-  paneTitle: '3D Custom',
-  modes,
-});
-
-mountDemoSidebar({
-  storageKey: 'flyby:sidebar:three-custom',
-  markdown: sidebarMarkdown,
-  sources: [{ label: 'demos/3d-custom/main.ts', language: 'typescript', code: sidebarSource }],
-});
+export const Custom3DDemo: React.FC = () => {
+  return (
+    <ThreeFeatureDemo
+      config={{ active: 'three-custom', paneTitle: '3D Custom', modes }}
+      sidebarConfig={{
+        storageKey: 'flyby:sidebar:three-custom',
+        markdown: sidebarMarkdown,
+        sources: [{ label: 'demos/3d-custom/index.tsx', language: 'tsx', code: sidebarSource }]
+      }}
+    />
+  );
+};
 
 function buildOscillateIdleForce(
   strength: number,

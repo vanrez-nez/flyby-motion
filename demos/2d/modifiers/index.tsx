@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   falloff,
   forces,
@@ -5,10 +6,10 @@ import {
   Vector2Fn,
   type Force,
 } from '../../../src/index';
-import { mountFeatureDemo, type FeatureMode } from '../../shared/twoDDemo';
-import { mountDemoSidebar } from '../../shared/demoSidebar';
+import { type FeatureMode } from '../../shared/components/TwoDFeatureDemo';
+import { TwoDFeatureDemo } from '../../shared/components/TwoDFeatureDemo';
 import sidebarMarkdown from './info.md?raw';
-import sidebarSource from './main.ts?raw';
+import sidebarSource from './index.tsx?raw';
 
 const modes: FeatureMode[] = [
   {
@@ -107,17 +108,18 @@ const modes: FeatureMode[] = [
   },
 ];
 
-await mountFeatureDemo({
-  active: 'modifiers',
-  title: 'Modifiers',
-  modes,
-});
-
-mountDemoSidebar({
-  storageKey: 'flyby:sidebar:modifiers',
-  markdown: sidebarMarkdown,
-  sources: [{ label: 'demos/modifiers/main.ts', language: 'typescript', code: sidebarSource }],
-});
+export const Modifiers2DDemo: React.FC = () => {
+  return (
+    <TwoDFeatureDemo
+      config={{ active: 'modifiers', title: 'Modifiers', modes }}
+      sidebarConfig={{
+        storageKey: 'flyby:sidebar:modifiers',
+        markdown: sidebarMarkdown,
+        sources: [{ label: 'demos/modifiers/index.tsx', language: 'tsx', code: sidebarSource }]
+      }}
+    />
+  );
+};
 
 function baseAttract(scene: { target: { x: number; y: number } }): Force {
   return forces.attract(

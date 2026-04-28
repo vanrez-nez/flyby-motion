@@ -1,3 +1,4 @@
+import React from 'react';
 import { forces } from '../../../src/index';
 import {
   cloneControls,
@@ -5,10 +6,10 @@ import {
   falloffControls,
   makeFalloff,
 } from '../../shared/modeUtils';
-import { mountThreeDemo, type ThreeMode } from '../../shared/mountThreeDemo';
-import { mountDemoSidebar } from '../../shared/demoSidebar';
+import { type ThreeMode } from '../../shared/components/ThreeFeatureDemo';
+import { ThreeFeatureDemo } from '../../shared/components/ThreeFeatureDemo';
 import sidebarMarkdown from './info.md?raw';
-import sidebarSource from './main.ts?raw';
+import sidebarSource from './index.tsx?raw';
 
 const modes: ThreeMode[] = [
   {
@@ -121,14 +122,15 @@ const modes: ThreeMode[] = [
   },
 ];
 
-await mountThreeDemo({
-  active: 'three-forces',
-  paneTitle: '3D Forces',
-  modes,
-});
-
-mountDemoSidebar({
-  storageKey: 'flyby:sidebar:three-forces',
-  markdown: sidebarMarkdown,
-  sources: [{ label: 'demos/3d/main.ts', language: 'typescript', code: sidebarSource }],
-});
+export const Forces3DDemo: React.FC = () => {
+  return (
+    <ThreeFeatureDemo
+      config={{ active: 'three-forces', paneTitle: '3D Forces', modes }}
+      sidebarConfig={{
+        storageKey: 'flyby:sidebar:three-forces',
+        markdown: sidebarMarkdown,
+        sources: [{ label: 'demos/3d-forces/index.tsx', language: 'tsx', code: sidebarSource }]
+      }}
+    />
+  );
+};

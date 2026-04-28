@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   falloff,
   forces,
@@ -5,10 +6,10 @@ import {
   Vector3Fn,
   type Force,
 } from '../../../src/index';
-import { mountThreeDemo, type ThreeDemoContext, type ThreeMode } from '../../shared/mountThreeDemo';
-import { mountDemoSidebar } from '../../shared/demoSidebar';
+import { type ThreeDemoContext, type ThreeMode } from '../../shared/components/ThreeFeatureDemo';
+import { ThreeFeatureDemo } from '../../shared/components/ThreeFeatureDemo';
 import sidebarMarkdown from './info.md?raw';
-import sidebarSource from './main.ts?raw';
+import sidebarSource from './index.tsx?raw';
 
 const modes: ThreeMode[] = [
   {
@@ -131,17 +132,18 @@ const modes: ThreeMode[] = [
   },
 ];
 
-await mountThreeDemo({
-  active: 'three-modifiers',
-  paneTitle: '3D Modifiers',
-  modes,
-});
-
-mountDemoSidebar({
-  storageKey: 'flyby:sidebar:three-modifiers',
-  markdown: sidebarMarkdown,
-  sources: [{ label: 'demos/3d-modifiers/main.ts', language: 'typescript', code: sidebarSource }],
-});
+export const Modifiers3DDemo: React.FC = () => {
+  return (
+    <ThreeFeatureDemo
+      config={{ active: 'three-modifiers', paneTitle: '3D Modifiers', modes }}
+      sidebarConfig={{
+        storageKey: 'flyby:sidebar:three-modifiers',
+        markdown: sidebarMarkdown,
+        sources: [{ label: 'demos/3d-modifiers/index.tsx', language: 'tsx', code: sidebarSource }]
+      }}
+    />
+  );
+};
 
 function baseAttract(context: ThreeDemoContext, strength: number, slowR: number): Force {
   return forces.attract(

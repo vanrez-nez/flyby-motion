@@ -1,0 +1,51 @@
+import { useMemo } from 'react';
+import { marked } from 'marked';
+import hljs from 'highlight.js/lib/core';
+import javascript from 'highlight.js/lib/languages/javascript';
+import typescript from 'highlight.js/lib/languages/typescript';
+import xml from 'highlight.js/lib/languages/xml';
+
+hljs.registerLanguage('javascript', javascript);
+hljs.registerLanguage('js', javascript);
+hljs.registerLanguage('typescript', typescript);
+hljs.registerLanguage('ts', typescript);
+hljs.registerLanguage('tsx', typescript);
+hljs.registerLanguage('html', xml);
+
+marked.use({
+  gfm: true,
+  breaks: false,
+});
+
+export function useMarkdown(markdown: string): string {
+  return useMemo(() => {
+    const rawHtml = marked.parse(markdown, { async: false }) as string;
+    
+    // We parse the HTML into a DOM element to run highlight.js on the code blocks
+    const template = document.createElement('template');
+    template.innerHTML = rawHtml;
+    
+    template.content.querySelectorAll('pre code').forEach((block) => {
+      const element = block as HTMLElement;
+      const cls = Array.from(element.classList).find((c) => c.startsWith('language-'));
+      const lang = cls ? cls.slice('language-'.length) : undefined;
+      const validLang = lang && hljs.getLanguage(lang) ? lang : undefined;
+
+      if (validLang) {
+        element.classList.add(`language-${validLang}`);
+        const result = hljs.highlight(element.textContent ?? '', { language: validLang, ignoreIllegals: true });
+        element.innerHTML = result.value;
+      } else {
+        element.innerHTML = hljs.highlightAuto(element.textContent ?? '').value;
+      }
+      element.classList.add('hljs');
+    });
+
+    return template.innerHTML;
+  }, [markdown]);
+}
+
+export function highlightCode(code: string, language: string = 'typescript'): string {
+  const lang = hljs.getLanguage(language) ? language : 'typescript';
+  return hljs.highlight(code, { language: lang, ignoreIllegals: true }).value;
+}

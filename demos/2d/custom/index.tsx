@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   falloff,
   forces,
@@ -10,10 +11,10 @@ import {
   drawMarker,
   drawRadiusRing,
 } from '../../shared/drawables';
-import { mountFeatureDemo, type FeatureMode } from '../../shared/twoDDemo';
-import { mountDemoSidebar } from '../../shared/demoSidebar';
+import { type FeatureMode } from '../../shared/components/TwoDFeatureDemo';
+import { TwoDFeatureDemo } from '../../shared/components/TwoDFeatureDemo';
 import sidebarMarkdown from './info.md?raw';
-import sidebarSource from './main.ts?raw';
+import sidebarSource from './index.tsx?raw';
 
 const idleHomeByAgent = new WeakMap<object, [number, number]>();
 const idleSeedByAgent = new WeakMap<object, { x: number; y: number }>();
@@ -225,17 +226,18 @@ const modes: FeatureMode[] = [
   },
 ];
 
-await mountFeatureDemo({
-  active: 'custom',
-  title: 'Custom',
-  modes,
-});
-
-mountDemoSidebar({
-  storageKey: 'flyby:sidebar:custom',
-  markdown: sidebarMarkdown,
-  sources: [{ label: 'demos/custom/main.ts', language: 'typescript', code: sidebarSource }],
-});
+export const Custom2DDemo: React.FC = () => {
+  return (
+    <TwoDFeatureDemo
+      config={{ active: 'custom', title: 'Custom', modes }}
+      sidebarConfig={{
+        storageKey: 'flyby:sidebar:custom',
+        markdown: sidebarMarkdown,
+        sources: [{ label: 'demos/custom/index.tsx', language: 'tsx', code: sidebarSource }]
+      }}
+    />
+  );
+};
 
 function getIdleHome(agent: object): [number, number] {
   const home = idleHomeByAgent.get(agent);

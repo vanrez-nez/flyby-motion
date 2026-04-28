@@ -1,8 +1,41 @@
-.demo-chrome {
-  position: fixed;
-  left: 0;
-  right: 0;
+.demo-base {
+  display: flex;
+  flex-direction: column;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.demo-base__header {
+  flex: 0 0 auto;
   z-index: 20;
+}
+
+.demo-base__body {
+  flex: 1 1 auto;
+  display: flex;
+  position: relative;
+  overflow: hidden;
+}
+
+.demo-base__content {
+  flex: 1 1 auto;
+  position: relative;
+  overflow: hidden;
+}
+
+.demo-base__sidebar {
+  flex: 0 0 auto;
+  z-index: 30;
+}
+
+.demo-base__footer {
+  flex: 0 0 auto;
+  z-index: 20;
+}
+
+/* Ported from demoChrome.css */
+.demo-chrome {
   display: flex;
   align-items: center;
   min-height: 32px;
@@ -23,7 +56,6 @@
 }
 
 .demo-chrome__header {
-  top: 0;
   justify-content: space-between;
   gap: 16px;
 }
@@ -42,7 +74,6 @@
 }
 
 .demo-chrome__footer {
-  bottom: 0;
   justify-content: center;
 }
 

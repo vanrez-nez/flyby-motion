@@ -1,8 +1,9 @@
+import React from 'react';
 import { falloff, forces, type FalloffFn } from '../../../src/index';
-import { mountFeatureDemo, type DemoControlValues, type FeatureMode } from '../../shared/twoDDemo';
-import { mountDemoSidebar } from '../../shared/demoSidebar';
+import { type FeatureMode, type DemoControlValues } from '../../shared/components/TwoDFeatureDemo';
+import { TwoDFeatureDemo } from '../../shared/components/TwoDFeatureDemo';
 import sidebarMarkdown from './info.md?raw';
-import sidebarSource from './main.ts?raw';
+import sidebarSource from './index.tsx?raw';
 
 const directionMap: Record<string, number[]> = {
   right: [1, 0],
@@ -134,17 +135,18 @@ const modes: FeatureMode[] = [
   },
 ];
 
-await mountFeatureDemo({
-  active: 'forces',
-  title: 'Forces',
-  modes,
-});
-
-mountDemoSidebar({
-  storageKey: 'flyby:sidebar:forces',
-  markdown: sidebarMarkdown,
-  sources: [{ label: 'demos/forces/main.ts', language: 'typescript', code: sidebarSource }],
-});
+export const Forces2DDemo: React.FC = () => {
+  return (
+    <TwoDFeatureDemo
+      config={{ active: 'forces', title: 'Forces', modes }}
+      sidebarConfig={{
+        storageKey: 'flyby:sidebar:forces',
+        markdown: sidebarMarkdown,
+        sources: [{ label: 'demos/forces/index.tsx', language: 'tsx', code: sidebarSource }]
+      }}
+    />
+  );
+};
 
 function makeFalloff(values: DemoControlValues): FalloffFn {
   const kind = values.falloff as string;
