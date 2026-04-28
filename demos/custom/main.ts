@@ -12,7 +12,102 @@ import {
 } from '../shared/drawables';
 import { mountFeatureDemo, type FeatureMode } from '../shared/twoDDemo';
 
+const idleHomeByAgent = new WeakMap<object, [number, number]>();
+const idleSeedByAgent = new WeakMap<object, { x: number; y: number }>();
+
 const modes: FeatureMode[] = [
+  {
+    value: 'idleDisturbance',
+    label: 'idle disturbance',
+    presentation: 'none',
+    trackPointer: true,
+    agentCount: 1,
+    maxSpeed: 700,
+    maxForce: 3600,
+    controls: [
+      {
+        type: 'options',
+        id: 'idleForce',
+        folder: 'Idle',
+        value: 'drift',
+        options: {
+          drift: 'drift',
+          oscillate: 'oscillate',
+        },
+      },
+      { id: 'idleStrength', folder: 'Idle', value: 180, min: 0, max: 420, step: 5 },
+      { id: 'idleScale', folder: 'Idle', value: 0.35, min: 0.05, max: 1.5, step: 0.05 },
+      { type: 'boolean', id: 'idleX', label: 'idle x', folder: 'Idle', value: true },
+      { type: 'boolean', id: 'idleY', label: 'idle y', folder: 'Idle', value: true },
+      { id: 'homeStrength', folder: 'Home', value: 1.6, min: 0.2, max: 12, step: 0.1 },
+      { id: 'damp', folder: 'Home', value: 5.5, min: 0, max: 14, step: 0.1 },
+      { id: 'mouseRadius', folder: 'Mouse', value: 180, min: 60, max: 360, step: 5 },
+      { id: 'mouseStrength', folder: 'Mouse', value: 1900, min: 0, max: 5200, step: 50 },
+      { id: 'agentMass', folder: 'Agent', value: 0.35, min: 0.05, max: 2, step: 0.05 },
+    ],
+    configureAgent: (entry, _scene, values) => {
+      entry.agent.mass = values.agentMass as number;
+      idleHomeByAgent.set(entry.agent, [entry.agent.position[0], entry.agent.position[1]]);
+      idleSeedByAgent.set(entry.agent, {
+        x: Math.random() * 10000,
+        y: Math.random() * 10000,
+      });
+    },
+    afterStep: (entry, _scene, values) => {
+      entry.agent.mass = values.agentMass as number;
+    },
+    buildForces: (entry, scene, values) => {
+      const home = getIdleHome(entry.agent);
+      const mouseRadius = values.mouseRadius as number;
+      const mousePoint = () => [scene.mouse.x, scene.mouse.y];
+      const mouseActiveForAgent = (agent: { position: number[] }) =>
+        scene.mouse.active && distance(agent.position, mousePoint()) <= mouseRadius;
+      const homeSpring = forces.attract(
+        () => home,
+        (d) => d * (values.homeStrength as number),
+      );
+      const mouseRepel = modifiers.gate(
+        mouseActiveForAgent,
+        forces.repel(mousePoint, falloff.constant(values.mouseStrength as number)),
+      );
+      const idleX = values.idleX as boolean;
+      const idleY = values.idleY as boolean;
+      const idleSeeds = getIdleSeeds(entry.agent);
+      const idleForce = values.idleForce === 'drift'
+        ? forces.drift({
+            strength: values.idleStrength as number,
+            scale: values.idleScale as number,
+            x: idleX ? { seed: idleSeeds.x } : false,
+            y: idleY ? { seed: idleSeeds.y } : false,
+          })
+        : buildOscillateIdleForce(
+            values.idleStrength as number,
+            values.idleScale as number,
+            idleX,
+            idleY,
+          );
+
+      return [
+        modifiers.sum(
+          idleForce,
+          homeSpring,
+          mouseRepel,
+          forces.damp(values.damp as number),
+        ),
+      ];
+    },
+    drawOverlay: (graphics, scene, values) => {
+      const [cx, cy] = scene.center();
+      const mouseRadius = values.mouseRadius as number;
+
+      drawMarker(graphics, cx, cy, demoColors.agent);
+
+      if (scene.mouse.active) {
+        drawRadiusRing(graphics, scene.mouse.x, scene.mouse.y, mouseRadius, demoColors.force);
+        drawMarker(graphics, scene.mouse.x, scene.mouse.y, demoColors.force);
+      }
+    },
+  },
   {
     value: 'mouseCapture',
     label: 'mouseCapture',
@@ -135,6 +230,32 @@ await mountFeatureDemo({
 
 function distance(a: number[], b: number[]): number {
   return Math.hypot(a[0] - b[0], a[1] - b[1]);
+}
+
+function getIdleHome(agent: object): [number, number] {
+  const home = idleHomeByAgent.get(agent);
+  if (!home) throw new Error('Missing idle home for custom demo agent');
+  return home;
+}
+
+function getIdleSeeds(agent: object): { x: number; y: number } {
+  const seeds = idleSeedByAgent.get(agent);
+  if (!seeds) throw new Error('Missing idle seeds for custom demo agent');
+  return seeds;
+}
+
+function buildOscillateIdleForce(
+  strength: number,
+  scale: number,
+  idleX: boolean,
+  idleY: boolean,
+): Force {
+  const axisForces: Force[] = [];
+  if (idleX) axisForces.push(forces.oscillate([1, 0], strength, scale));
+  if (idleY) axisForces.push(forces.oscillate([0, 1], strength, scale * 0.65, Math.PI / 2));
+
+  if (axisForces.length === 0) return forces.constant([0, 0]);
+  return modifiers.sum(...axisForces);
 }
 
 function keepDistanceFromMouse(

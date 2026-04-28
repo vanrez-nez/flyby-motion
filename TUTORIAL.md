@@ -146,6 +146,27 @@ agent.add(forces.damp(2));
 
 Damping is what makes things settle. Without it, agents tend to oscillate or drift indefinitely.
 
+#### `forces.drift(config?)`
+
+Organic idle motion. `drift` samples smooth noise and turns it into a force, so the agent keeps moving in an unpredictable but gentle way.
+
+```ts
+agent.add(forces.drift({ strength: 80 }));
+agent.add(forces.damp(4));
+```
+
+The canonical idle pattern adds a weak home spring. Drift creates the living motion, damping keeps velocity under control, and the spring keeps the equilibrium centered on the home position.
+
+```ts
+const home = [...agent.position];
+
+agent.add(forces.drift({ strength: 80, scale: 0.5 }));
+agent.add(forces.attract(() => home, (distance) => distance * 2));
+agent.add(forces.damp(4));
+```
+
+Use `drift` when the motion should feel organic and unpredictable. Use `oscillate` when it should feel structured or rhythmic. Drift composes cleanly with home springs because its noise has no long-term directional bias; oscillators are better for deliberate pulses, breathing, or regular waves.
+
 #### `forces.oscillate(direction, amplitude, freq, phase?)`
 
 A sinusoidal force along an axis.

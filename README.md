@@ -113,6 +113,7 @@ Forces are the low-level building blocks. They return vectors that `step(...)` s
 
 - `forces.constant(vec)`: Always returns a copy of `vec`.
 - `forces.damp(coefficient)`: Pushes opposite velocity. Higher coefficient removes velocity faster.
+- `forces.drift(config?)`: Smooth noise force for organic idle motion.
 - `forces.oscillate(direction, amplitude, freq, phase?)`: Sinusoidal force along an axis.
 - `forces.attract(targetFn, falloffFn?)`: Pushes toward a target.
 - `forces.repel(sourceFn, falloffFn?)`: Pushes away from a source.
@@ -120,6 +121,71 @@ Forces are the low-level building blocks. They return vectors that `step(...)` s
 - `forces.tangentialAround(axis, k)`: 3D perpendicular force using `velocity x axis`.
 
 For `attract` and `repel`, the position function is called every step. The optional falloff function converts distance to force magnitude.
+
+Axis names map to vector indices as `x -> 0`, `y -> 1`, and `z -> 2`.
+
+### `forces.drift(config?)`
+
+```ts
+type AxisConfig = {
+  strength?: number;
+  scale?: number;
+  seed?: number;
+};
+
+type AxisValue = true | false | AxisConfig;
+
+type DriftConfig = {
+  strength?: number;
+  scale?: number;
+  seed?: number;
+  x?: AxisValue;
+  y?: AxisValue;
+  z?: AxisValue;
+  noiseFn?: (x: number) => number;
+};
+
+forces.drift(config?: DriftConfig): Force
+```
+
+`drift` returns a bounded, smoothly varying force sampled from 1D Perlin noise per axis. Defaults are `strength: 50`, `scale: 0.5`, and deterministic per-axis seeds of `0`, `1000`, and `2000`.
+
+- `strength`: Force magnitude multiplier. Must be finite and non-negative.
+- `scale`: Noise sampling rate in cycles per second. Must be finite and positive.
+- `seed`: Numeric input offset. Must be finite; negative values are valid.
+- `x`, `y`, `z`: Per-axis enable/disable or overrides.
+- `noiseFn`: Optional custom `(x) => number` sampler. Values should be approximately `[-1, 1]`.
+
+Mode resolution:
+
+- **Default-on mode**: used when no axis is `true` or an object. All axes present on the agent drift unless explicitly set to `false`.
+- **Per-axis mode**: used when at least one axis is `true` or an object. Only those axes drift.
+- `x: false`, `y: false`, and `z: false` always mean that axis is off. This is documented intent, not a no-op shortcut; use it to mark axes as deliberately disabled.
+- For each enabled axis, fields resolve as per-axis config, then top-level config, then factory defaults.
+
+```ts
+forces.drift();                         // default-on, all agent axes
+forces.drift({});                       // same
+forces.drift({ strength: 80 });         // all axes, stronger
+forces.drift({ strength: 80, x: false }); // all except x
+forces.drift({ strength: 80, x: true });  // per-axis mode, only x
+forces.drift({ x: true });              // only x, factory defaults
+forces.drift({
+  scale: 0.5,
+  x: { strength: 80 },
+  y: { strength: 200, scale: 0.2 },
+});                                     // x and y only
+forces.drift({ x: true, y: false });    // only x; y is explicit off
+```
+
+For stable idle motion, pair drift with damping and usually a soft home attractor:
+
+```ts
+const home = [...agent.position];
+agent.add(forces.drift({ strength: 80 }));
+agent.add(forces.attract(() => home, (distance) => distance * 2));
+agent.add(forces.damp(4));
+```
 
 ## Falloff
 
