@@ -18,6 +18,7 @@ const links: Array<{
   { key: 'behaviors', label: 'Behaviors', href: '/demos/behaviors/index.html' },
   { key: 'modifiers', label: 'Modifiers', href: '/demos/modifiers/index.html' },
   { key: 'custom', label: 'Custom', href: '/demos/custom/index.html' },
+  { key: 'three', label: '3D', href: '/demos/3d/index.html' },
 ];
 
 export function mountDemoChrome(active?: DemoKey): void {

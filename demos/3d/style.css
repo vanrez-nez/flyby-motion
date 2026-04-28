@@ -6,3 +6,27 @@ html, body {
   overflow: hidden;
   background: #1a1a2e;
 }
+
+#app {
+  display: contents;
+}
+
+.three-demo__pane {
+  position: fixed;
+  top: 44px;
+  left: 12px;
+  z-index: 10;
+  width: min(320px, calc(100vw - 24px));
+}
+
+canvas {
+  display: block;
+}
+
+@media (max-width: 560px) {
+  .three-demo__pane {
+    top: 48px;
+    left: 10px;
+    width: min(300px, calc(100vw - 20px));
+  }
+}
