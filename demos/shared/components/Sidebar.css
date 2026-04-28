@@ -97,9 +97,6 @@
 
 .demo-sidebar__content::-webkit-scrollbar-thumb {
   background: var(--border);
-  border-radius: 4px;
-}
-
 }
 
 .demo-sidebar__sources {

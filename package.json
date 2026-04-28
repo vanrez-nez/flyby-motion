@@ -18,6 +18,8 @@
   "scripts": {
     "dev": "vite --mode demos",
     "build": "vite build",
+    "build:demos": "vite build --mode demos",
+    "deploy": "npm run build:demos && npx -y gh-pages -d dist-demos -b docs",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest"

@@ -6,7 +6,12 @@
     <title>flyby-motion — demo</title>
     <script type="text/javascript">
       // Single Page Apps for GitHub Pages
+      // MIT License
       // https://github.com/rafgraph/spa-github-pages
+      // This script checks to see if a redirect is present in the query string,
+      // converts it back into a correct url and adds it to the
+      // browser's history using window.history.replaceState(...),
+      // which will cause the window load event to fire
       (function(l) {
         if (l.search[1] === '/' ) {
           var decoded = l.search.slice(1).split('&').map(function(s) { 
@@ -18,7 +23,15 @@
         }
       }(window.location))
     </script>
-    <link rel="stylesheet" href="/style.css" />
+    <!-- Redirect logic for GH Pages 404 -->
+    <script>
+      // Simple fallback for SPAs on GitHub Pages
+      // If the page is not found, it redirects to the index page with the path in the URL
+      const path = window.location.pathname;
+      if (path !== '/flyby-motion/' && path !== '/flyby-motion/index.html') {
+        window.location.href = '/flyby-motion/index.html?/' + path.replace('/flyby-motion/', '');
+      }
+    </script>
   </head>
   <body>
     <div id="app"></div>

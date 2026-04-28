@@ -47,13 +47,20 @@ const App: React.FC = () => {
     };
   }, []);
 
-  // Normalize current path
-  const normalizedPath = currentPath.endsWith('/index.html') && currentPath !== '/index.html'
-    ? currentPath.replace(/\/index\.html$/, '')
+  // Strip base path for route matching (important for GitHub Pages /flyby-motion/)
+  const BASE_PATH = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+  let normalizedPath = currentPath.startsWith(BASE_PATH)
+    ? currentPath.slice(BASE_PATH.length) || '/'
     : currentPath;
 
+  // Handle index.html suffix
+  if (normalizedPath.endsWith('/index.html') && normalizedPath !== '/index.html') {
+    normalizedPath = normalizedPath.replace(/\/index\.html$/, '');
+  }
+  if (normalizedPath === '/index.html') normalizedPath = '/';
+
   // Simple route matching
-  if (normalizedPath === '/' || normalizedPath === '/index.html') return <LandingPage />;
+  if (normalizedPath === '/') return <LandingPage />;
   if (normalizedPath === '/2d/forces') return <Forces2DDemo />;
   if (normalizedPath === '/2d/behaviors') return <Behaviors2DDemo />;
   if (normalizedPath === '/2d/modifiers') return <Modifiers2DDemo />;

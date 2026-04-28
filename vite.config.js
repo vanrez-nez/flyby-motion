@@ -3,13 +3,17 @@ import path from 'node:path'
 import dts from 'vite-plugin-dts'
 import react from '@vitejs/plugin-react'
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, command }) => {
+  const isBuild = command === 'build';
+
   if (mode === 'demos') {
     return {
       // Dev server config only: serves the demos
       root: 'demos',
+      base: isBuild ? '/flyby-motion/' : '/',
       build: {
-        outDir: 'dist-demos',
+        outDir: '../dist-demos',
+        emptyOutDir: true,
       },
       plugins: [react(), dts({
         entryRoot: 'src',
