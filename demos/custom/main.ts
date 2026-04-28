@@ -64,7 +64,7 @@ const modes: FeatureMode[] = [
       const mouseRadius = values.mouseRadius as number;
       const mousePoint = () => [scene.mouse.x, scene.mouse.y];
       const mouseActiveForAgent = (agent: { position: number[] }) =>
-        scene.mouse.active && distance(agent.position, mousePoint()) <= mouseRadius;
+        scene.mouse.active && Vector2Fn.distance(agent.position, mousePoint()) <= mouseRadius;
       const homeSpring = forces.attract(
         () => home,
         (d) => d * (values.homeStrength as number),
@@ -138,11 +138,11 @@ const modes: FeatureMode[] = [
       const targetRadius = values.targetRadius as number;
       const centerRadius = values.centerRadius as number;
       const targetPoint = () => [scene.mouse.x, scene.mouse.y];
-      const isTargetInsideCenter = () => distance(targetPoint(), scene.center()) <= centerRadius;
+      const isTargetInsideCenter = () => Vector2Fn.distance(targetPoint(), scene.center()) <= centerRadius;
       const isTargetCaptureActive = (agent: { position: number[] }) =>
         scene.mouse.active &&
         isTargetInsideCenter() &&
-        distance(agent.position, targetPoint()) <= targetRadius;
+        Vector2Fn.distance(agent.position, targetPoint()) <= targetRadius;
       const centerForce = modifiers.gate(
         (agent) => !isTargetCaptureActive(agent),
         forces.attract(
@@ -236,10 +236,6 @@ mountDemoSidebar({
   markdown: sidebarMarkdown,
   sources: [{ label: 'demos/custom/main.ts', language: 'typescript', code: sidebarSource }],
 });
-
-function distance(a: number[], b: number[]): number {
-  return Math.hypot(a[0] - b[0], a[1] - b[1]);
-}
 
 function getIdleHome(agent: object): [number, number] {
   const home = idleHomeByAgent.get(agent);

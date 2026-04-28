@@ -3,6 +3,7 @@ import { Pane } from 'tweakpane';
 import {
   Agent,
   step,
+  Vector2Fn,
   type Force,
 } from '../../src/index';
 import {
@@ -14,6 +15,7 @@ import {
   drawTrail,
 } from './drawables';
 import { mountDemoChrome, type DemoKey } from './demoChrome';
+import { stopCanvasPassthrough } from './stopPassthrough';
 import './twoDDemo.css';
 
 export type DemoControl =
@@ -152,14 +154,25 @@ export async function mountFeatureDemo(config: FeatureDemoConfig): Promise<void>
 
   app.stage.eventMode = 'static';
   app.stage.hitArea = app.screen;
+  // Drags that begin on the sidebar / tweakpane must not pierce into the
+  // playground when the cursor passes over the canvas. Track whether the
+  // active drag was actually started on the canvas itself.
+  let canvasDragActive = false;
   app.stage.on('pointerdown', (event) => {
+    canvasDragActive = true;
     updateTrackedPointer(event.global.x, event.global.y);
     moveActiveMarker(event.global.x, event.global.y);
   });
   app.stage.on('pointermove', (event) => {
+    if (event.buttons && !canvasDragActive) return;
     updateTrackedPointer(event.global.x, event.global.y);
     if (event.buttons) moveActiveMarker(event.global.x, event.global.y);
   });
+  const endCanvasDrag = () => {
+    canvasDragActive = false;
+  };
+  window.addEventListener('pointerup', endCanvasDrag);
+  window.addEventListener('pointercancel', endCanvasDrag);
   app.canvas.addEventListener('pointerleave', () => {
     scene.mouse.active = false;
   });
@@ -375,15 +388,6 @@ function groupControlsByFolder(controls: DemoControl[], fallbackTitle: string): 
   return grouped;
 }
 
-function stopCanvasPassthrough(element: HTMLElement): void {
-  const stop = (event: Event) => event.stopPropagation();
-  element.addEventListener('pointerdown', stop);
-  element.addEventListener('pointermove', stop);
-  element.addEventListener('pointerup', stop);
-  element.addEventListener('pointercancel', stop);
-  element.addEventListener('click', stop);
-  element.addEventListener('wheel', stop);
-}
 
 function updateLeader(scene: DemoScene, time: number, leaderSpeed: number): void {
   const [cx, cy] = scene.center();
@@ -434,7 +438,7 @@ function addTrailPoint(
   maxPoints: number,
 ): void {
   const last = points[points.length - 1];
-  if (!last || Math.hypot(last[0] - position[0], last[1] - position[1]) > spacing) {
+  if (!last || Vector2Fn.distance(last, position) > spacing) {
     points.push([...position]);
     if (points.length > maxPoints) points.shift();
   }

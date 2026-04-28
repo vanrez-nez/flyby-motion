@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { Vector3Fn } from '../../src/index';
 
 export const colors = {
   bg: 0x11151f,
@@ -65,7 +66,7 @@ export function addTrailPoint(
     ? [positions[lastIndex], positions[lastIndex + 1], positions[lastIndex + 2]]
     : undefined;
 
-  if (!last || distance3(last, point) > minSpacing) {
+  if (!last || Vector3Fn.distance(last, point) > minSpacing) {
     positions.push(point[0], point[1], point[2]);
     while (positions.length > maxPoints * 3) positions.splice(0, 3);
   }
@@ -167,8 +168,4 @@ export function updateArrow(
   v.normalize();
   arrow.setDirection(v);
   arrow.setLength(Math.min(len * scale, maxLength), 0.16, 0.08);
-}
-
-export function distance3(a: number[], b: number[]): number {
-  return Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
 }

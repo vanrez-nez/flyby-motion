@@ -2,6 +2,7 @@ import {
   falloff,
   forces,
   modifiers,
+  Vector3Fn,
   type Force,
 } from '../../src/index';
 import { mountThreeDemo, type ThreeDemoContext, type ThreeMode } from '../3d/mountThreeDemo';
@@ -35,7 +36,7 @@ const modes: ThreeMode[] = [
     ],
     buildForces: (_entry, values, context) => [
       modifiers.gate(
-        (agent) => distance3(agent.position, context.points.source()) < (values.range as number),
+        (agent) => Vector3Fn.distance(agent.position, context.points.source()) < (values.range as number),
         forces.repel(context.points.source, falloff.constant(values.strength as number)),
       ),
     ],
@@ -150,33 +151,25 @@ function baseAttract(context: ThreeDemoContext, strength: number, slowR: number)
 }
 
 function wobbleAttract(targetFn: () => number[], strength: number, wobble: number): Force {
+  const toward = [0, 0, 0];
+  const perp = [0, 0, 0];
   return (agent, _world, t) => {
-    const target = targetFn();
-    const dx = target[0] - agent.position[0];
-    const dy = target[1] - agent.position[1];
-    const dz = target[2] - agent.position[2];
-    const dist = Math.hypot(dx, dy, dz);
+    Vector3Fn.subtract(toward, targetFn(), agent.position);
+    const dist = Vector3Fn.length(toward);
     if (dist < 0.001) return [0, 0, 0];
-    const nx = dx / dist;
-    const ny = dy / dist;
-    const nz = dz / dist;
+    Vector3Fn.normalize(toward, toward);
     // Perpendicular axis = normalized(toward × worldUp). Falls back to worldZ when toward is parallel to up.
-    let px = nz, py = 0, pz = -nx;
-    const plen = Math.hypot(px, py, pz);
-    if (plen < 0.001) {
-      px = 0; py = 0; pz = 1;
+    Vector3Fn.cross(perp, toward, [0, 1, 0]);
+    if (Vector3Fn.length(perp) < 0.001) {
+      Vector3Fn.set(perp, 0, 0, 1);
     } else {
-      px /= plen; pz /= plen;
+      Vector3Fn.normalize(perp, perp);
     }
     const side = Math.sin(t * 3) * wobble;
     return [
-      nx * strength + px * side,
-      ny * strength + py * side,
-      nz * strength + pz * side,
+      toward[0] * strength + perp[0] * side,
+      toward[1] * strength + perp[1] * side,
+      toward[2] * strength + perp[2] * side,
     ];
   };
-}
-
-function distance3(a: number[], b: number[]): number {
-  return Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
 }

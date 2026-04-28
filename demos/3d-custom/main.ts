@@ -2,10 +2,10 @@ import {
   falloff,
   forces,
   modifiers,
+  Vector3Fn,
   type Force,
 } from '../../src/index';
 import { mountThreeDemo, type ThreeMode } from '../3d/mountThreeDemo';
-import { distance3 } from '../3d/threeHelpers';
 import { mountDemoSidebar } from '../shared/demoSidebar';
 import sidebarMarkdown from './info.md?raw';
 import sidebarSource from './main.ts?raw';
@@ -65,7 +65,7 @@ const modes: ThreeMode[] = [
           idleForce,
           forces.attract(context.points.center, (d) => d * (values.homeStrength as number)),
           modifiers.gate(
-            (agent) => distance3(agent.position, context.points.source()) < (values.sourceRadius as number),
+            (agent) => Vector3Fn.distance(agent.position, context.points.source()) < (values.sourceRadius as number),
             forces.repel(context.points.source, falloff.constant(values.sourceStrength as number)),
           ),
           forces.damp(values.damp as number),
@@ -93,10 +93,10 @@ const modes: ThreeMode[] = [
       const targetRadius = values.targetRadius as number;
       const centerRadius = values.centerRadius as number;
       const targetPoint = context.points.target;
-      const isTargetInsideCenter = () => distance3(targetPoint(), context.points.center()) <= centerRadius;
+      const isTargetInsideCenter = () => Vector3Fn.distance(targetPoint(), context.points.center()) <= centerRadius;
       const isTargetCaptureActive = (agent: { position: number[] }) =>
         isTargetInsideCenter() &&
-        distance3(agent.position, targetPoint()) <= targetRadius;
+        Vector3Fn.distance(agent.position, targetPoint()) <= targetRadius;
       const centerForce = modifiers.gate(
         (agent) => !isTargetCaptureActive(agent),
         forces.attract(
@@ -177,22 +177,14 @@ function keepDistanceFromPoint(
   desiredRadius: number,
   stiffness: number,
 ): Force {
+  const delta = [0, 0, 0];
   return (agent) => {
-    const point = pointFn();
-    const delta = [
-      point[0] - agent.position[0],
-      point[1] - agent.position[1],
-      point[2] - agent.position[2],
-    ];
-    const currentDistance = Math.hypot(delta[0], delta[1], delta[2]);
+    Vector3Fn.subtract(delta, pointFn(), agent.position);
+    const currentDistance = Vector3Fn.length(delta);
     if (currentDistance < 0.001) return [0, 0, 0];
 
+    Vector3Fn.normalize(delta, delta);
     const distanceError = currentDistance - desiredRadius;
-    const scale = (distanceError * stiffness) / currentDistance;
-    return [
-      delta[0] * scale,
-      delta[1] * scale,
-      delta[2] * scale,
-    ];
+    return Vector3Fn.scale([0, 0, 0], delta, distanceError * stiffness);
   };
 }

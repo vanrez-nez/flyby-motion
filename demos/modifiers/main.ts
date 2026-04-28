@@ -2,6 +2,7 @@ import {
   falloff,
   forces,
   modifiers,
+  Vector2Fn,
   type Force,
 } from '../../src/index';
 import { mountFeatureDemo, type FeatureMode } from '../shared/twoDDemo';
@@ -33,7 +34,7 @@ const modes: FeatureMode[] = [
     ],
     buildForces: (_entry, scene, v) => [
       modifiers.gate(
-        (agent) => distance(agent.position, [scene.source.x, scene.source.y]) < (v.range as number),
+        (agent) => Vector2Fn.distance(agent.position, [scene.source.x, scene.source.y]) < (v.range as number),
         forces.repel(() => [scene.source.x, scene.source.y], falloff.constant(900)),
       ),
     ],
@@ -126,22 +127,16 @@ function baseAttract(scene: { target: { x: number; y: number } }): Force {
 }
 
 function customForce(targetFn: () => number[], strength: number, wobble: number): Force {
+  const delta = [0, 0];
   return (agent, _world, t) => {
-    const target = targetFn();
-    const dx = target[0] - agent.position[0];
-    const dy = target[1] - agent.position[1];
-    const dist = Math.hypot(dx, dy);
+    Vector2Fn.subtract(delta, targetFn(), agent.position);
+    const dist = Vector2Fn.length(delta);
     if (dist < 0.001) return [0, 0];
-    const nx = dx / dist;
-    const ny = dy / dist;
+    Vector2Fn.normalize(delta, delta);
     const side = Math.sin(t * 3) * wobble;
     return [
-      nx * strength - ny * side,
-      ny * strength + nx * side,
+      delta[0] * strength - delta[1] * side,
+      delta[1] * strength + delta[0] * side,
     ];
   };
-}
-
-function distance(a: number[], b: number[]): number {
-  return Math.hypot(a[0] - b[0], a[1] - b[1]);
 }

@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+import { Vector2Fn } from '../../src/index';
 
 export const demoColors = {
   bg: 0x11151f,
@@ -127,7 +128,7 @@ export function drawArrow(
   scale: number,
   maxLength: number
 ): void {
-  const len = Math.hypot(vector[0], vector[1]);
+  const len = Vector2Fn.length(vector as number[]);
   if (len < 0.01) return;
 
   const length = Math.min(len * scale, maxLength);
@@ -160,7 +161,7 @@ function drawVectorFromEdge(
     maxLength: number;
   }
 ): void {
-  const len = Math.hypot(vector[0], vector[1]);
+  const len = Vector2Fn.length(vector as number[]);
   if (len < 0.01) return;
 
   const nx = vector[0] / len;

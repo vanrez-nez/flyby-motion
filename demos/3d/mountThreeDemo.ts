@@ -8,6 +8,7 @@ import {
 } from '../../src/index';
 import { mountDemoChrome, type DemoKey } from '../shared/demoChrome';
 import { mirrorVectorAcrossBounds, type Bounds3 } from '../shared/mirrorBounds';
+import { stopCanvasPassthrough } from '../shared/stopPassthrough';
 import {
   centerPoint,
   controlsToValues,
@@ -440,12 +441,3 @@ function normalizePresentations(
   return Array.isArray(presentation) ? presentation : [presentation];
 }
 
-function stopCanvasPassthrough(element: HTMLElement): void {
-  const stop = (event: Event) => event.stopPropagation();
-  element.addEventListener('pointerdown', stop);
-  element.addEventListener('pointermove', stop);
-  element.addEventListener('pointerup', stop);
-  element.addEventListener('pointercancel', stop);
-  element.addEventListener('click', stop);
-  element.addEventListener('wheel', stop);
-}

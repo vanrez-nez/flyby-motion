@@ -4,6 +4,7 @@ import javascript from 'highlight.js/lib/languages/javascript';
 import typescript from 'highlight.js/lib/languages/typescript';
 import xml from 'highlight.js/lib/languages/xml';
 import 'highlight.js/styles/atom-one-dark.css';
+import { stopCanvasPassthrough } from './stopPassthrough';
 import './demoSidebar.css';
 
 hljs.registerLanguage('javascript', javascript);
@@ -74,6 +75,9 @@ export function mountDemoSidebar(config: DemoSidebarConfig): void {
   reopenButton.textContent = 'Docs';
 
   document.body.append(root, reopenButton);
+
+  stopCanvasPassthrough(root);
+  stopCanvasPassthrough(reopenButton);
 
   renderMarkdown(article, config.markdown);
   renderSources(sourceList, config.sources ?? []);
