@@ -150,7 +150,7 @@ export const Custom3DDemo: React.FC = () => {
     <ThreeFeatureDemo
       config={{ active: 'three-custom', paneTitle: '3D Custom', modes }}
       sidebarConfig={{
-        storageKey: 'flyby:sidebar:three-custom',
+
         markdown: sidebarMarkdown,
         sources: [{ label: 'demos/3d-custom/index.tsx', language: 'tsx', code: sidebarSource }]
       }}

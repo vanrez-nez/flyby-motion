@@ -127,7 +127,7 @@ export const Forces3DDemo: React.FC = () => {
     <ThreeFeatureDemo
       config={{ active: 'three-forces', paneTitle: '3D Forces', modes }}
       sidebarConfig={{
-        storageKey: 'flyby:sidebar:three-forces',
+
         markdown: sidebarMarkdown,
         sources: [{ label: 'demos/3d-forces/index.tsx', language: 'tsx', code: sidebarSource }]
       }}

@@ -9,7 +9,7 @@ export interface SidebarSource {
 }
 
 export interface SidebarProps {
-  storageKey?: string; // deprecated
+
   markdown: string;
   sources?: SidebarSource[];
 }

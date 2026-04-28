@@ -36,8 +36,8 @@ export function useThreeDemo(playAreaRef: React.RefObject<HTMLDivElement | null>
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
-
-
+    controls.enablePan = false;
+    controls.target.set(0, 0.5, 0);
 
     setContext({ renderer, scene, camera, controls });
 

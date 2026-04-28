@@ -122,6 +122,7 @@ export const TwoDFeatureDemo: React.FC<{ config: FeatureDemoConfig, sidebarConfi
     let entries: InternalAgentEntry[] = [];
     let leaderTrail: number[][] = [];
     let t = 0;
+    let resizeTimeout: any = null;
 
     app.stage.eventMode = 'static';
     app.stage.hitArea = app.screen;
@@ -318,6 +319,11 @@ export const TwoDFeatureDemo: React.FC<{ config: FeatureDemoConfig, sidebarConfi
         const height = playArea.clientHeight;
         if (app.screen.width !== width || app.screen.height !== height) {
           app.renderer.resize(width, height);
+          
+          clearTimeout(resizeTimeout);
+          resizeTimeout = setTimeout(() => {
+            reset();
+          }, 100);
         }
       }
 
@@ -353,6 +359,7 @@ export const TwoDFeatureDemo: React.FC<{ config: FeatureDemoConfig, sidebarConfi
       });
       root.destroy({ children: true });
       pane?.children.forEach(c => c.dispose());
+      clearTimeout(resizeTimeout);
     };
 
   }, [app, pane, config]);

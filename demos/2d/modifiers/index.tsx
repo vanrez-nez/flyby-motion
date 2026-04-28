@@ -113,7 +113,7 @@ export const Modifiers2DDemo: React.FC = () => {
     <TwoDFeatureDemo
       config={{ active: 'modifiers', title: 'Modifiers', modes }}
       sidebarConfig={{
-        storageKey: 'flyby:sidebar:modifiers',
+
         markdown: sidebarMarkdown,
         sources: [{ label: 'demos/modifiers/index.tsx', language: 'tsx', code: sidebarSource }]
       }}

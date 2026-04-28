@@ -14,8 +14,15 @@
 .demo-base__body {
   flex: 1 1 auto;
   display: flex;
+  flex-direction: row;
   position: relative;
   overflow: hidden;
+}
+
+@media (orientation: portrait) {
+  .demo-base__body {
+    flex-direction: column;
+  }
 }
 
 .demo-base__content {

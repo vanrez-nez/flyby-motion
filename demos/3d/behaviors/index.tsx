@@ -104,7 +104,7 @@ export const Behaviors3DDemo: React.FC = () => {
     <ThreeFeatureDemo
       config={{ active: 'three-behaviors', paneTitle: '3D Behaviors', modes }}
       sidebarConfig={{
-        storageKey: 'flyby:sidebar:three-behaviors',
+
         markdown: sidebarMarkdown,
         sources: [{ label: 'demos/3d-behaviors/index.tsx', language: 'tsx', code: sidebarSource }]
       }}

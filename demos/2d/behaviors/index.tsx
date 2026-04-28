@@ -103,7 +103,7 @@ export const Behaviors2DDemo: React.FC = () => {
     <TwoDFeatureDemo
       config={{ active: 'behaviors', title: 'Behaviors', modes }}
       sidebarConfig={{
-        storageKey: 'flyby:sidebar:behaviors',
+
         markdown: sidebarMarkdown,
         sources: [{ label: 'demos/behaviors/index.tsx', language: 'tsx', code: sidebarSource }]
       }}

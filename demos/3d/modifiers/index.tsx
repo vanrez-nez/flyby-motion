@@ -137,7 +137,7 @@ export const Modifiers3DDemo: React.FC = () => {
     <ThreeFeatureDemo
       config={{ active: 'three-modifiers', paneTitle: '3D Modifiers', modes }}
       sidebarConfig={{
-        storageKey: 'flyby:sidebar:three-modifiers',
+
         markdown: sidebarMarkdown,
         sources: [{ label: 'demos/3d-modifiers/index.tsx', language: 'tsx', code: sidebarSource }]
       }}

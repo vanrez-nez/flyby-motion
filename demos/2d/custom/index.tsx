@@ -231,7 +231,7 @@ export const Custom2DDemo: React.FC = () => {
     <TwoDFeatureDemo
       config={{ active: 'custom', title: 'Custom', modes }}
       sidebarConfig={{
-        storageKey: 'flyby:sidebar:custom',
+
         markdown: sidebarMarkdown,
         sources: [{ label: 'demos/custom/index.tsx', language: 'tsx', code: sidebarSource }]
       }}

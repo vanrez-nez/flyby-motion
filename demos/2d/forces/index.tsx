@@ -140,7 +140,7 @@ export const Forces2DDemo: React.FC = () => {
     <TwoDFeatureDemo
       config={{ active: 'forces', title: 'Forces', modes }}
       sidebarConfig={{
-        storageKey: 'flyby:sidebar:forces',
+
         markdown: sidebarMarkdown,
         sources: [{ label: 'demos/forces/index.tsx', language: 'tsx', code: sidebarSource }]
       }}
