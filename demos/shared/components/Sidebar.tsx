@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { useMarkdown } from '../hooks/useMarkdown';
+import { useMarkdown, highlightCode } from '../hooks/useMarkdown';
 import './Sidebar.css';
 
 export interface SidebarSource {
@@ -22,18 +22,16 @@ interface SidebarLayout {
   bottomHeight: number;
 }
 
-const DEFAULT_RIGHT_WIDTH = 360;
-const DEFAULT_BOTTOM_HEIGHT = 320;
 const MIN_RIGHT_WIDTH = 240;
-const MAX_RIGHT_WIDTH_RATIO = 0.65;
+const MAX_RIGHT_WIDTH_RATIO = 0.85;
 const MIN_BOTTOM_HEIGHT = 180;
-const MAX_BOTTOM_HEIGHT_RATIO = 0.7;
+const MAX_BOTTOM_HEIGHT_RATIO = 0.85;
 
 function loadLayout(key: string): SidebarLayout {
   const fallback: SidebarLayout = {
     open: true,
-    rightWidth: DEFAULT_RIGHT_WIDTH,
-    bottomHeight: DEFAULT_BOTTOM_HEIGHT,
+    rightWidth: Math.floor(window.innerWidth * 0.5),
+    bottomHeight: Math.floor(window.innerHeight * 0.5),
   };
   try {
     const raw = window.localStorage.getItem(key);
@@ -189,7 +187,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ markdown, sources = [] }) => {
                   <details key={idx} className="demo-sidebar__source">
                     <summary>{source.label}</summary>
                     <pre>
-                      <code className={`language-${lang} hljs`}>{source.code}</code>
+                      <code 
+                        className={`language-${lang} hljs`}
+                        dangerouslySetInnerHTML={{ __html: highlightCode(source.code, lang) }}
+                      />
                     </pre>
                   </details>
                 );

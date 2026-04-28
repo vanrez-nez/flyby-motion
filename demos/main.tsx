@@ -10,6 +10,7 @@ import { Behaviors3DDemo } from './3d/behaviors';
 import { Modifiers3DDemo } from './3d/modifiers';
 import { Custom3DDemo } from './3d/custom';
 import './style.css';
+import 'highlight.js/styles/github-dark.css';
 
 const App: React.FC = () => {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
