@@ -4,8 +4,8 @@ import {
   directionMap,
   falloffControls,
   makeFalloff,
-} from '../modeUtils';
-import { mountThreeDemo, type ThreeMode } from '../mountThreeDemo';
+} from '../../shared/modeUtils';
+import { mountThreeDemo, type ThreeMode } from '../../shared/mountThreeDemo';
 import { mountDemoSidebar } from '../../shared/demoSidebar';
 import sidebarMarkdown from './info.md?raw';
 import sidebarSource from './main.ts?raw';

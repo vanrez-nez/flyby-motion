@@ -7,7 +7,7 @@ export default defineConfig(({ mode }) => {
   if (mode === 'demos') {
     return {
       // Dev server config only: serves the demos
-      root: '.',
+      root: 'demos',
       build: {
         outDir: 'dist-demos',
       },

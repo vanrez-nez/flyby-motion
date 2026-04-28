@@ -17,10 +17,10 @@ const twoDLinks: Array<{
   label: string;
   href: string;
 }> = [
-  { key: 'forces', label: 'Forces', href: '/demos/2d/forces/index.html' },
-  { key: 'behaviors', label: 'Behaviors', href: '/demos/2d/behaviors/index.html' },
-  { key: 'modifiers', label: 'Modifiers', href: '/demos/2d/modifiers/index.html' },
-  { key: 'custom', label: 'Custom', href: '/demos/2d/custom/index.html' },
+  { key: 'forces', label: 'Forces', href: '/2d/forces/index.html' },
+  { key: 'behaviors', label: 'Behaviors', href: '/2d/behaviors/index.html' },
+  { key: 'modifiers', label: 'Modifiers', href: '/2d/modifiers/index.html' },
+  { key: 'custom', label: 'Custom', href: '/2d/custom/index.html' },
 ];
 
 const threeDLinks: Array<{
@@ -28,10 +28,10 @@ const threeDLinks: Array<{
   label: string;
   href: string;
 }> = [
-  { key: 'three-forces', label: 'Forces', href: '/demos/3d/core/index.html' },
-  { key: 'three-behaviors', label: 'Behaviors', href: '/demos/3d/behaviors/index.html' },
-  { key: 'three-modifiers', label: 'Modifiers', href: '/demos/3d/modifiers/index.html' },
-  { key: 'three-custom', label: 'Custom', href: '/demos/3d/custom/index.html' },
+  { key: 'three-forces', label: 'Forces', href: '/3d/forces/index.html' },
+  { key: 'three-behaviors', label: 'Behaviors', href: '/3d/behaviors/index.html' },
+  { key: 'three-modifiers', label: 'Modifiers', href: '/3d/modifiers/index.html' },
+  { key: 'three-custom', label: 'Custom', href: '/3d/custom/index.html' },
 ];
 
 export function mountDemoChrome(active?: DemoKey): void {

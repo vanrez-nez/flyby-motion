@@ -106,18 +106,13 @@ const WORLD: Record<string, unknown> = {};
 export async function mountFeatureDemo(config: FeatureDemoConfig): Promise<void> {
   const app = new PIXI.Application();
 
-  // A wrapper div that is constrained to the play area (excludes sidebar).
-  // PIXI's resizeTo watches this element instead of the full window.
-  const playArea = document.createElement('div');
-  playArea.id = 'play-area';
-  playArea.style.position = 'absolute';
-  playArea.style.inset = '0';
-  playArea.style.width = 'var(--demo-play-width, 100%)';
-  playArea.style.height = 'var(--demo-play-height, 100%)';
-
   const mount = document.querySelector<HTMLDivElement>('#app');
   if (!mount) throw new Error('Missing #app mount');
-  mount.appendChild(playArea);
+  const playArea = document.querySelector<HTMLDivElement>('#play-area');
+  if (!playArea) throw new Error('Missing #play-area element');
+  const tpContainer = document.querySelector<HTMLDivElement>('#tp-container');
+  if (!tpContainer) throw new Error('Missing #tp-container element');
+  stopCanvasPassthrough(tpContainer);
 
   await app.init({
     backgroundColor: demoColors.bg,
@@ -156,14 +151,6 @@ export async function mountFeatureDemo(config: FeatureDemoConfig): Promise<void>
   let t = 0;
   let pane: Pane | undefined;
 
-  const tpContainer = document.createElement('div');
-  tpContainer.style.position = 'absolute';
-  tpContainer.style.top = '44px';
-  tpContainer.style.left = '12px';
-  tpContainer.style.zIndex = '10';
-  stopCanvasPassthrough(tpContainer);
-  mount.appendChild(tpContainer);
-
   app.stage.eventMode = 'static';
   app.stage.hitArea = app.screen;
   // Drags that begin on the sidebar / tweakpane must not pierce into the
@@ -188,13 +175,6 @@ export async function mountFeatureDemo(config: FeatureDemoConfig): Promise<void>
   app.canvas.addEventListener('pointerleave', () => {
     scene.mouse.active = false;
   });
-
-  const onResize = () => {
-    app.stage.hitArea = app.screen;
-    clampMarkers(scene, app.screen.width, app.screen.height);
-  };
-  window.addEventListener('resize', onResize);
-  window.addEventListener('playgroundresize', onResize);
 
   window.addEventListener('keydown', (event) => {
     if (event.key.toLowerCase() === 'r') reset();

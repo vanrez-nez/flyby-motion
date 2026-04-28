@@ -5,7 +5,7 @@ import {
   Vector3Fn,
   type Force,
 } from '../../../src/index';
-import { mountThreeDemo, type ThreeDemoContext, type ThreeMode } from '../mountThreeDemo';
+import { mountThreeDemo, type ThreeDemoContext, type ThreeMode } from '../../shared/mountThreeDemo';
 import { mountDemoSidebar } from '../../shared/demoSidebar';
 import sidebarMarkdown from './info.md?raw';
 import sidebarSource from './main.ts?raw';

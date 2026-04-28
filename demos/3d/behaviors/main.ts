@@ -3,7 +3,7 @@ import {
   forces,
   modifiers,
 } from '../../../src/index';
-import { mountThreeDemo, type ThreeMode } from '../mountThreeDemo';
+import { mountThreeDemo, type ThreeMode } from '../../shared/mountThreeDemo';
 import { mountDemoSidebar } from '../../shared/demoSidebar';
 import sidebarMarkdown from './info.md?raw';
 import sidebarSource from './main.ts?raw';

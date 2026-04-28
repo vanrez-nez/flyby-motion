@@ -6,10 +6,10 @@ import {
   step,
   type Force,
 } from '../../src/index';
-import { mountDemoChrome, type DemoKey } from '../shared/demoChrome';
-import '../shared/tpTheme.css';
-import { mirrorVectorAcrossBounds, type Bounds3 } from '../shared/mirrorBounds';
-import { stopCanvasPassthrough } from '../shared/stopPassthrough';
+import { mountDemoChrome, type DemoKey } from './demoChrome';
+import './tpTheme.css';
+import { mirrorVectorAcrossBounds, type Bounds3 } from './mirrorBounds';
+import { stopCanvasPassthrough } from './stopPassthrough';
 import {
   centerPoint,
   controlsToValues,
@@ -77,39 +77,31 @@ const PLAY_BOUNDS: Bounds3 = {
 const WORLD: Record<string, unknown> = {};
 
 export async function mountThreeDemo(config: ThreeDemoConfig): Promise<void> {
-  // Returns the current play-area size, which excludes the sidebar when open.
-  function playSize(): { w: number; h: number } {
-    const style = getComputedStyle(document.documentElement);
-    const w = parseFloat(style.getPropertyValue('--demo-play-width')) || window.innerWidth;
-    const h = parseFloat(style.getPropertyValue('--demo-play-height')) || window.innerHeight;
-    return { w, h };
-  }
-
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(colors.bg);
   scene.fog = new THREE.Fog(colors.bg, 12, 34);
 
-  const { w: initW, h: initH } = playSize();
-  const camera = new THREE.PerspectiveCamera(55, initW / initH, 0.1, 100);
+  const mount = document.querySelector<HTMLDivElement>('#app');
+  if (!mount) throw new Error('Missing #app mount');
+  const playArea = document.querySelector<HTMLDivElement>('#play-area');
+  if (!playArea) throw new Error('Missing #play-area element');
+  const paneContainer = document.querySelector<HTMLDivElement>('#tp-container');
+  if (!paneContainer) throw new Error('Missing #tp-container element');
+  stopCanvasPassthrough(paneContainer);
+
+  const camera = new THREE.PerspectiveCamera(55, playArea.clientWidth / playArea.clientHeight, 0.1, 100);
   camera.position.set(14, 11, 16);
 
   const renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(initW, initH);
+  renderer.setSize(playArea.clientWidth, playArea.clientHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  const mount = document.querySelector<HTMLDivElement>('#app');
-  if (!mount) throw new Error('Missing #app mount');
-  mount.appendChild(renderer.domElement);
+  playArea.appendChild(renderer.domElement);
   mountDemoChrome(config.active);
 
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.enablePan = false;
   controls.target.set(0, 0.5, 0);
-
-  const paneContainer = document.createElement('div');
-  paneContainer.className = 'three-demo__pane';
-  mount.appendChild(paneContainer);
-  stopCanvasPassthrough(paneContainer);
 
   const root = new THREE.Group();
   scene.add(root);
@@ -189,14 +181,17 @@ export async function mountThreeDemo(config: ThreeDemoConfig): Promise<void> {
     if (event.key.toLowerCase() === 'r') reset();
   });
 
-  const onResize = () => {
-    const { w, h } = playSize();
-    camera.aspect = w / h;
-    camera.updateProjectionMatrix();
-    renderer.setSize(w, h);
-  };
-  window.addEventListener('resize', onResize);
-  window.addEventListener('playgroundresize', onResize);
+  const resizeObserver = new ResizeObserver((entries) => {
+    for (const entry of entries) {
+      if (entry.target === playArea) {
+        const { width, height } = entry.contentRect;
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+        renderer.setSize(width, height);
+      }
+    }
+  });
+  resizeObserver.observe(playArea);
 
   mountPane();
   reset();
