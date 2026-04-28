@@ -1,0 +1,87 @@
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4 {
+  margin: 1.5em 0 1em;
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.markdown-body h1 { font-size: 2.25em; }
+.markdown-body h2 {
+  font-size: 1.5em;
+  margin-top: 2.5rem;
+  color: #fff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 6px;
+  margin-bottom: 12px;
+}
+.markdown-body h3 { font-size: 1.25em; margin-top: 2rem; color: #fff; }
+.markdown-body h4 { font-size: 1em; margin-top: 1.5rem; color: #fff; }
+
+.markdown-body p {
+  margin: 0 0 1.5em;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.markdown-body ul,
+.markdown-body ol {
+  margin: 0 0 1.5em;
+  padding-left: 1.625em;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.markdown-body li { margin-bottom: 6px; }
+
+.markdown-body code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.875em;
+  background: rgba(255, 255, 255, 0.07);
+  padding: 2px 5px;
+  border-radius: 4px;
+  color: #ffd6a5;
+}
+
+.markdown-body pre {
+  margin: 14px 0;
+  padding: 14px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  overflow-x: auto;
+}
+
+.markdown-body pre code,
+.markdown-body pre code.hljs {
+  display: block;
+  background: transparent !important;
+  padding: 0 !important;
+  border-radius: 0;
+  color: #c9d1d9;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.875em;
+  line-height: 1.6;
+}
+
+.markdown-body a {
+  color: #75a7ff;
+  text-decoration: none;
+}
+
+.markdown-body a:hover { text-decoration: underline; }
+
+.markdown-body kbd {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom-width: 2px;
+  padding: 1px 5px;
+  border-radius: 4px;
+}

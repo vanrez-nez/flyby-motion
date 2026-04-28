@@ -64,6 +64,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ markdown, sources = [] }) => {
   const [isPortrait, setIsPortrait] = useState(() => window.innerHeight > window.innerWidth);
   
   const handleRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const layoutRef = useRef(layout);
   layoutRef.current = layout; // sync latest layout state for drag handlers
 
@@ -177,10 +178,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ markdown, sources = [] }) => {
         >
           &times;
         </button>
-        <div className="demo-sidebar__content">
-          <article className="demo-sidebar__article" dangerouslySetInnerHTML={{ __html: htmlContent }} />
+        <div className="demo-sidebar__content" ref={contentRef}>
+          <article className="markdown-body" dangerouslySetInnerHTML={{ __html: htmlContent }} />
           {sources.length > 0 && (
-            <div className="demo-sidebar__sources">
+            <div className="demo-sidebar__sources markdown-body">
               {sources.map((source, idx) => {
                 const lang = source.language || 'typescript';
                 return (
