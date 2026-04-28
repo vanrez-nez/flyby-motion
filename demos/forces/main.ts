@@ -8,6 +8,8 @@ const directionMap: Record<string, number[]> = {
   up: [0, -1],
 };
 
+const driftSeedsByAgent = new WeakMap<object, { x: number; y: number }>();
+
 const falloffControls = [
   { type: 'options' as const, id: 'falloff', value: 'constant', options: { constant: 'constant', linear: 'linear', invSquare: 'invSquare', arrive: 'arrive', exponential: 'exponential' } },
   { id: 'k', value: 900, min: 10, max: 3000, step: 10 },
@@ -52,6 +54,37 @@ const modes: FeatureMode[] = [
     buildForces: (_entry, _scene, v) => [
       forces.damp(v.coefficient as number),
     ],
+  },
+  {
+    value: 'drift',
+    label: 'drift',
+    presentation: 'none',
+    controls: [
+      { id: 'strength', value: 220, min: 0, max: 600, step: 5 },
+      { id: 'scale', value: 0.45, min: 0.05, max: 2, step: 0.05 },
+      { type: 'boolean', id: 'x', label: 'x axis', value: true },
+      { type: 'boolean', id: 'y', label: 'y axis', value: true },
+      { id: 'damp', value: 4, min: 0, max: 14, step: 0.1 },
+    ],
+    configureAgent: (entry) => {
+      driftSeedsByAgent.set(entry.agent, {
+        x: Math.random() * 10000,
+        y: Math.random() * 10000,
+      });
+    },
+    buildForces: (entry, _scene, v) => {
+      const seeds = driftSeedsByAgent.get(entry.agent);
+      if (!seeds) throw new Error('Missing drift seeds for forces demo agent');
+      return [
+        forces.drift({
+          strength: v.strength as number,
+          scale: v.scale as number,
+          x: v.x ? { seed: seeds.x } : false,
+          y: v.y ? { seed: seeds.y } : false,
+        }),
+        forces.damp(v.damp as number),
+      ];
+    },
   },
   {
     value: 'oscillate',

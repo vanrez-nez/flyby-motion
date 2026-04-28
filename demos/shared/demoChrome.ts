@@ -5,11 +5,14 @@ export type DemoKey =
   | 'behaviors'
   | 'modifiers'
   | 'custom'
-  | 'three';
+  | 'three-forces'
+  | 'three-behaviors'
+  | 'three-modifiers'
+  | 'three-custom';
 
 const GITHUB_URL = 'https://github.com/vanrez-nez/flyby-motion';
 
-const links: Array<{
+const twoDLinks: Array<{
   key: DemoKey;
   label: string;
   href: string;
@@ -18,7 +21,17 @@ const links: Array<{
   { key: 'behaviors', label: 'Behaviors', href: '/demos/behaviors/index.html' },
   { key: 'modifiers', label: 'Modifiers', href: '/demos/modifiers/index.html' },
   { key: 'custom', label: 'Custom', href: '/demos/custom/index.html' },
-  { key: 'three', label: '3D', href: '/demos/3d/index.html' },
+];
+
+const threeDLinks: Array<{
+  key: DemoKey;
+  label: string;
+  href: string;
+}> = [
+  { key: 'three-forces', label: 'Forces', href: '/demos/3d/index.html' },
+  { key: 'three-behaviors', label: 'Behaviors', href: '/demos/3d-behaviors/index.html' },
+  { key: 'three-modifiers', label: 'Modifiers', href: '/demos/3d-modifiers/index.html' },
+  { key: 'three-custom', label: 'Custom', href: '/demos/3d-custom/index.html' },
 ];
 
 export function mountDemoChrome(active?: DemoKey): void {
@@ -41,6 +54,7 @@ function createHeader(active?: DemoKey): HTMLElement {
   nav.className = 'demo-chrome__nav';
   nav.setAttribute('aria-label', 'Demo navigation');
 
+  const links = active?.startsWith('three-') ? threeDLinks : twoDLinks;
   links.forEach((link) => {
     const anchor = document.createElement('a');
     anchor.href = link.href;

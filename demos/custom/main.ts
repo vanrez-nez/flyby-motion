@@ -109,17 +109,17 @@ const modes: FeatureMode[] = [
     },
   },
   {
-    value: 'mouseCapture',
-    label: 'mouseCapture',
+    value: 'targetCapture',
+    label: 'target capture',
     presentation: 'none',
     trackPointer: true,
     agentCount: 1,
     maxSpeed: 900,
     maxForce: 3200,
     controls: [
-      { id: 'mouseRadius', folder: 'Mouse', value: 150, min: 50, max: 320, step: 5 },
-      { id: 'mouseStrength', folder: 'Mouse', value: 3000, min: 500, max: 6000, step: 50 },
-      { id: 'mouseSlowR', folder: 'Mouse', value: 50, min: 10, max: 180, step: 5 },
+      { id: 'targetRadius', folder: 'Target', value: 150, min: 50, max: 320, step: 5 },
+      { id: 'targetStrength', folder: 'Target', value: 3000, min: 500, max: 6000, step: 50 },
+      { id: 'targetSlowR', label: 'target slow r', folder: 'Target', value: 50, min: 10, max: 180, step: 5 },
       { id: 'centerRadius', folder: 'Center', value: 150, min: 50, max: 320, step: 5 },
       { id: 'centerStrength', folder: 'Center', value: 1800, min: 300, max: 4200, step: 50 },
       { id: 'damp', folder: 'Agent', value: 5, min: 0, max: 14, step: 0.1 },
@@ -132,47 +132,47 @@ const modes: FeatureMode[] = [
       entry.agent.mass = values.agentMass as number;
     },
     buildForces: (_entry, scene, values) => {
-      const mouseRadius = values.mouseRadius as number;
+      const targetRadius = values.targetRadius as number;
       const centerRadius = values.centerRadius as number;
-      const mousePoint = () => [scene.mouse.x, scene.mouse.y];
-      const isMouseInsideCenter = () => distance(mousePoint(), scene.center()) <= centerRadius;
-      const isMouseCaptureActive = (agent: { position: number[] }) =>
+      const targetPoint = () => [scene.mouse.x, scene.mouse.y];
+      const isTargetInsideCenter = () => distance(targetPoint(), scene.center()) <= centerRadius;
+      const isTargetCaptureActive = (agent: { position: number[] }) =>
         scene.mouse.active &&
-        isMouseInsideCenter() &&
-        distance(agent.position, mousePoint()) <= mouseRadius;
+        isTargetInsideCenter() &&
+        distance(agent.position, targetPoint()) <= targetRadius;
       const centerForce = modifiers.gate(
-        (agent) => !isMouseCaptureActive(agent),
+        (agent) => !isTargetCaptureActive(agent),
         forces.attract(
           scene.center,
           falloff.arrive(values.centerStrength as number, centerRadius),
         ),
       );
-      const mouseForce = modifiers.gate(
-        isMouseCaptureActive,
+      const targetForce = modifiers.gate(
+        isTargetCaptureActive,
         forces.attract(
-          mousePoint,
-          falloff.arrive(values.mouseStrength as number, values.mouseSlowR as number),
+          targetPoint,
+          falloff.arrive(values.targetStrength as number, values.targetSlowR as number),
         ),
       );
 
       return [
         modifiers.sum(
           centerForce,
-          mouseForce,
+          targetForce,
           forces.damp(values.damp as number),
         ),
       ];
     },
     drawOverlay: (graphics, scene, values) => {
       const [cx, cy] = scene.center();
-      const mouseRadius = values.mouseRadius as number;
+      const targetRadius = values.targetRadius as number;
       const centerRadius = values.centerRadius as number;
 
       drawRadiusRing(graphics, cx, cy, centerRadius, demoColors.target);
       drawMarker(graphics, cx, cy, demoColors.target);
 
       if (scene.mouse.active) {
-        drawRadiusRing(graphics, scene.mouse.x, scene.mouse.y, mouseRadius, demoColors.force);
+        drawRadiusRing(graphics, scene.mouse.x, scene.mouse.y, targetRadius, demoColors.force);
         drawMarker(graphics, scene.mouse.x, scene.mouse.y, demoColors.force);
       }
     },

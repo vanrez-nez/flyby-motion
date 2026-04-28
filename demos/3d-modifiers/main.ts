@@ -1,0 +1,173 @@
+import {
+  falloff,
+  forces,
+  modifiers,
+  type Force,
+} from '../../src/index';
+import { mountThreeDemo, type ThreeDemoContext, type ThreeMode } from '../3d/mountThreeDemo';
+
+const modes: ThreeMode[] = [
+  {
+    value: 'scale',
+    label: 'scale',
+    marker: 'target',
+    presentation: { point: 'target', intent: 'attract', radiusControl: 'slowR' },
+    controls: [
+      { id: 'k', value: 0.5, min: 0, max: 2, step: 0.05 },
+      { id: 'strength', value: 8, min: 0.5, max: 32, step: 0.1 },
+      { id: 'slowR', label: 'slow r', value: 2.8, min: 0.3, max: 10, step: 0.1 },
+    ],
+    buildForces: (_entry, values, context) => [
+      modifiers.scale(baseAttract(context, values.strength as number, values.slowR as number), values.k as number),
+    ],
+  },
+  {
+    value: 'gate',
+    label: 'gate',
+    marker: 'source',
+    presentation: { point: 'source', intent: 'reject', radiusControl: 'range' },
+    controls: [
+      { id: 'range', value: 3.8, min: 0.3, max: 10, step: 0.1 },
+      { id: 'strength', value: 8, min: 0.5, max: 32, step: 0.1 },
+    ],
+    buildForces: (_entry, values, context) => [
+      modifiers.gate(
+        (agent) => distance3(agent.position, context.points.source()) < (values.range as number),
+        forces.repel(context.points.source, falloff.constant(values.strength as number)),
+      ),
+    ],
+  },
+  {
+    value: 'during',
+    label: 'during',
+    marker: 'target',
+    presentation: { point: 'target', intent: 'attract', radiusControl: 'slowR' },
+    controls: [
+      { id: 'start', value: 1, min: 0, max: 8, step: 0.25 },
+      { id: 'end', value: 5, min: 0, max: 10, step: 0.25 },
+      { id: 'strength', value: 8, min: 0.5, max: 32, step: 0.1 },
+      { id: 'slowR', label: 'slow r', value: 2.8, min: 0.3, max: 10, step: 0.1 },
+    ],
+    buildForces: (_entry, values, context) => [
+      modifiers.during(
+        values.start as number,
+        values.end as number,
+        baseAttract(context, values.strength as number, values.slowR as number),
+      ),
+    ],
+  },
+  {
+    value: 'fadeIn',
+    label: 'fadeIn',
+    marker: 'target',
+    presentation: { point: 'target', intent: 'attract', radiusControl: 'slowR' },
+    controls: [
+      { id: 'duration', value: 3, min: 0, max: 8, step: 0.25 },
+      { id: 'strength', value: 8, min: 0.5, max: 32, step: 0.1 },
+      { id: 'slowR', label: 'slow r', value: 2.8, min: 0.3, max: 10, step: 0.1 },
+    ],
+    buildForces: (_entry, values, context) => [
+      modifiers.fadeIn(
+        values.duration as number,
+        baseAttract(context, values.strength as number, values.slowR as number),
+      ),
+    ],
+  },
+  {
+    value: 'fadeOut',
+    label: 'fadeOut',
+    marker: 'target',
+    presentation: { point: 'target', intent: 'attract', radiusControl: 'slowR' },
+    controls: [
+      { id: 'duration', value: 5, min: 0, max: 10, step: 0.25 },
+      { id: 'strength', value: 8, min: 0.5, max: 32, step: 0.1 },
+      { id: 'slowR', label: 'slow r', value: 2.8, min: 0.3, max: 10, step: 0.1 },
+    ],
+    buildForces: (_entry, values, context) => [
+      modifiers.fadeOut(
+        values.duration as number,
+        baseAttract(context, values.strength as number, values.slowR as number),
+      ),
+    ],
+  },
+  {
+    value: 'sum',
+    label: 'sum',
+    marker: 'target',
+    presentation: { point: 'target', intent: 'attract', radiusControl: 'slowR' },
+    controls: [
+      { id: 'strength', value: 8, min: 0.5, max: 32, step: 0.1 },
+      { id: 'slowR', label: 'slow r', value: 2.8, min: 0.3, max: 10, step: 0.1 },
+      { id: 'amplitude', value: 2.4, min: 0, max: 12, step: 0.1 },
+      { id: 'freq', value: 0.5, min: 0, max: 2, step: 0.05 },
+    ],
+    buildForces: (_entry, values, context) => [
+      modifiers.sum(
+        baseAttract(context, values.strength as number, values.slowR as number),
+        forces.oscillate([0, 1, 0], values.amplitude as number, values.freq as number),
+      ),
+    ],
+  },
+  {
+    value: 'custom',
+    label: 'custom',
+    marker: 'target',
+    presentation: { point: 'target', intent: 'attract' },
+    controls: [
+      { id: 'strength', value: 8, min: 0.5, max: 32, step: 0.1 },
+      { id: 'wobble', value: 3, min: 0, max: 12, step: 0.1 },
+    ],
+    buildForces: (_entry, values, context) => [
+      wobbleAttract(
+        context.points.target,
+        values.strength as number,
+        values.wobble as number,
+      ),
+    ],
+  },
+];
+
+await mountThreeDemo({
+  active: 'three-modifiers',
+  paneTitle: '3D Modifiers',
+  modes,
+});
+
+function baseAttract(context: ThreeDemoContext, strength: number, slowR: number): Force {
+  return forces.attract(
+    context.points.target,
+    falloff.arrive(strength, slowR),
+  );
+}
+
+function wobbleAttract(targetFn: () => number[], strength: number, wobble: number): Force {
+  return (agent, _world, t) => {
+    const target = targetFn();
+    const dx = target[0] - agent.position[0];
+    const dy = target[1] - agent.position[1];
+    const dz = target[2] - agent.position[2];
+    const dist = Math.hypot(dx, dy, dz);
+    if (dist < 0.001) return [0, 0, 0];
+    const nx = dx / dist;
+    const ny = dy / dist;
+    const nz = dz / dist;
+    // Perpendicular axis = normalized(toward × worldUp). Falls back to worldZ when toward is parallel to up.
+    let px = nz, py = 0, pz = -nx;
+    const plen = Math.hypot(px, py, pz);
+    if (plen < 0.001) {
+      px = 0; py = 0; pz = 1;
+    } else {
+      px /= plen; pz /= plen;
+    }
+    const side = Math.sin(t * 3) * wobble;
+    return [
+      nx * strength + px * side,
+      ny * strength + py * side,
+      nz * strength + pz * side,
+    ];
+  };
+}
+
+function distance3(a: number[], b: number[]): number {
+  return Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+}
