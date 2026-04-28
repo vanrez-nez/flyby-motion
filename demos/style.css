@@ -55,7 +55,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 80px 20px 120px;
+  padding: 100px 40px 120px;
   box-sizing: border-box;
 }
 
@@ -121,24 +121,60 @@ body {
   box-shadow: 0 8px 25px rgba(100, 108, 255, 0.35);
 }
 
-.landing__tutorial {
-  margin-top: 60px;
+.landing__grid {
   width: 100%;
-  max-width: 60rem;
-  text-align: left;
+  max-width: 65rem;
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 40px;
+  grid-template-columns: 240px 1fr;
+  gap: 60px;
   align-items: start;
+}
+
+.landing__hero {
+  grid-column: 1 / -1;
+  margin-bottom: 80px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.landing__sidebar {
+  align-self: stretch;
+}
+
+.landing__hero-brand {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.landing__logo {
+  height: 40px;
+}
+
+.landing__subtitle {
+  color: #9ca3af;
+  margin: 0;
+  font-size: 1rem;
+}
+
+.landing__buttons {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
 }
 
 .landing__tutorial .markdown-body {
   min-width: 0;
 }
 
-@media (max-width: 900px) {
-  .landing__tutorial {
+@media (max-width: 1000px) {
+  .landing__grid {
     grid-template-columns: 1fr;
+    gap: 40px;
   }
 }
 
@@ -208,7 +244,6 @@ body {
 
 .markdown-nav__item.is-active button {
   color: var(--text-primary);
-  font-weight: 700;
 }
 
 .markdown-nav__item.is-active {
