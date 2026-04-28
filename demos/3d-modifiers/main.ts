@@ -5,6 +5,9 @@ import {
   type Force,
 } from '../../src/index';
 import { mountThreeDemo, type ThreeDemoContext, type ThreeMode } from '../3d/mountThreeDemo';
+import { mountDemoSidebar } from '../shared/demoSidebar';
+import sidebarMarkdown from './info.md?raw';
+import sidebarSource from './main.ts?raw';
 
 const modes: ThreeMode[] = [
   {
@@ -131,6 +134,12 @@ await mountThreeDemo({
   active: 'three-modifiers',
   paneTitle: '3D Modifiers',
   modes,
+});
+
+mountDemoSidebar({
+  storageKey: 'flyby:sidebar:three-modifiers',
+  markdown: sidebarMarkdown,
+  sources: [{ label: 'demos/3d-modifiers/main.ts', language: 'typescript', code: sidebarSource }],
 });
 
 function baseAttract(context: ThreeDemoContext, strength: number, slowR: number): Force {

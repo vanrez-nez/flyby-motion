@@ -5,6 +5,9 @@ import {
   type Force,
 } from '../../src/index';
 import { mountFeatureDemo, type FeatureMode } from '../shared/twoDDemo';
+import { mountDemoSidebar } from '../shared/demoSidebar';
+import sidebarMarkdown from './info.md?raw';
+import sidebarSource from './main.ts?raw';
 
 const modes: FeatureMode[] = [
   {
@@ -107,6 +110,12 @@ await mountFeatureDemo({
   active: 'modifiers',
   title: 'Modifiers',
   modes,
+});
+
+mountDemoSidebar({
+  storageKey: 'flyby:sidebar:modifiers',
+  markdown: sidebarMarkdown,
+  sources: [{ label: 'demos/modifiers/main.ts', language: 'typescript', code: sidebarSource }],
 });
 
 function baseAttract(scene: { target: { x: number; y: number } }): Force {

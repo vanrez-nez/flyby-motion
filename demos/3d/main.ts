@@ -6,6 +6,9 @@ import {
   makeFalloff,
 } from './modeUtils';
 import { mountThreeDemo, type ThreeMode } from './mountThreeDemo';
+import { mountDemoSidebar } from '../shared/demoSidebar';
+import sidebarMarkdown from './info.md?raw';
+import sidebarSource from './main.ts?raw';
 
 const modes: ThreeMode[] = [
   {
@@ -122,4 +125,10 @@ await mountThreeDemo({
   active: 'three-forces',
   paneTitle: '3D Forces',
   modes,
+});
+
+mountDemoSidebar({
+  storageKey: 'flyby:sidebar:three-forces',
+  markdown: sidebarMarkdown,
+  sources: [{ label: 'demos/3d/main.ts', language: 'typescript', code: sidebarSource }],
 });

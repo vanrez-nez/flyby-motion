@@ -11,6 +11,9 @@ import {
   drawRadiusRing,
 } from '../shared/drawables';
 import { mountFeatureDemo, type FeatureMode } from '../shared/twoDDemo';
+import { mountDemoSidebar } from '../shared/demoSidebar';
+import sidebarMarkdown from './info.md?raw';
+import sidebarSource from './main.ts?raw';
 
 const idleHomeByAgent = new WeakMap<object, [number, number]>();
 const idleSeedByAgent = new WeakMap<object, { x: number; y: number }>();
@@ -226,6 +229,12 @@ await mountFeatureDemo({
   active: 'custom',
   title: 'Custom',
   modes,
+});
+
+mountDemoSidebar({
+  storageKey: 'flyby:sidebar:custom',
+  markdown: sidebarMarkdown,
+  sources: [{ label: 'demos/custom/main.ts', language: 'typescript', code: sidebarSource }],
 });
 
 function distance(a: number[], b: number[]): number {

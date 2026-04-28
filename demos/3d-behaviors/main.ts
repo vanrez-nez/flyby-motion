@@ -4,6 +4,9 @@ import {
   modifiers,
 } from '../../src/index';
 import { mountThreeDemo, type ThreeMode } from '../3d/mountThreeDemo';
+import { mountDemoSidebar } from '../shared/demoSidebar';
+import sidebarMarkdown from './info.md?raw';
+import sidebarSource from './main.ts?raw';
 
 const modes: ThreeMode[] = [
   {
@@ -99,4 +102,10 @@ await mountThreeDemo({
   active: 'three-behaviors',
   paneTitle: '3D Behaviors',
   modes,
+});
+
+mountDemoSidebar({
+  storageKey: 'flyby:sidebar:three-behaviors',
+  markdown: sidebarMarkdown,
+  sources: [{ label: 'demos/3d-behaviors/main.ts', language: 'typescript', code: sidebarSource }],
 });

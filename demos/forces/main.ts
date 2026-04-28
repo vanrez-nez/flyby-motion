@@ -1,5 +1,8 @@
 import { falloff, forces, type FalloffFn } from '../../src/index';
 import { mountFeatureDemo, type DemoControlValues, type FeatureMode } from '../shared/twoDDemo';
+import { mountDemoSidebar } from '../shared/demoSidebar';
+import sidebarMarkdown from './info.md?raw';
+import sidebarSource from './main.ts?raw';
 
 const directionMap: Record<string, number[]> = {
   right: [1, 0],
@@ -135,6 +138,12 @@ await mountFeatureDemo({
   active: 'forces',
   title: 'Forces',
   modes,
+});
+
+mountDemoSidebar({
+  storageKey: 'flyby:sidebar:forces',
+  markdown: sidebarMarkdown,
+  sources: [{ label: 'demos/forces/main.ts', language: 'typescript', code: sidebarSource }],
 });
 
 function makeFalloff(values: DemoControlValues): FalloffFn {

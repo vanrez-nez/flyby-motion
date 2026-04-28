@@ -6,6 +6,9 @@ import {
 } from '../../src/index';
 import { mountThreeDemo, type ThreeMode } from '../3d/mountThreeDemo';
 import { distance3 } from '../3d/threeHelpers';
+import { mountDemoSidebar } from '../shared/demoSidebar';
+import sidebarMarkdown from './info.md?raw';
+import sidebarSource from './main.ts?raw';
 
 const modes: ThreeMode[] = [
   {
@@ -145,6 +148,12 @@ await mountThreeDemo({
   active: 'three-custom',
   paneTitle: '3D Custom',
   modes,
+});
+
+mountDemoSidebar({
+  storageKey: 'flyby:sidebar:three-custom',
+  markdown: sidebarMarkdown,
+  sources: [{ label: 'demos/3d-custom/main.ts', language: 'typescript', code: sidebarSource }],
 });
 
 function buildOscillateIdleForce(
