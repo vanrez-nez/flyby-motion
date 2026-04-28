@@ -1,6 +1,6 @@
 {
   "name": "flyby-motion",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "A lightweight library for motion-driven DOM interactions.",
   "type": "module",
   "main": "./dist/flyby-motion.umd.js",
