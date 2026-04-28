@@ -1,4 +1,3 @@
-
 * {
   box-sizing: border-box;
 }
@@ -125,10 +124,10 @@ body {
 .landing__tutorial {
   margin-top: 60px;
   width: 100%;
-  max-width: 800px;
+  max-width: 60rem;
   text-align: left;
   display: grid;
-  grid-template-columns: 200px 1fr;
+  grid-template-columns: auto 1fr;
   gap: 40px;
   align-items: start;
 }
@@ -194,9 +193,18 @@ body {
   color: var(--text-primary);
 }
 
-.markdown-nav__item--l1 { font-weight: 600; }
-.markdown-nav__item--l2 { padding-left: 12px; }
-.markdown-nav__item--l3 { padding-left: 24px; font-size: 0.8rem; }
+.markdown-nav__item--l1 {
+  font-weight: 600;
+}
+
+.markdown-nav__item--l2 {
+  padding-left: 12px;
+}
+
+.markdown-nav__item--l3 {
+  padding-left: 24px;
+  font-size: 0.8rem;
+}
 
 .markdown-nav__item.is-active button {
   color: var(--text-primary);

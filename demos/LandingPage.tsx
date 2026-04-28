@@ -3,6 +3,7 @@ import { DemoKey } from './shared/DemoBase';
 import { useMarkdown, getMarkdownSections } from './shared/hooks/useMarkdown';
 import { MarkdownNav } from './shared/components/MarkdownNav';
 import { DemoFooter } from './shared/components/DemoFooter';
+import logoUrl from './flyby-logo.svg';
 import tutorialMarkdown from '../TUTORIAL.md?raw';
 
 export const LandingPage: React.FC = () => {
@@ -11,7 +12,7 @@ export const LandingPage: React.FC = () => {
 
   return (
     <div className="landing">
-      <h1 className="landing__title">JS Flyby Library</h1>
+      <img src={logoUrl} alt="Flyby Library" className="landing__logo" style={{ height: '80px', marginBottom: '2rem' }} />
       <p className="landing__subtitle">Choose a demo to explore:</p>
       <div className="landing__buttons">
         <a href="/2d/forces" className="landing__buttons-btn landing__buttons-btn--2d">

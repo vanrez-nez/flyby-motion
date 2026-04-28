@@ -1,5 +1,5 @@
-import React, { ReactNode } from 'react';
 import { DemoFooter } from './components/DemoFooter';
+import logoUrl from '../flyby-logo.svg';
 import './DemoBase.css';
 
 export type DemoKey =
@@ -34,7 +34,7 @@ const DemoHeader: React.FC<{ active?: DemoKey }> = ({ active }) => {
   return (
     <header className="demo-ui demo-ui__header">
       <a className="demo-ui__title" href="/">
-        Flyby Library
+        <img src={logoUrl} alt="Flyby Library" style={{ height: '16px', display: 'block' }} />
       </a>
       <nav className="demo-ui__nav" aria-label="Demo navigation">
         {links.map((link) => (
