@@ -168,28 +168,6 @@ export function smoothLerp(out: number[], a: number[], b: number[], decay: numbe
 }
 
 /**
- * Transforms the vec2 with a mat3 (implicit z=1)
- */
-export function transformMat3(out: number[], a: number[], m: number[] | Float32Array): number[] {
-    const x = a[0];
-    const y = a[1];
-    out[0] = m[0] * x + m[3] * y + m[6];
-    out[1] = m[1] * x + m[4] * y + m[7];
-    return out;
-}
-
-/**
- * Transforms the vec2 with a mat4 (implicit z=0, w=1)
- */
-export function transformMat4(out: number[], a: number[], m: number[] | Float32Array): number[] {
-    const x = a[0];
-    const y = a[1];
-    out[0] = m[0] * x + m[4] * y + m[12];
-    out[1] = m[1] * x + m[5] * y + m[13];
-    return out;
-}
-
-/**
  * Strict equality comparison
  */
 export function exactEquals(a: number[], b: number[]): boolean {

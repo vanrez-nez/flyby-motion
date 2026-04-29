@@ -120,26 +120,6 @@ export class Vector3 extends Array<number> {
         return Vector3Fn.exactEquals(this, v);
     }
 
-    applyMatrix3(mat3: number[] | Float32Array): Vector3 {
-        Vector3Fn.transformMat3(this, this, mat3);
-        return this;
-    }
-
-    applyMatrix4(mat4: number[] | Float32Array): Vector3 {
-        Vector3Fn.transformMat4(this, this, mat4);
-        return this;
-    }
-
-    scaleRotateMatrix4(mat4: number[] | Float32Array): Vector3 {
-        Vector3Fn.scaleRotateMat4(this, this, mat4);
-        return this;
-    }
-
-    applyQuaternion(q: number[] | Float32Array): Vector3 {
-        Vector3Fn.transformQuat(this, this, q);
-        return this;
-    }
-
     angle(v: number[]): number {
         return Vector3Fn.angle(this, v);
     }
@@ -170,17 +150,5 @@ export class Vector3 extends Array<number> {
         a[o + 1] = this[1];
         a[o + 2] = this[2];
         return a;
-    }
-
-    transformDirection(mat4: number[] | Float32Array): Vector3 {
-        const x = this[0];
-        const y = this[1];
-        const z = this[2];
-
-        this[0] = mat4[0] * x + mat4[4] * y + mat4[8] * z;
-        this[1] = mat4[1] * x + mat4[5] * y + mat4[9] * z;
-        this[2] = mat4[2] * x + mat4[6] * y + mat4[10] * z;
-
-        return this.normalize();
     }
 }
