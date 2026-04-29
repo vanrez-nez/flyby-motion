@@ -13,7 +13,7 @@ import {
   drawMotionVectors,
   drawRadiusRing,
   drawTrail,
-} from '../drawables';
+} from '../2dHelpers';
 import { type DemoKey, DemoBase } from '../DemoBase';
 import { Sidebar, type SidebarProps } from './Sidebar';
 import { usePixiDemo } from '../hooks/usePixiDemo';
@@ -299,7 +299,7 @@ export const TwoDFeatureDemo: React.FC<{ config: FeatureDemoConfig, sidebarConfi
       entries.forEach((entry, index) => {
         entry.graphics.clear();
         entry.trailLayer.clear();
-        const fill = index % 2 === 0 ? demoColors.agent : demoColors.agentAlt;
+        const fill = demoColors.agent;
         drawTrail(entry.trailLayer, entry.trailPoints);
         drawAgentDot(entry.graphics, entry.agent.position, { ...AGENT_STYLE, fill });
         drawMotionVectors(entry.graphics, entry.agent.position, AGENT_STYLE.radius, entry.agent.velocity, entry.force);

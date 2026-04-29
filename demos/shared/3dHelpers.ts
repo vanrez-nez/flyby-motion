@@ -1,17 +1,8 @@
 import * as THREE from 'three';
 import { Vector3Fn } from '../../src/index';
 
-export const colors = {
-  bg: 0x000000,
-  grid: 0x6b7280,
-  agent: 0x4dd8a8,
-  agentAlt: 0x75a7ff,
-  target: 0xffc857,
-  source: 0xff5c7c,
-  velocity: 0x75a7ff,
-  force: 0xff5c7c,
-  trail: 0x8bd7ff,
-};
+import { demoColors as colors } from './colors';
+export { colors };
 
 export type RadiusIndicator = {
   group: THREE.Group;
@@ -21,7 +12,7 @@ export type RadiusIndicator = {
 export function createAgentMesh(index: number): THREE.Mesh {
   const geometry = new THREE.SphereGeometry(0.16, 24, 16);
   const material = new THREE.MeshStandardMaterial({
-    color: index % 2 === 0 ? colors.agent : colors.agentAlt,
+    color: colors.agent,
     roughness: 0.42,
     metalness: 0.05,
     emissive: 0x07120f,

@@ -10,7 +10,7 @@ import {
   demoColors,
   drawMarker,
   drawRadiusRing,
-} from '../../shared/drawables';
+} from '../../shared/2dHelpers';
 import { type FeatureMode } from '../../shared/components/TwoDFeatureDemo';
 import { TwoDFeatureDemo } from '../../shared/components/TwoDFeatureDemo';
 import sidebarMarkdown from './info.md?raw';

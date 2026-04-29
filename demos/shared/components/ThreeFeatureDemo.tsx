@@ -32,7 +32,7 @@ import {
   updateRadiusIndicator,
   updateTrail,
   type RadiusIndicator,
-} from '../threeHelpers';
+} from '../3dHelpers';
 
 export type ThreeMode = {
   value: string;

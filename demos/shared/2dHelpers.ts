@@ -1,16 +1,8 @@
 import * as PIXI from 'pixi.js';
 import { Vector2Fn } from '../../src/index';
 
-export const demoColors = {
-  bg: 0x000000,
-  target: 0xffc857,
-  agent: 0x4dd8a8,
-  agentAlt: 0x75a7ff,
-  force: 0xff5c7c,
-  velocity: 0x75a7ff,
-  trail: 0x8bd7ff,
-  radiusRing: 0xffc857
-};
+import { demoColors } from './colors';
+export { demoColors };
 
 export type Point = readonly [number, number] | readonly number[];
 
@@ -35,10 +27,6 @@ export function drawAgentDot(
       color: style.stroke ?? 0xffffff,
       width: style.strokeWidth ?? 2
     });
-
-  graphics
-    .circle(point[0], point[1], style.dotRadius ?? 3)
-    .fill(style.dotColor ?? 0xffffff);
 }
 
 export function drawMarker(

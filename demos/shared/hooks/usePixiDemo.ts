@@ -1,6 +1,6 @@
 import * as PIXI from 'pixi.js';
 import { useEffect, useState } from 'react';
-import { demoColors } from '../drawables';
+import { demoColors } from '../2dHelpers';
 
 export function usePixiDemo(playAreaRef: React.RefObject<HTMLDivElement | null>) {
   const [app, setApp] = useState<PIXI.Application | null>(null);
