@@ -6,5 +6,7 @@ export const demoColors = {
   force: 0xf15060,
   velocity: 0x0078bf,
   trail: 0xffffff,
-  radiusRing: 0xffc857
+  radiusRing: 0xffc857,
+  source: 0x4dd8a8,
+  grid: 0x222222
 };

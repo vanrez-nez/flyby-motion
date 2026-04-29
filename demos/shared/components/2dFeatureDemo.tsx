@@ -4,6 +4,7 @@ import {
   Agent,
   step,
   Vector2Fn,
+  onFrame,
   type Force,
 } from '../../../src/index';
 import {
@@ -123,6 +124,7 @@ export const FeatureDemo2D: React.FC<{ config: FeatureDemoConfig, sidebarConfig:
     let leaderTrail: number[][] = [];
     let t = 0;
     let resizeTimeout: any = null;
+    let frameUpdater: any = null;
 
     app.stage.eventMode = 'static';
     app.stage.hitArea = app.screen;
@@ -261,7 +263,7 @@ export const FeatureDemo2D: React.FC<{ config: FeatureDemoConfig, sidebarConfig:
     }
 
     function moveActiveMarker(x: number, y: number): void {
-      if (activeMode.trackPointer) return;
+      if (activeMode.trackPointer || !app) return;
 
       const marker = activeMode.marker ?? 'target';
       if (marker === 'source') {
@@ -277,7 +279,7 @@ export const FeatureDemo2D: React.FC<{ config: FeatureDemoConfig, sidebarConfig:
     }
 
     function updateTrackedPointer(x: number, y: number): void {
-      if (!activeMode.trackPointer) return;
+      if (!activeMode.trackPointer || !app) return;
       scene.mouse.x = clamp(x, 0, app.screen.width);
       scene.mouse.y = clamp(y, 0, app.screen.height);
       scene.mouse.active = true;
@@ -296,7 +298,7 @@ export const FeatureDemo2D: React.FC<{ config: FeatureDemoConfig, sidebarConfig:
         drawTrail(leaderTrailLayer, leaderTrail, { color: demoColors.target, width: 2, maxAlpha: 0.35 });
       }
 
-      entries.forEach((entry, index) => {
+      entries.forEach((entry, _index) => {
         entry.graphics.clear();
         entry.trailLayer.clear();
         const fill = demoColors.agent;
@@ -309,9 +311,8 @@ export const FeatureDemo2D: React.FC<{ config: FeatureDemoConfig, sidebarConfig:
     mountPane();
     reset();
 
-    const tick = (ticker: PIXI.Ticker) => {
-      const dt = Math.min(ticker.deltaMS / 1000, 1 / 30);
-      t += dt;
+    const tick = (elapsed: number, dt: number) => {
+      t = elapsed;
 
       const playArea = playAreaRef.current;
       if (playArea) {
@@ -340,10 +341,10 @@ export const FeatureDemo2D: React.FC<{ config: FeatureDemoConfig, sidebarConfig:
       draw();
     };
 
-    app.ticker.add(tick);
+    frameUpdater = onFrame(tick, { maxDelta: 1 / 30, autoStart: true });
 
     return () => {
-      app.ticker?.remove(tick);
+      frameUpdater?.stop();
       app.stage?.off('pointerdown', onPointerDown);
       app.stage?.off('pointermove', onPointerMove);
       window.removeEventListener('pointerup', endCanvasDrag);

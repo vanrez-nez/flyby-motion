@@ -9,7 +9,7 @@ export type RadiusIndicator = {
   material: THREE.ShaderMaterial;
 };
 
-export function createAgentMesh(index: number): THREE.Mesh {
+export function createAgentMesh(_index: number): THREE.Mesh {
   const geometry = new THREE.SphereGeometry(0.16, 24, 16);
   const material = new THREE.MeshStandardMaterial({
     color: colors.agent,

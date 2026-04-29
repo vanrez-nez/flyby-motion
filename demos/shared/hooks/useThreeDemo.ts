@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { useEffect, useState } from 'react';
 
+
 export interface ThreeDemoContext {
   renderer: THREE.WebGLRenderer;
   scene: THREE.Scene;

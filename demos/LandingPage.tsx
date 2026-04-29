@@ -1,5 +1,4 @@
 import React from 'react';
-import { DemoKey } from './shared/DemoBase';
 import { useMarkdown, getMarkdownSections } from './shared/hooks/useMarkdown';
 import { MarkdownNav } from './shared/components/MarkdownNav';
 import { DemoFooter } from './shared/components/DemoFooter';

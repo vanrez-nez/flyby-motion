@@ -1,9 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import { Agent, step, type Force } from '../../../src/index';
+import { Agent, step, onFrame, type Force } from '../../../src/index';
 import { type DemoKey, DemoBase } from '../DemoBase';
 import { Sidebar, type SidebarProps } from './Sidebar';
-import { useThreeDemo, type ThreeDemoContext } from '../hooks/useThreeDemo';
+import { useThreeDemo, type ThreeDemoContext as BaseContext } from '../hooks/useThreeDemo';
 import { useTweakpane } from '../hooks/useTweakpane';
 import '../3dDemo.css';
 import '../tpTheme.css';
@@ -33,6 +33,11 @@ import {
   updateTrail,
   type RadiusIndicator,
 } from '../3dHelpers';
+
+export interface ThreeDemoContext extends BaseContext {
+  points: PointResolvers;
+  leader: Agent;
+}
 
 export type ThreeMode = {
   value: string;
@@ -122,7 +127,7 @@ export const FeatureDemo3D: React.FC<{ config: ThreeDemoConfig, sidebarConfig: S
         leader,
       }),
       leader,
-    };
+    } as ThreeDemoContext;
 
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
@@ -134,9 +139,8 @@ export const FeatureDemo3D: React.FC<{ config: ThreeDemoConfig, sidebarConfig: S
     let activeMode = config.modes[0];
     let values = controlsToValues(activeMode.controls);
     let entries: ThreeAgentEntry[] = [];
-    let last = performance.now();
     let t = 0;
-    let animId = 0;
+    let frameUpdater: any = null;
 
     const onPointerDown = (event: PointerEvent) => {
       if (event.button !== 2) return;
@@ -166,11 +170,8 @@ export const FeatureDemo3D: React.FC<{ config: ThreeDemoConfig, sidebarConfig: S
     window.addEventListener('pointerup', onPointerUp);
     window.addEventListener('keydown', onKeyDown);
 
-    function animate(now: number): void {
-      animId = requestAnimationFrame(animate);
-      const dt = Math.min((now - last) / 1000, 1 / 30);
-      last = now;
-      t += dt;
+    const tick = (elapsed: number, dt: number) => {
+      t = elapsed;
 
       const playArea = playAreaRef.current;
       if (playArea) {
@@ -197,7 +198,7 @@ export const FeatureDemo3D: React.FC<{ config: ThreeDemoConfig, sidebarConfig: S
 
       controls.update();
       renderer.render(scene, camera);
-    }
+    };
 
     function mountPane(): void {
       pane?.children.forEach(c => c.dispose());
@@ -402,10 +403,10 @@ export const FeatureDemo3D: React.FC<{ config: ThreeDemoConfig, sidebarConfig: S
 
     mountPane();
     reset();
-    animId = requestAnimationFrame(animate);
+    frameUpdater = onFrame(tick, { maxDelta: 1 / 30, autoStart: true });
 
     return () => {
-      cancelAnimationFrame(animId);
+      frameUpdater?.stop();
       renderer.domElement.removeEventListener('pointerdown', onPointerDown);
       renderer.domElement.removeEventListener('pointermove', onPointerMove);
       renderer.domElement.removeEventListener('contextmenu', onContextMenu);

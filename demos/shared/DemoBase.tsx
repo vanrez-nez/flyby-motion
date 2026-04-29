@@ -1,3 +1,4 @@
+import React, { ReactNode } from 'react';
 import { DemoFooter } from './components/DemoFooter';
 import logoUrl from '../flyby-logo.svg';
 import './DemoBase.css';
@@ -12,7 +13,6 @@ export type DemoKey =
   | 'three-modifiers'
   | 'three-custom';
 
-const GITHUB_URL = 'https://github.com/vanrez-nez/flyby-motion';
 
 const twoDLinks: Array<{ key: DemoKey; label: string; href: string }> = [
   { key: 'forces', label: 'Forces', href: '/2d/forces' },

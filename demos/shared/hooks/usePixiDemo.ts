@@ -19,7 +19,7 @@ export function usePixiDemo(playAreaRef: React.RefObject<HTMLDivElement | null>)
       height: playArea.clientHeight,
     }).then(() => {
       if (!isMounted) {
-        newApp.destroy(true, { children: true, texture: true, baseTexture: true });
+        newApp.destroy(true, { children: true, texture: true });
         return;
       }
       playArea.appendChild(newApp.canvas);
@@ -36,7 +36,7 @@ export function usePixiDemo(playAreaRef: React.RefObject<HTMLDivElement | null>)
         // getter throws if renderer is not initialized
       }
       try {
-        newApp.destroy(true, { children: true, texture: true, baseTexture: true });
+        newApp.destroy(true, { children: true, texture: true });
       } catch (e) {
         // Ignore if already destroyed
       }
