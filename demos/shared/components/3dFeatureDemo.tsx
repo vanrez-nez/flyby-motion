@@ -5,7 +5,7 @@ import { type DemoKey, DemoBase } from '../DemoBase';
 import { Sidebar, type SidebarProps } from './Sidebar';
 import { useThreeDemo, type ThreeDemoContext } from '../hooks/useThreeDemo';
 import { useTweakpane } from '../hooks/useTweakpane';
-import '../threeDemo.css';
+import '../3dDemo.css';
 import '../tpTheme.css';
 
 import { mirrorVectorAcrossBounds, type Bounds3 } from '../mirrorBounds';
@@ -70,7 +70,7 @@ const PLAY_BOUNDS: Bounds3 = {
 };
 const WORLD: Record<string, unknown> = {};
 
-export const ThreeFeatureDemo: React.FC<{ config: ThreeDemoConfig, sidebarConfig: SidebarProps }> = ({ config, sidebarConfig }) => {
+export const FeatureDemo3D: React.FC<{ config: ThreeDemoConfig, sidebarConfig: SidebarProps }> = ({ config, sidebarConfig }) => {
   const playAreaRef = useRef<HTMLDivElement>(null);
   const tpContainerRef = useRef<HTMLDivElement>(null);
 

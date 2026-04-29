@@ -1,7 +1,7 @@
 import React from 'react';
 import { behaviors } from '../../../src/index';
-import { type FeatureMode } from '../../shared/components/TwoDFeatureDemo';
-import { TwoDFeatureDemo } from '../../shared/components/TwoDFeatureDemo';
+import { type FeatureMode } from '../../shared/components/2dFeatureDemo';
+import { FeatureDemo2D } from '../../shared/components/2dFeatureDemo';
 import sidebarMarkdown from './info.md?raw';
 import sidebarSource from './index.tsx?raw';
 
@@ -100,7 +100,7 @@ const modes: FeatureMode[] = [
 
 export const Behaviors2DDemo: React.FC = () => {
   return (
-    <TwoDFeatureDemo
+    <FeatureDemo2D
       config={{ active: 'behaviors', title: 'Behaviors', modes }}
       sidebarConfig={{
 

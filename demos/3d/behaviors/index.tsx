@@ -4,8 +4,8 @@ import {
   forces,
   modifiers,
 } from '../../../src/index';
-import { type ThreeMode } from '../../shared/components/ThreeFeatureDemo';
-import { ThreeFeatureDemo } from '../../shared/components/ThreeFeatureDemo';
+import { type ThreeMode } from '../../shared/components/3dFeatureDemo';
+import { FeatureDemo3D } from '../../shared/components/3dFeatureDemo';
 import sidebarMarkdown from './info.md?raw';
 import sidebarSource from './index.tsx?raw';
 
@@ -101,7 +101,7 @@ const modes: ThreeMode[] = [
 
 export const Behaviors3DDemo: React.FC = () => {
   return (
-    <ThreeFeatureDemo
+    <FeatureDemo3D
       config={{ active: 'three-behaviors', paneTitle: '3D Behaviors', modes }}
       sidebarConfig={{
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { falloff, forces, type FalloffFn } from '../../../src/index';
-import { type FeatureMode, type DemoControlValues } from '../../shared/components/TwoDFeatureDemo';
-import { TwoDFeatureDemo } from '../../shared/components/TwoDFeatureDemo';
+import { type FeatureMode, type DemoControlValues } from '../../shared/components/2dFeatureDemo';
+import { FeatureDemo2D } from '../../shared/components/2dFeatureDemo';
 import sidebarMarkdown from './info.md?raw';
 import sidebarSource from './index.tsx?raw';
 
@@ -137,7 +137,7 @@ const modes: FeatureMode[] = [
 
 export const Forces2DDemo: React.FC = () => {
   return (
-    <TwoDFeatureDemo
+    <FeatureDemo2D
       config={{ active: 'forces', title: 'Forces', modes }}
       sidebarConfig={{
 

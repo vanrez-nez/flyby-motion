@@ -18,7 +18,7 @@ import { type DemoKey, DemoBase } from '../DemoBase';
 import { Sidebar, type SidebarProps } from './Sidebar';
 import { usePixiDemo } from '../hooks/usePixiDemo';
 import { useTweakpane } from '../hooks/useTweakpane';
-import '../twoDDemo.css';
+import '../2dDemo.css';
 import '../tpTheme.css';
 
 export type DemoControl =
@@ -84,7 +84,7 @@ interface InternalAgentEntry extends DemoAgentEntry {
   trailPoints: number[][];
 }
 
-export const TwoDFeatureDemo: React.FC<{ config: FeatureDemoConfig, sidebarConfig: SidebarProps }> = ({ config, sidebarConfig }) => {
+export const FeatureDemo2D: React.FC<{ config: FeatureDemoConfig, sidebarConfig: SidebarProps }> = ({ config, sidebarConfig }) => {
   const playAreaRef = useRef<HTMLDivElement>(null);
   const tpContainerRef = useRef<HTMLDivElement>(null);
 
