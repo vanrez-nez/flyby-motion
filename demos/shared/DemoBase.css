@@ -54,7 +54,7 @@
 }
 
 .demo-ui a {
-  color: inherit;
+  color: var(--text-muted);
   text-decoration: none;
 }
 
@@ -72,6 +72,12 @@
 .demo-ui__title {
   flex: 0 0 auto;
   letter-spacing: 0;
+}
+
+.demo-ui__logo {
+  height: 16px;
+  display: block;
+  margin-inline: 1rem;
 }
 
 .demo-ui__nav {

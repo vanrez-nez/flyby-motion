@@ -34,7 +34,7 @@ const DemoHeader: React.FC<{ active?: DemoKey }> = ({ active }) => {
   return (
     <header className="demo-ui demo-ui__header">
       <a className="demo-ui__title" href="/">
-        <img src={logoUrl} alt="Flyby Library" style={{ height: '16px', display: 'block' }} />
+        <img src={logoUrl} alt="Flyby Library" className="demo-ui__logo" />
       </a>
       <nav className="demo-ui__nav" aria-label="Demo navigation">
         {links.map((link) => (

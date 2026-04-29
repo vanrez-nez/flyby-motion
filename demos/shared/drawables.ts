@@ -139,15 +139,21 @@ export function drawArrow(
   const sideX = -ny;
   const sideY = nx;
 
+  const arrowSize = 8;
+  const arrowWidth = 4;
+
   graphics
     .moveTo(origin[0], origin[1])
     .lineTo(endX, endY)
-    .stroke({ color, width: 3, alpha: 0.9 })
-    .moveTo(endX, endY)
-    .lineTo(endX - nx * 12 + sideX * 6, endY - ny * 12 + sideY * 6)
-    .moveTo(endX, endY)
-    .lineTo(endX - nx * 12 - sideX * 6, endY - ny * 12 - sideY * 6)
-    .stroke({ color, width: 3, alpha: 0.9 });
+    .stroke({ color, width: 2, alpha: 0.8 });
+
+  graphics
+    .poly([
+      endX, endY,
+      endX - nx * arrowSize + sideX * arrowWidth, endY - ny * arrowSize + sideY * arrowWidth,
+      endX - nx * arrowSize - sideX * arrowWidth, endY - ny * arrowSize - sideY * arrowWidth
+    ])
+    .fill({ color, alpha: 0.9 });
 }
 
 function drawVectorFromEdge(
