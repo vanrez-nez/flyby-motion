@@ -15,3 +15,5 @@ export { Vector2 } from './lib/utils/Vector2';
 export { Vector3 } from './lib/utils/Vector3';
 export * as Vector2Fn from './lib/utils/Vector2Fn';
 export * as Vector3Fn from './lib/utils/Vector3Fn';
+export { onFrame } from './lib/utils/onFrame';
+export type { FrameCallback, FrameOptions, FrameUpdater } from './lib/utils/onFrame';
