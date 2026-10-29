@@ -16,6 +16,8 @@ export default defineConfig(({ mode, command }) => {
         emptyOutDir: true,
       },
       plugins: [react(), dts({
+        // The library's own tsconfig: the root one includes the demos, which moves the emitted root.
+        tsconfigPath: './tsconfig.lib.json',
         entryRoot: 'src',
         outDir: 'dist',
         include: ['src/**/*'],
@@ -27,6 +29,8 @@ export default defineConfig(({ mode, command }) => {
 
   return {
     plugins: [react(), dts({
+      // The library's own tsconfig: the root one includes the demos, which moves the emitted root.
+      tsconfigPath: './tsconfig.lib.json',
       entryRoot: 'src',
       outDir: 'dist',
       include: ['src/**/*'],

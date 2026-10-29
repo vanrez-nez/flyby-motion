@@ -1,43 +1,39 @@
-# How to use it
+# Getting Started
 
-This tutorial walks through `flyby-motion` from the simplest useful behavior to custom force functions.
+`flyby-motion` is a small library for motion-driven interactions. You build motion by adding **forces** to an **agent** and stepping the simulation each frame. There are no tweens, no keyframes, no start/end times — forces sum, integrate to velocity, integrate to position. That's the whole engine.
 
-## How the library is organized
+## Installation
 
-There are four public building blocks, and they all feed the same `Agent` + `step(...)` loop.
+```bash
+npm install flyby-motion
+```
 
-The **forces layer** is the engine. A force returns a vector each frame.
+```bash
+pnpm add flyby-motion
+yarn add flyby-motion
+```
 
-The **falloff layer** shapes forces that depend on distance.
+To run the demos and tutorial site locally, clone the repo and run `npm install && npm run dev`.
 
-The **behaviors layer** bundles common force combinations like arrival, fleeing, orbiting, and pursuit.
+## Mental model
 
-The **modifiers layer** transforms forces: scale them, gate them, time-window them, or sum them.
+Two pieces of state per agent:
 
-## The mental model
+- **Position** — where the agent is. In 2D it's `[x, y]`; in 3D `[x, y, z]`. Browser-canvas convention: `+y` points down in 2D.
+- **Velocity** — how position is changing per second. `[20, 0]` means moving right at 20 units/s.
 
-Every frame, the library answers one question for each agent:
+Every frame, `step()` answers one question for each agent:
 
 > What forces are pushing on this thing right now?
 
-It sums those forces, turns them into acceleration, then into velocity, then into position. That's the whole engine. There are no tweens, no keyframes, no start/end times. Forces just exist, and the agent moves under them.
+It sums the forces, divides by mass to get acceleration, integrates into velocity, and integrates velocity into position. That extra layer (force → velocity → position) is what gives motion its weight — things accelerate, drift, settle, overshoot.
 
-This is why behaviors compose without conflict. Two forces don't "fight" the way two tweens do — they add. An oscillating force plus an arrival behavior gives you a thing that floats *while* moving toward a target.
+This is also why behaviors compose without conflict. Two forces don't *fight* the way two tweens do — they **add**. An oscillator plus an arrival behavior gives you a thing that floats *while* moving toward a target.
 
-## Position and velocity
-
-Two pieces of state per agent.
-
-**Position** is where the agent is. In 2D it's `[x, y]`. `[100, 50]` means 100 right, 50 down (using browser canvas conventions where y increases downward).
-
-**Velocity** is how position is changing. `[20, 0]` means moving right at 20 units per second. `[0, -20]` means moving up at 20.
-
-Forces don't change position directly. They change velocity, and velocity changes position. That extra layer is what gives motion its weight — things accelerate, drift, settle, overshoot.
-
-## Creating an agent
+## Quick start
 
 ```ts
-import { Agent } from 'flyby-motion';
+import { Agent, step, forces, falloff } from 'flyby-motion';
 
 const agent = new Agent({
   position: [0, 0],
@@ -46,25 +42,13 @@ const agent = new Agent({
   maxSpeed: 600,
   maxForce: 1200,
 });
-```
 
-`mass` controls how readily the agent accelerates under force. Heavier agents feel slower. Start at `1`.
+const target = [200, 100];
+agent.add(forces.attract(() => target, falloff.constant(500)));
+agent.add(forces.damp(2));
 
-`maxSpeed` caps how fast the agent can move. Useful when forces would otherwise accelerate it past anything reasonable.
-
-`maxForce` caps the total force in any single frame. Prevents violent snaps when forces combine or targets jump.
-
-You can leave the caps at `Infinity` while prototyping and add them when motion gets unruly.
-
-## The frame loop
-
-Call `step(...)` once per frame.
-
-```ts
-import { step } from 'flyby-motion';
-
-let t = 0;
 let last = performance.now();
+let t = 0;
 
 function frame(now: number): void {
   const dt = Math.min((now - last) / 1000, 1 / 30);
@@ -73,7 +57,6 @@ function frame(now: number): void {
 
   step(agent, {}, t, dt);
 
-  // Render however you want:
   // sprite.x = agent.position[0];
   // sprite.y = agent.position[1];
 
@@ -83,157 +66,371 @@ function frame(now: number): void {
 requestAnimationFrame(frame);
 ```
 
-`t` is total elapsed time in seconds. `dt` is the time since the last frame. The library uses both. Clamping `dt` to `1/30` prevents huge jumps when a tab regains focus.
+`t` is total elapsed time in seconds. `dt` is time since the last frame. Clamping `dt` to `1/30` keeps a tab-refocus from producing one giant simulation step.
 
-The empty `{}` is the **world** — shared data for forces that need it (mouse position, neighbor lookups, etc.). Pass `{}` when you don't need it.
+The empty `{}` is the **world** — shared data forces can read (mouse position, neighbor lookups, etc.). Pass `{}` when you don't need it.
 
 The library does not render. Copy `agent.position` into your scene, DOM, canvas, or whatever you draw with.
 
+If you want to skip the manual `requestAnimationFrame` boilerplate, use `onFrame`:
+
+```ts
+import { onFrame } from 'flyby-motion';
+
+onFrame((t, dt) => step(agent, {}, t, dt), {
+  maxDelta: 1 / 30,
+  autoStart: true,
+  visibleOnly: true,
+});
+```
+
+## How the library is organized
+
+Four public building blocks. They all feed the same `Agent` + `step()` loop.
+
+### Forces layer
+
+The **forces layer** is the engine. A force is just a function that returns a vector each frame. The library ships building blocks for the common cases.
+
+```ts
+agent.add(forces.constant([0, 200]));     // gentle gravity
+agent.add(forces.damp(2));                // velocity-damping
+agent.add(forces.oscillate([0, 1], 30, 0.5));  // sine wave on Y
+```
+
+### Falloff layer
+
+A **falloff function** decides how `attract` and `repel` strengths vary with distance. Without one, attract returns force = distance (rarely what you want).
+
+```ts
+forces.attract(() => target, falloff.invSquare(400));
+forces.repel(() => threat, falloff.within(falloff.constant(500), 100));
+```
+
+`falloff.within` and `falloff.beyond` wrap any falloff with a range gate.
+
+### Behaviors layer
+
+**Behaviors** are pre-tuned bundles of forces. They are conveniences, but they stay explicit about their parameters. The fact that you can read each one as a small composition is the point of the layered design.
+
+```ts
+agent.add(behaviors.arrive(() => target));   // attract + damp, smooth deceleration
+agent.add(behaviors.flee(() => threat));     // range-limited repel + damp
+agent.add(behaviors.orbit(() => center));    // attract + tangential + damp
+agent.add(behaviors.pursue(() => leader));   // arrive at leader's predicted future position
+```
+
+### Modifiers layer
+
+**Modifiers** transform existing forces. They don't add new physics; they shape *when* and *how strongly* an existing force acts.
+
+```ts
+modifiers.scale(force, 0.5);                 // halve strength
+modifiers.gate((agent) => isClose(agent), force);
+modifiers.during(2, 5, force);               // only between t=2 and t=5
+modifiers.fadeIn(0.4, force);                // ramp up over 0.4s
+modifiers.sum(forceA, forceB);               // bundle multiple forces as one
+```
+
+## Writing your own force
+
+Anything matching `(agent, world, t, dt) => number[]` is a valid force.
+
+```ts
+const wind = () => [40, 0];
+agent.add(wind);
+
+const lift = (_agent, _world, t) => (t < 2 ? [0, 0] : [0, -300]);
+agent.add(lift);
+```
+
+A force should not mutate the agent. Return a vector. Let `step()` handle the rest.
+
+If your custom force ends up looking like *"sometimes return X, sometimes return zero"*, consider whether `modifiers.gate` would express it more clearly. If it's *"ramp from zero"*, consider `modifiers.fadeIn`. The modifiers exist to keep custom forces small and readable.
+
+## Tuning advice
+
+Start with one force at a time. Add others once it feels right alone.
+
+- **Motion overshoots** — increase damping, decrease strength, or increase the slow radius.
+- **Motion feels sluggish** — decrease damping, increase strength, or raise `maxForce`.
+- **Motion explodes** — cap `maxSpeed` and `maxForce`. Check whether two forces are fighting each other (an attract and a repel at similar strengths near the same point will get loud).
+- **Agent stops moving when it shouldn't** — damping may have killed velocity. Lower damping or add a sustaining force like an oscillator or constant push.
+
+## A learning order
+
+If you're working through this end-to-end, this is roughly the right order to play with things:
+
+1. `behaviors.arrive` — get a feel for "agent goes to a place."
+2. `forces.damp` and `forces.constant` — the simplest low-level pieces.
+3. `forces.attract` with different `falloff` curves — see how strength shaping changes feel.
+4. `behaviors.flee`, `behaviors.orbit`, and `behaviors.pursue` — named patterns with full control.
+5. `modifiers.gate` and `modifiers.during` — conditional and time-bounded forces.
+6. Custom force functions — when nothing built in fits.
+
+By the end, the library should feel like a small set of pieces rather than a list of features.
+
 ---
 
-## Layer 1: Forces
+# API Reference
 
-A **force** is just a function that returns a vector each frame:
+Every export from `flyby-motion`. Each entry shows the signature, defaults, and a short snippet.
 
-```ts
-type Force = (agent, world, t, dt) => number[];
-```
+## Agent
 
-You add forces to an agent. The library sums them. That's it.
+The simulated body. Holds position, velocity, and a set of forces.
 
-The library ships four force-building namespaces:
-
-- **`forces`** — the building blocks (attract, repel, damp, oscillate, …)
-- **`falloff`** — curves that shape how force strength varies with distance
-- **`behaviors`** — pre-tuned bundles of forces (arrive, flee, orbit, pursue)
-- **`modifiers`** — operations on forces (scale, gate, time-window, sum)
-
-If you can name a behavior in those four buckets, you usually don't need to write a custom force. If you can't, you write a function that returns a vector and add it directly.
-
-### `forces`
+### new Agent(options)
 
 ```ts
-import { forces } from 'flyby-motion';
+new Agent(options?: AgentOptions)
+
+interface AgentOptions {
+  position?: number[];   // default: [0, 0] — dimension inferred from position.length
+  velocity?: number[];   // default: zero vector matching position dimension
+  mass?: number;         // default: 1
+  maxSpeed?: number;     // default: Infinity
+  maxForce?: number;     // default: Infinity
+}
 ```
 
-#### `forces.attract(targetFn, falloffFn?)`
+`mass` controls how readily the agent accelerates under force. Heavier agents feel slower.
 
-Pulls toward a (possibly moving) target.
+`maxSpeed` caps how fast the agent can move. `maxForce` caps the total force magnitude in any single frame — prevents violent snaps when forces combine. You can leave both at `Infinity` while prototyping.
+
+```ts
+const agent = new Agent({ position: [0, 0], maxSpeed: 600, maxForce: 1200 });
+```
+
+### agent.add / remove / clear
+
+```ts
+agent.add(force, opts?: { label?: string }): Force   // returns the force back
+agent.remove(force): boolean
+agent.clear(): void
+```
+
+`add` returns the same force, so you can keep a handle:
+
+```ts
+const click = agent.add(behaviors.arrive(() => target), { label: 'click' });
+// later:
+agent.remove(click);
+```
+
+The optional `label` is retrievable via `getForceLabel(force)` — useful for debug overlays. Forces can be added or removed mid-frame; changes take effect on the next step.
+
+### Force type
+
+```ts
+type Force = (agent: Agent, world: World, t: number, dt: number) => number[];
+```
+
+A force returns a vector matching the agent's dimension (2 numbers in 2D, 3 in 3D). Returning `[0, 0]` means "no force this frame."
+
+### World type
+
+```ts
+type World = Record<string, unknown>;
+```
+
+Free-form shared data passed to every force. Pass `{}` when you don't need it. Use it for mouse position, neighbor lookups, time-of-day — anything multiple forces want to read.
+
+### getForceLabel(force)
+
+```ts
+getForceLabel(force: Force): string | undefined
+```
+
+Returns the label assigned via `agent.add(force, { label })`. Returns `undefined` if no label was set.
+
+## step
+
+```ts
+step(agent: Agent, world: World, t: number, dt: number): void
+```
+
+Run once per frame per agent. Returns immediately if `dt <= 0`.
+
+Order of operations: emit `step:before` → sum all forces → clamp to `maxForce` → emit `force:applied` → integrate to velocity → clamp to `maxSpeed` → integrate to position → emit `step:after`. (See **events** below to subscribe.)
+
+```ts
+step(agent, {}, t, dt);
+```
+
+## forces
+
+Force constructors. Each returns a `Force` you pass to `agent.add()`.
+
+### forces.constant
+
+```ts
+forces.constant(vec: number[]): Force
+```
+
+A fixed force every frame. Pair with damping to get terminal-velocity drift.
+
+```ts
+agent.add(forces.constant([0, 200]));   // gentle downward pull
+agent.add(forces.damp(2));
+```
+
+### forces.damp
+
+```ts
+forces.damp(coefficient: number): Force
+```
+
+A force opposite the agent's current velocity. Reduces motion over time. Damping is what makes things settle — without it, agents tend to oscillate or drift indefinitely.
+
+```ts
+agent.add(forces.damp(2));
+```
+
+### forces.attract
+
+```ts
+forces.attract(targetFn: () => number[], falloffFn?: FalloffFn): Force
+```
+
+Pulls toward a (possibly moving) target. The target is always a function — that's how the force tracks moving targets, leader positions, predicted points. Without a falloff, magnitude equals distance, which is rarely what you want.
 
 ```ts
 agent.add(forces.attract(() => target, falloff.constant(500)));
 ```
 
-The target is always a function — that's how the force tracks moving targets, leader positions, predicted points, anything dynamic.
+### forces.repel
 
-The falloff function decides force *strength* based on distance. Without one, strength equals distance (farther → stronger), which is rarely what you want.
+```ts
+forces.repel(sourceFn: () => number[], falloffFn?: FalloffFn): Force
+```
 
-#### `forces.repel(sourceFn, falloffFn?)`
-
-The opposite. Pushes away.
+Pushes away from a source. Same shape as `attract`, opposite direction.
 
 ```ts
 agent.add(forces.repel(() => threat, falloff.invSquare(400)));
 ```
 
-#### `forces.damp(coefficient)`
-
-A force opposite the agent's current velocity. Reduces motion over time.
+### forces.oscillate
 
 ```ts
-agent.add(forces.damp(2));
+forces.oscillate(direction: number[], amplitude: number, freq: number, phase?: number): Force
+// phase defaults to 0
 ```
 
-Damping is what makes things settle. Without it, agents tend to oscillate or drift indefinitely.
-
-#### `forces.drift(config?)`
-
-Organic idle motion. `drift` samples smooth noise and turns it into a force, so the agent keeps moving in an unpredictable but gentle way.
+A sinusoidal force along an axis. Use perpendicular oscillators at different frequencies for idle floating motion.
 
 ```ts
-agent.add(forces.drift({ strength: 80 }));
-agent.add(forces.damp(4));
+agent.add(forces.oscillate([0, 1], 30, 0.5));   // up/down at amplitude 30, 0.5 Hz
 ```
 
-The canonical idle pattern adds a weak home spring. Drift creates the living motion, damping keeps velocity under control, and the spring keeps the equilibrium centered on the home position.
+### forces.drift
 
 ```ts
-const home = [...agent.position];
+forces.drift(config?: DriftConfig): Force
 
+interface DriftConfig {
+  strength?: number;       // default: 50
+  scale?: number;          // default: 0.5 — noise rate (lower = slower drift)
+  seed?: number;           // default: per-axis index * 1000
+  noiseFn?: (x: number) => number;  // default: built-in 1D Perlin
+  x?: true | false | AxisConfig;
+  y?: true | false | AxisConfig;
+  z?: true | false | AxisConfig;
+}
+
+type AxisConfig = { strength?: number; scale?: number; seed?: number };
+```
+
+Organic idle motion. Samples smooth noise per axis. If you set any per-axis value to `true` or an `AxisConfig`, drift switches to per-axis mode and inactive axes are disabled. Use `drift` when motion should feel organic; use `oscillate` when it should feel rhythmic.
+
+```ts
 agent.add(forces.drift({ strength: 80, scale: 0.5 }));
-agent.add(forces.attract(() => home, (distance) => distance * 2));
 agent.add(forces.damp(4));
+
+// Per-axis: drift only on X with a custom seed
+agent.add(forces.drift({ x: { strength: 80, seed: 42 }, y: false }));
 ```
 
-Use `drift` when the motion should feel organic and unpredictable. Use `oscillate` when it should feel structured or rhythmic. Drift composes cleanly with home springs because its noise has no long-term directional bias; oscillators are better for deliberate pulses, breathing, or regular waves.
-
-#### `forces.oscillate(direction, amplitude, freq, phase?)`
-
-A sinusoidal force along an axis.
+### forces.tangential
 
 ```ts
-agent.add(forces.oscillate([0, 1], 30, 0.5));
+forces.tangential(k: number): Force   // 2D only
 ```
 
-Pushes up and down with amplitude 30, twice per second. Combine two perpendicular oscillators at different frequencies for idle floating motion.
-
-#### `forces.constant(vec)`
-
-A fixed force every frame. Pair with damping to get terminal-velocity drift.
-
-```ts
-agent.add(forces.constant([0, 200]));   // gentle gravity
-agent.add(forces.damp(2));
-```
-
-#### `forces.tangential(k)` (2D) / `forces.tangentialAround(axis, k)` (3D)
-
-A force perpendicular to current velocity. Bends paths into curves. Combined with attraction, it produces orbital motion.
+A 2D force perpendicular to current velocity (rotated counter-clockwise). Bends paths into curves. Combined with attraction, produces orbital motion.
 
 ```ts
 agent.add(forces.attract(() => center, falloff.constant(200)));
 agent.add(forces.tangential(150));
 ```
 
-In 3D the perpendicular direction isn't unique — pass a reference axis (usually world-up):
+### forces.tangentialAround
+
+```ts
+forces.tangentialAround(axis: number[], k: number): Force   // 3D
+```
+
+Same idea in 3D, but the perpendicular direction isn't unique — pass a reference axis (usually world-up).
 
 ```ts
 agent.add(forces.tangentialAround([0, 1, 0], 150));
 ```
 
-## Layer 2: Falloff
-
-Falloff functions shape attraction and repulsion by distance.
-
-### `falloff`
-
-```ts
-import { falloff } from 'flyby-motion';
-```
+## falloff
 
 Falloff functions take a distance and return a force magnitude. They're how you say "strong nearby, weak far away" or "only matters within range" without writing custom logic.
 
-#### `falloff.constant(k)`
+```ts
+type FalloffFn = (distance: number) => number;
+```
+
+### falloff.constant
+
+```ts
+falloff.constant(k: number): FalloffFn
+```
 
 Same strength at any distance. Direction still depends on where the target is; just the *amount* is fixed.
 
-#### `falloff.linear(k)`
+### falloff.linear
+
+```ts
+falloff.linear(k: number): FalloffFn
+```
 
 Strength grows with distance. Spring-like. Far targets pull harder.
 
-#### `falloff.invSquare(k, eps?)`
+### falloff.invSquare
 
-Strong nearby, fades fast with distance. Gravity-like, charge-like. The `eps` parameter prevents the force exploding when distance approaches zero.
+```ts
+falloff.invSquare(k: number, eps?: number): FalloffFn
+// eps defaults to 0.001
+```
 
-#### `falloff.arrive(k, slowR)`
+Strong nearby, fades fast with distance. Gravity- and charge-like. `eps` prevents the force exploding as distance approaches zero.
 
-Full strength outside `slowR`, scales down inside it. The core of smooth arrival — agents approach at full speed and ease in close.
+### falloff.arrive
 
-#### `falloff.exponential(k, rate)`
+```ts
+falloff.arrive(k: number, slowR: number): FalloffFn
+```
+
+Full strength `k` outside `slowR`, scales linearly toward zero inside it. The core of smooth arrival — agents approach at full speed and ease in close.
+
+### falloff.exponential
+
+```ts
+falloff.exponential(k: number, rate: number): FalloffFn
+```
 
 Smooth fade from `k` at zero distance toward zero at infinity. Higher `rate` = faster fade.
 
-#### `falloff.within(fn, maxR)`
+### falloff.within
+
+```ts
+falloff.within(fn: FalloffFn, maxR: number): FalloffFn
+```
 
 Wraps another falloff and returns zero outside `maxR`. Use for range-limited effects.
 
@@ -241,55 +438,78 @@ Wraps another falloff and returns zero outside `maxR`. Use for range-limited eff
 forces.repel(() => mouse, falloff.within(falloff.constant(500), 100));
 ```
 
-#### `falloff.beyond(fn, minR)`
+### falloff.beyond
+
+```ts
+falloff.beyond(fn: FalloffFn, minR: number): FalloffFn
+```
 
 Wraps another falloff and returns zero *inside* `minR`. Use for dead zones — no effect when too close.
 
-## Layer 3: Behaviors
+## behaviors
 
-Behaviors are named force combinations with explicit parameters.
+Pre-tuned force bundles. Each is `sum(...)` of a couple of forces, with explicit parameters.
 
-### `behaviors`
-
-```ts
-import { behaviors } from 'flyby-motion';
-```
-
-Behaviors are tuned bundles of forces. They are conveniences, but they stay explicit about their real parameters.
-
-#### `behaviors.arrive(targetFn, opts?)`
-
-Pull toward a target with smooth deceleration.
+### behaviors.arrive
 
 ```ts
-agent.add(behaviors.arrive(() => target, {
-  strength: 800,
-  slowR: 120,
-  damp: 2,
-}));
+behaviors.arrive(targetFn: () => number[], opts?: {
+  strength?: number;   // default: 1
+  slowR?: number;      // default: 100
+  damp?: number;       // default: 1
+}): Force
 ```
 
-Equivalent to `forces.attract(targetFn, falloff.arrive(strength, slowR))` plus `forces.damp(damp)` summed together. The fact that you can read it as "attract + damp" is the point of the layered design.
+Pull toward a target with smooth deceleration. Equivalent to `forces.attract(targetFn, falloff.arrive(strength, slowR))` plus `forces.damp(damp)`.
 
-#### `behaviors.flee(sourceFn, opts?)`
+```ts
+// Tuned example for a fast, snappy click-to-go behavior:
+agent.add(behaviors.arrive(() => target, { strength: 800, slowR: 120, damp: 2 }));
+```
+
+### behaviors.flee
+
+```ts
+behaviors.flee(sourceFn: () => number[], opts?: {
+  strength?: number;   // default: 1
+  range?: number;      // default: 200
+  damp?: number;       // default: 0.5
+}): Force
+```
 
 Push away while the source is inside `range`; outside that distance, damping lets the agent settle.
 
 ```ts
-agent.add(behaviors.flee(() => threat, {
-  strength: 700,
-  range: 200,
-  damp: 1.5,
-}));
+agent.add(behaviors.flee(() => threat, { strength: 700, range: 200, damp: 1.5 }));
 ```
 
-#### `behaviors.orbit(centerFn, opts?)`
+### behaviors.orbit
 
-Attract + tangential + damping. There is no radius parameter. Orbit shape emerges from the balance of forces.
+```ts
+behaviors.orbit(centerFn: () => number[], opts?: {
+  attractK?: number;   // default: 1
+  tangentK?: number;   // default: 1
+  damp?: number;       // default: 0
+}): Force
+```
 
-#### `behaviors.pursue(leaderFn, opts?)`
+`attract + tangential + damp`. There is no radius parameter — orbit shape emerges from the balance of forces. This bundle is 2D-only because `tangential` is 2D; for 3D, compose `attract + tangentialAround` manually.
 
-Like `arrive`, but targets the leader's predicted future position based on its velocity.
+### behaviors.pursue
+
+```ts
+behaviors.pursue(
+  leaderFn: () => { position: number[]; velocity: number[] },
+  opts?: {
+    strength?: number;   // default: 5
+    slowR?: number;      // default: 50
+    damp?: number;       // default: 1
+    lookahead?: number;  // default: 0.3 (seconds)
+  },
+): Force
+```
+
+Like `arrive`, but targets the leader's *predicted* future position based on its velocity.
 
 ```ts
 agent.add(behaviors.pursue(() => ({ position: leader.pos, velocity: leader.vel }), {
@@ -298,25 +518,28 @@ agent.add(behaviors.pursue(() => ({ position: leader.pos, velocity: leader.vel }
 }));
 ```
 
-## Layer 4: Modifiers
+## modifiers
 
-Modifiers transform existing forces.
+Operations on existing forces.
 
-### `modifiers`
+### modifiers.scale
 
 ```ts
-import { modifiers } from 'flyby-motion';
+modifiers.scale(force: Force, k: number): Force
 ```
-
-Modifiers take a force and return a new force. They don't add new physics; they shape *when* and *how strongly* an existing force acts.
-
-#### `modifiers.scale(force, k)`
 
 Multiply a force's strength by `k`. Use `0.5` to soften, `2` to amplify, `-1` to invert.
 
-#### `modifiers.gate(predicate, force)`
+### modifiers.gate
 
-Run a force only when a condition holds.
+```ts
+modifiers.gate(
+  pred: (agent: Agent, world: World, t: number) => boolean,
+  force: Force,
+): Force
+```
+
+Run a force only when a condition holds. When `pred` is false, the modifier returns the zero vector.
 
 ```ts
 const closeRepel = modifiers.gate(
@@ -325,21 +548,41 @@ const closeRepel = modifiers.gate(
 );
 ```
 
-#### `modifiers.during(start, end, force)`
+### modifiers.during
 
-Run a force only during a time window. Times are in seconds since `t=0`.
+```ts
+modifiers.during(start: number, end: number, force: Force): Force
+```
+
+Run a force only during a time window. Times are seconds since `t = 0`.
 
 ```ts
 agent.add(modifiers.during(2, 5, forces.constant([100, 0])));
 ```
 
-#### `modifiers.fadeIn(duration, force)` / `modifiers.fadeOut(duration, force)`
+### modifiers.fadeIn
 
-Ramp a force in or out smoothly over a duration. Useful when a sudden force-on or force-off would feel like a snap.
+```ts
+modifiers.fadeIn(duration: number, force: Force): Force
+```
 
-#### `modifiers.sum(...forces)`
+Ramp a force from zero to full strength over `duration` seconds, starting from the first frame the modifier is evaluated. Useful when a sudden force-on would feel like a snap.
 
-Add multiple forces into a single force. This is exactly what the agent does internally — `sum` exposes the same operation so you can pre-bundle forces and manage them as a unit.
+### modifiers.fadeOut
+
+```ts
+modifiers.fadeOut(duration: number, force: Force): Force
+```
+
+Symmetrical to `fadeIn` — ramps from full to zero over `duration`. After that, the modifier always returns zero.
+
+### modifiers.sum
+
+```ts
+modifiers.sum(...forces: Force[]): Force
+```
+
+Add multiple forces into a single force. The agent does this internally already; `sum` exposes the same operation so you can pre-bundle forces and manage them as a unit.
 
 ```ts
 const combo = modifiers.sum(
@@ -347,84 +590,103 @@ const combo = modifiers.sum(
   forces.oscillate([0, 1], 20, 0.5),
 );
 
-agent.add(combo);
+agent.add(combo);   // remove `combo` and both parts go at once
 ```
 
-The agent treats `combo` as one force. Removing `combo` removes both of its parts at once.
+## Utilities
 
----
+Smaller helpers — the bits you reach for occasionally.
 
-## Writing your own force
+### onFrame
 
-Anything that takes `(agent, world, t, dt)` and returns a vector is a valid force.
+A `requestAnimationFrame` wrapper that hands you `(elapsed, delta)` in seconds.
 
 ```ts
-const wind = () => [40, 0];
-agent.add(wind);
+onFrame(callback: (elapsed: number, delta: number) => void, options?: FrameOptions): FrameUpdater
+
+interface FrameOptions {
+  maxDelta?: number;     // default: Infinity — clamp per-frame delta in seconds
+  autoStart?: boolean;   // default: false — start the loop immediately
+  visibleOnly?: boolean; // default: false — skip callback while document is hidden
+}
+
+interface FrameUpdater {
+  start(): FrameUpdater;
+  stop(): FrameUpdater;
+  getElapsedTime(): number;
+  getDelta(): number;
+}
 ```
 
-A force that activates after two seconds:
-
 ```ts
-const lift = (_agent, _world, t) => {
-  if (t < 2) return [0, 0];
-  return [0, -300];
-};
-agent.add(lift);
-```
-
-A force should not mutate the agent. Return a vector. Let `step(...)` handle the rest.
-
-If your custom force ends up looking like "sometimes return X, sometimes return Y," consider whether `modifiers.gate` would express it more clearly. If it's "ramp from zero," consider `modifiers.fadeIn`. The modifiers exist to keep custom forces small and readable.
-
-## Adding and removing forces
-
-`agent.add(force)` returns the same force back, so you can keep a handle:
-
-```ts
-const click = agent.add(behaviors.arrive(() => target));
-
+const updater = onFrame((t, dt) => step(agent, {}, t, dt), { maxDelta: 1 / 30 }).start();
 // later:
-agent.remove(click);
+updater.stop();
 ```
 
-`agent.clear()` removes all forces.
+### events
 
-Forces can be added and removed mid-frame. Changes take effect on the next step.
+Agent extends an `EventEmitter`. Subscribe with `agent.on(name, handler)`; unsubscribe by calling the returned function or `agent.off(name, handler)`.
 
----
+| Event           | Payload                          |
+|-----------------|----------------------------------|
+| `step:before`   | `(agent, world, t, dt)`          |
+| `step:after`    | `(agent, world, t, dt)`          |
+| `force:applied` | `(totalForce: number[])` — clamped sum |
+| `force:added`   | `(force)`                        |
+| `force:removed` | `(force)`                        |
 
-## When to use which layer
+```ts
+const off = agent.on('force:applied', (total) => debugDraw(total));
+// later: off();
+```
 
-A rough heuristic:
+### spatial
 
-- **Behaviors** if you want a named pattern with full parameter control.
-- **Forces + falloff + modifiers** if you're composing something custom. Combining flee with idle float, gating an attractor by distance, time-windowing an effect.
-- **Custom force functions** if your motion depends on state the library doesn't model — game logic, animation phase, external sensors.
+Shared interface for neighbor lookups. Useful when forces need to query nearby agents without checking everyone.
 
-You can mix layers freely. A custom force coexists with behaviors and modifiers. Everything ends up in the same sum.
+```ts
+interface SpatialIndex<T> {
+  insert(point: number[], data: T): void;
+  remove(point: number[], data: T): boolean;
+  query(point: number[], radius: number): T[];
+  clear(): void;
+}
+```
 
-## Tuning advice
+Implementations:
 
-Start with one force at a time. Add others once it feels right alone.
+- `new Grid<T>(cellSize: number)` — uniform grid; great default for evenly distributed agents.
+- `new QuadTree<T>(bounds: { x, y, w, h }, capacity?: number = 8)` — 2D, adaptive subdivision.
+- `new Octree<T>(bounds: { x, y, z, w, h, d }, capacity?: number = 8)` — 3D, adaptive subdivision.
 
-If motion overshoots: increase damping, decrease strength, or increase the slow radius.
+```ts
+import { spatial } from 'flyby-motion';
 
-If motion feels sluggish: decrease damping, increase strength, or raise `maxForce`.
+const grid = new spatial.Grid<Agent>(50);
+agents.forEach((a) => grid.insert(a.position, a));
+const nearby = grid.query(agent.position, 100);
+```
 
-If motion explodes: cap `maxSpeed` and `maxForce`. Check whether two forces are fighting each other (an attract and a repel at similar strengths near the same point will get loud).
+### Vector2 and Vector3
 
-If an agent stops moving when it shouldn't: damping may have killed its velocity. Either lower damping or add a sustaining force like an oscillator or a constant push.
+Small mutable vector classes. Constructors accept defaults that chain (`new Vector2(5)` gives `(5, 5)`, `new Vector3(5)` gives `(5, 5, 5)`).
 
-## A learning order
+Methods on both: `set`, `copy`, `clone`, `add`, `sub`, `multiply`, `divide`, `scale`, `negate`, `inverse`, `normalize`, `dot`, `len`, `squaredLen`, `distance`, `squaredDistance`, `lerp`, `smoothLerp`, `equals`, `fromArray`, `toArray`. `Vector3` adds `angle`. `Vector2.cross` returns a scalar; `Vector3.cross` writes a vector and is mutating — pick the right one for your code path.
 
-If you're working through this end to end, this is roughly the right order to play with things:
+These are convenient for app code. The library itself works on `number[]` and uses the function-style helpers below.
 
-1. `behaviors.arrive` — get a feel for "agent goes to a place."
-2. `forces.damp` and `forces.constant` — the simplest low-level pieces.
-3. `forces.attract` with different `falloff` curves — understand how strength shaping changes feel.
-4. `behaviors.flee`, `behaviors.orbit`, and `behaviors.pursue` — named patterns with full control.
-5. `modifiers.gate` and `modifiers.during` — conditional and time-bounded forces.
-6. Custom force functions — when nothing built in fits.
+### Vector2Fn and Vector3Fn
 
-By the time you reach step 7, the library should feel like a small set of pieces rather than a list of features.
+Out-style pure functions following the gl-matrix convention `(out, a, b) => out`. They mutate `out` and return it, so you can chain or alias.
+
+```ts
+import { Vector2Fn } from 'flyby-motion';
+
+const out = [0, 0];
+Vector2Fn.subtract(out, target, agent.position);
+Vector2Fn.normalize(out, out);
+Vector2Fn.scale(out, out, 100);
+```
+
+Functions in both: `copy`, `set`, `add`, `subtract`, `multiply`, `divide`, `scale`, `negate`, `inverse`, `normalize`, `dot`, `cross`, `length`, `squaredLength`, `distance`, `squaredDistance`, `lerp`, `smoothLerp`, `exactEquals`. `Vector3Fn` also exports `angle`. `Vector2Fn.cross` returns a scalar (the z-component of the 3D cross). `Vector3Fn.cross` writes into `out`.
