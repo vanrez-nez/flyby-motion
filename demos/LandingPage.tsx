@@ -1,46 +1,61 @@
-import React from 'react';
-import { useMarkdown, getMarkdownSections } from './shared/hooks/useMarkdown';
-import { MarkdownNav } from './shared/components/MarkdownNav';
+import React, { useState } from 'react';
+import { SiteHeader } from './shared/components/SiteHeader';
 import { DemoFooter } from './shared/components/DemoFooter';
+import { FlybyField3D } from './landing/FlybyField3D';
+import { withBase } from './shared/routes';
+import { arrowRightIcon } from './shared/icons';
 import logoUrl from './flyby-logo.svg';
-import tutorialMarkdown from '../TUTORIAL.md?raw';
+import pkg from '../package.json';
+import './LandingPage.css';
+
+const INSTALL_COMMAND = 'npm install flyby-motion';
 
 export const LandingPage: React.FC = () => {
-  const sections = getMarkdownSections(tutorialMarkdown);
-  const html = useMarkdown(tutorialMarkdown);
+  const [formation, setFormation] = useState('sphere');
 
   return (
     <div className="landing">
-      <div className="landing__grid">
-        <header className="landing__hero">
-          <div className="landing__hero-brand">
-            <img src={logoUrl} alt="Flyby Library" className="landing__logo" />
-          </div>
-          <div className="landing__buttons">
-            <a href="/2d/forces" className="landing__buttons-btn landing__buttons-btn--2d">
-              2D Demo
-            </a>
-            <a href="/3d/forces" className="landing__buttons-btn landing__buttons-btn--3d">
-              3D Demo
-            </a>
-          </div>
-        </header>
+      <FlybyField3D className="landing__field" logoUrl={logoUrl} onFormationChange={setFormation} />
+      <div className="landing__veil" aria-hidden="true" />
 
-        <aside className="landing__sidebar">
-          <MarkdownNav sections={sections} />
-        </aside>
+      <SiteHeader active="home" variant="overlay" />
 
-        <main className="landing__main">
-          <article
-            className="markdown-body"
-            dangerouslySetInnerHTML={{ __html: html }}
-          />
-        </main>
-      </div>
+      <main className="landing__hero">
+        <p className="site-eyebrow">flyby-motion {pkg.version}</p>
+        <h1 className="landing__title">
+          <span className="landing__title-line">Motion,</span>
+          <span className="landing__title-line landing__title-line--outline">in flight</span>
+        </h1>
+        <p className="landing__lead">
+          A small force-based motion library. Agents sum forces, integrate to velocity, integrate to
+          position — no tweens, no keyframes. Everything behind this text is live agents: move the
+          pointer through them, click to scatter.
+        </p>
 
-      <footer className="landing__footer">
+        <div className="landing__actions">
+          <tp-button size="lg" href={withBase('/docs')}>Get started</tp-button>
+          <tp-button size="lg" variant="outline" href={withBase('/3d/forces')}>
+            Demos
+            <tp-icon slot="icon-end" icon={arrowRightIcon}></tp-icon>
+          </tp-button>
+        </div>
+
+        <div className="landing__install">
+          <code className="landing__install-code">
+            <span className="landing__install-prompt" aria-hidden="true">$</span> {INSTALL_COMMAND}
+          </code>
+          <tp-copy-button value={INSTALL_COMMAND} variant="ghost" size="sm" label="Copy install command"></tp-copy-button>
+        </div>
+      </main>
+
+      <p className="landing__caption" aria-live="polite">
+        <span className="landing__caption-dot" aria-hidden="true" />
+        {formation} · attract + arrive · drift · swirl · repel
+      </p>
+
+      <div className="landing__footer">
         <DemoFooter />
-      </footer>
+      </div>
     </div>
   );
 };
