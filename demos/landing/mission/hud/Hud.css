@@ -136,6 +136,25 @@
 .hud__panel--forces { left: var(--hud-side-left); }
 .hud__panel--telemetry { right: var(--hud-side-right); width: clamp(7.5rem, 13cqi, 9rem); }
 
+/*
+ * The side panels sit out toward the rim of the optic (postPass.ts), so they get a cheap copy of
+ * its look: a faint colour fringe, red toward the centre and blue outward as the pass splits the
+ * scene, and a touch of softness. The telemetry panel sits further out, so it gets a little more.
+ * Static: nothing here runs per frame.
+ */
+.hud__panel {
+  --hud-fringe: 0.7px;
+  text-shadow:
+    var(--hud-fringe) 0 rgba(255, 60, 120, 0.35),
+    calc(-1 * var(--hud-fringe)) 0 rgba(60, 200, 255, 0.35);
+  filter: blur(0.25px);
+}
+
+.hud__panel--telemetry {
+  --hud-fringe: -0.9px;
+  filter: blur(0.4px);
+}
+
 .hud__heading {
   margin: 0 0 0.7em;
   font: inherit;

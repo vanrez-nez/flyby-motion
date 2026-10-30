@@ -18,13 +18,13 @@ export const LandingPage: React.FC = () => {
         <main className="landing__hero">
           <p className="site-eyebrow">flyby-motion {version}</p>
           <h1 className="landing__title">
-            <span className="landing__title-line">Motion,</span>
-            <span className="landing__title-line landing__title-line--outline">in flight</span>
+            <span className="landing__title-line">Forces in</span>
+            <span className="landing__title-line landing__title-line--outline">motion out</span>
           </h1>
           <p className="landing__lead">
-            A small force-based motion library. Agents sum forces, integrate to velocity, integrate to
-            position — no tweens, no keyframes. The drone flying this mission is one agent: every
-            mode on its HUD is a force from the library, live.
+            A small force-based motion library. Agents sum forces, integrate to velocity, then
+            integrate to position. No tweens, no keyframes. Combine simple behaviors to create fluid,
+            responsive motion without scripting every move.
           </p>
 
           <div className="landing__actions">
