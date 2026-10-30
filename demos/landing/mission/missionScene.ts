@@ -5,6 +5,8 @@ import { createChaseCamera } from './chaseCamera';
 import { createHudPublisher } from './hudPublisher';
 import type { HudAnchors, HudMessage, HudSnapshot } from './hudState';
 import { createMission, type HudEvent, type MissionState } from './missionScript';
+import { BEACON_DROP } from './markers';
+import { createObjectives } from './objectives';
 import { readPalette } from './palette';
 import { createSceneObjects, type Detail } from './sceneObjects';
 import { createWorld } from './world';
@@ -28,13 +30,13 @@ export interface MissionScene {
 const COMPACT_QUERY = '(max-width: 860px)';
 
 /**
- * Contour density: rows are the lines across the valley, samples the points along each line.
- * Denser on desktop (~0.9 m between rows); phones keep a lighter mesh. All of it is one draw call.
+ * Contour detail: the grid cell the contours are traced on. Finer on desktop for smoother curves;
+ * phones keep a lighter mesh. All of it is one draw call.
  */
 function detailFor(compact: boolean): Detail {
   return compact
-    ? { terrainRows: 80, terrainSamples: 110, pointsPerSpire: 80 }
-    : { terrainRows: 150, terrainSamples: 200, pointsPerSpire: 160 };
+    ? { terrainCell: 1.2, pointsPerSpire: 80 }
+    : { terrainCell: 0.8, pointsPerSpire: 160 };
 }
 
 export async function createMissionScene(options: MissionSceneOptions, signal: AbortSignal): Promise<MissionScene> {
@@ -94,6 +96,20 @@ export async function createMissionScene(options: MissionSceneOptions, signal: A
   const goalOf = (state: MissionState): number[] | null =>
     state.targetLocked ? mission.target.position : state.waypoint?.position ?? null;
 
+  // Beacons: the current objective emits waves until the drone reaches it; then it switches off
+  // and, once its pulse has dropped down the pole, a scan wave rings out across the terrain.
+  const objectives = createObjectives(mission.world.waypoints, (waypoint) => {
+    objects.scan.trigger(waypoint.position[0], waypoint.position[2], BEACON_DROP);
+  });
+  const updateBeacons = (state: MissionState, dt: number) => {
+    for (const [id, beaconState] of objectives.update(mission.drone.position, state.waypoint?.id ?? null)) {
+      const pin = objects.pins.get(id);
+      pin?.setState(beaconState);
+      pin?.update(dt);
+    }
+    objects.scan.update(dt);
+  };
+
   let messageId = 0;
   let lastPhase = -1;
   // Mission time accumulates frame deltas: `onFrame` restarts its elapsed time at 0 on every
@@ -104,12 +120,14 @@ export async function createMissionScene(options: MissionSceneOptions, signal: A
     const t = clock;
     const state = mission.update(t, dt);
     if (state.phaseIndex !== lastPhase) {
-      if (state.phaseIndex === 0) objects.trail.reset();
-      lastPhase = state.phaseIndex;
-      for (const waypoint of mission.world.waypoints) {
-        objects.pins.get(waypoint.id)?.setActive(state.waypoint?.label === waypoint.label);
+      if (state.phaseIndex === 0) {
+        objects.trail.reset();
+        objectives.reset();
+        objects.scan.reset();
       }
+      lastPhase = state.phaseIndex;
     }
+    updateBeacons(state, dt);
     for (const event of pending.splice(0)) {
       onMessage({ id: ++messageId, text: event.text, tone: event.tone, at: t });
     }
@@ -121,9 +139,6 @@ export async function createMissionScene(options: MissionSceneOptions, signal: A
     objects.arrows.update(state.activeForces, dt);
     objects.goalLine.set(mission.drone.position, goalOf(state));
     objects.trail.push(mission.drone.position);
-    for (const pin of objects.pins.values()) {
-      pin.rings.forEach((ring, i) => ring.scale.setScalar(1 + ((t * 0.8 + i * 0.5) % 1) * 0.35));
-    }
 
     chase.update(t, dt);
     renderer.render(scene, camera);
@@ -135,7 +150,13 @@ export async function createMissionScene(options: MissionSceneOptions, signal: A
   let updater: FrameUpdater | null = null;
   if (reducedMotion) {
     let state = mission.update(1 / 60, 1 / 60);
-    for (let i = 2; i <= 60 * 30; i++) state = mission.update(i / 60, 1 / 60);
+    for (let i = 2; i <= 60 * 30; i++) {
+      state = mission.update(i / 60, 1 / 60);
+      updateBeacons(state, 0); // still image: track reached waypoints, no wave animation
+    }
+    // Show the end of every switch-off: lights out, scans done, the mapped ground left lit.
+    objects.pins.forEach((pin) => pin.update(BEACON_DROP));
+    objects.scan.settle();
     pending.length = 0;
     objects.drone.update(1);
     objects.target.update(0);

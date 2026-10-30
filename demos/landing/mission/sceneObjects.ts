@@ -4,8 +4,8 @@ import { createForceArrows, createGoalLine, type ForceArrows } from './forceArro
 import { createSpires, createWaypointPin, makeDotTexture, type WaypointPin } from './markers';
 import type { Mission } from './missionScript';
 import type { MissionPalette } from './palette';
-import { createGrid, createTerrain } from './terrain';
-import { terrainHeight } from './world';
+import { addTerrainScan, createTerrain, type TerrainScan } from './terrain';
+import { surfaceHeight } from './world';
 
 /** Everything drawn in the mission scene, built once, recolored when the theme changes. */
 export interface SceneObjects {
@@ -13,6 +13,7 @@ export interface SceneObjects {
   drone: DroneView;
   target: ReturnType<typeof createTargetView>;
   pins: Map<string, WaypointPin>;
+  scan: TerrainScan;
   arrows: ForceArrows;
   goalLine: ReturnType<typeof createGoalLine>;
   trail: { line: THREE.Line; push(point: number[]): void; reset(): void };
@@ -21,8 +22,8 @@ export interface SceneObjects {
 }
 
 export interface Detail {
-  terrainRows: number;
-  terrainSamples: number;
+  /** Grid cell (m) the contours are traced on. */
+  terrainCell: number;
   pointsPerSpire: number;
 }
 
@@ -30,21 +31,19 @@ export function createSceneObjects(mission: Mission, palette: MissionPalette, de
   const root = new THREE.Group();
   const { world } = mission;
 
-  // Lighter per line than before: twice as many contour lines, about the same overall brightness.
   const terrainMaterial = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.42, fog: true });
-  const gridMaterial = new THREE.LineBasicMaterial({ transparent: true, opacity: 0.12, fog: true });
-  const terrain = createTerrain(detail.terrainRows, detail.terrainSamples, terrainMaterial);
-  const grid = createGrid(gridMaterial);
+  const terrain = createTerrain(detail.terrainCell, terrainMaterial);
+  const scan = addTerrainScan(terrainMaterial, palette.line);
 
   const dot = makeDotTexture();
   const spireMaterial = new THREE.PointsMaterial({ size: 0.32, map: dot, transparent: true, depthWrite: false, opacity: 0.85, fog: true, sizeAttenuation: true });
   const spires = createSpires(world.spires, detail.pointsPerSpire, spireMaterial);
-  root.add(grid, terrain, spires);
+  root.add(terrain, scan.group, spires);
 
   const pins = new Map<string, WaypointPin>();
   for (const waypoint of world.waypoints) {
     const [x, , z] = waypoint.position;
-    const pin = createWaypointPin(waypoint, terrainHeight(x, z), palette.line);
+    const pin = createWaypointPin(waypoint, surfaceHeight(x, z), palette.line, dot);
     pins.set(waypoint.id, pin);
     root.add(pin.group);
   }
@@ -86,8 +85,8 @@ export function createSceneObjects(mission: Mission, palette: MissionPalette, de
   };
 
   const applyPalette = (p: MissionPalette) => {
-    gridMaterial.color.copy(p.line);
     terrainMaterial.color.copy(p.line);
+    scan.setColor(p.line);
     spireMaterial.color.copy(p.line);
     trailMaterial.color.copy(p.accent);
     // Additive glow reads on dark; on light, normal blending keeps lines dark on white.
@@ -103,16 +102,16 @@ export function createSceneObjects(mission: Mission, palette: MissionPalette, de
     drone,
     target,
     pins,
+    scan,
     arrows,
     goalLine,
     trail,
     applyPalette,
     dispose() {
       terrain.geometry.dispose();
-      grid.geometry.dispose();
       spires.geometry.dispose();
       trailGeometry.dispose();
-      [terrainMaterial, gridMaterial, spireMaterial, trailMaterial].forEach((m) => m.dispose());
+      [terrainMaterial, spireMaterial, trailMaterial].forEach((m) => m.dispose());
       dot.dispose();
       drone.dispose();
       target.dispose();
@@ -120,7 +119,9 @@ export function createSceneObjects(mission: Mission, palette: MissionPalette, de
       goalLine.dispose();
       root.traverse((object) => {
         const mesh = object as THREE.Mesh;
-        if (mesh.isMesh || (object as THREE.Line).isLine) {
+        if ((object as THREE.Sprite).isSprite) {
+          (object as THREE.Sprite).material.dispose();
+        } else if (mesh.isMesh || (object as THREE.Line).isLine) {
           mesh.geometry?.dispose();
           const material = mesh.material as THREE.Material | THREE.Material[];
           (Array.isArray(material) ? material : [material]).forEach((m) => m?.dispose());

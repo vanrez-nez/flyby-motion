@@ -76,6 +76,19 @@ export function terrainHeight(x: number, z: number): number {
   return valley * valley * ridges * 26 + peak * valley + noise(x * 0.08, z * 0.08) * 1.2 * valley;
 }
 
+/**
+ * The height the contours are drawn from: the terrain plus shallow swells and one sinkhole on the
+ * valley floor, so the floor carries contour lines too instead of reading as an empty plane. Drawing
+ * only: it stays within ~2 m of the floor, far below cruise altitude, so the flight ignores it.
+ */
+export function surfaceHeight(x: number, z: number): number {
+  const fromCorridor = Math.abs(x - corridorX(z));
+  const floor = 1 - Math.min(1, Math.max(0, (fromCorridor - VALLEY_HALF_WIDTH) / 36));
+  const swell = (noise(x * 0.05 + 31, z * 0.05 + 17) - 0.5) * 3.6 + (noise(x * 0.12 + 5, z * 0.12 + 9) - 0.5) * 1.1;
+  const sinkhole = Math.exp(-(((x + 13) ** 2) + ((z + 62) ** 2) * 0.7) / 70) * -4.5;
+  return terrainHeight(x, z) + (swell + sinkhole) * floor;
+}
+
 export interface Spire {
   position: [number, number, number];
   height: number;

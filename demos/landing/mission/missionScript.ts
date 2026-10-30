@@ -20,7 +20,7 @@ export interface MissionState {
   activeForces: InstrumentedForce[];
   targetLocked: boolean;
   targetVisible: boolean;
-  waypoint: { label: string; position: number[] } | null;
+  waypoint: { id: string; label: string; position: number[] } | null;
   nearestObstacle: { spire: Spire; distance: number } | null;
 }
 
@@ -126,7 +126,7 @@ export function createMission(world: World, onEvent: (event: HudEvent) => void):
         activeForces: active,
         targetLocked: phase.targetLocked,
         targetVisible: phase.targetVisible,
-        waypoint: wp ? { label: wp.label, position: wp.position } : null,
+        waypoint: wp ? { id: wp.id, label: wp.label, position: wp.position } : null,
         nearestObstacle: scratch.nearest,
       };
     },

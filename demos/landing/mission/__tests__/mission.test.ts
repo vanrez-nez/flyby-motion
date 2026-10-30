@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createWorld, terrainHeight } from '../world';
 import { createMission, type HudEvent, type MissionState } from '../missionScript';
+import { createObjectives, REACHED_RADIUS } from '../objectives';
 
 const DT = 1 / 60;
 
@@ -107,5 +108,50 @@ describe('drone mission', () => {
     for (const text of ['SYSTEMS ONLINE', 'OBSTACLES AHEAD', 'REROUTING', 'TARGET ACQUIRED', 'HOLDING 10M · ORBIT', 'TARGET RELEASED · RTB']) {
       expect(texts).toContain(text);
     }
+  });
+});
+
+describe('beacons', () => {
+  /** Replays the recorded loop through the objectives tracker, the way the scene does. */
+  const replay = () => {
+    const objectives = createObjectives(run.world.waypoints, (waypoint) => reached.push({ id: waypoint.id, at: frame }));
+    const reached: { id: string; at: number }[] = [];
+    let frame = 0;
+    const states = run.samples.map((s, i) => {
+      frame = i;
+      return objectives.update(s.drone, s.state.waypoint?.id ?? null);
+    });
+    return { reached, states };
+  };
+
+  it('reaches every waypoint once, in order, while its phase is on', () => {
+    const { reached } = replay();
+    expect(reached.map((r) => r.id)).toEqual(['wp1', 'wp2', 'wp3']);
+    for (const { id, at } of reached) {
+      // Reached on its own phase or on the frame the mission moved on from it, not later.
+      const owner = run.samples[Math.max(0, at - 1)].state.waypoint?.id;
+      expect(owner).toBe(id);
+    }
+  });
+
+  it('activates only the current objective and keeps reached beacons off', () => {
+    const { states } = replay();
+    states.forEach((map, i) => {
+      const active = [...map].filter(([, state]) => state === 'active').map(([id]) => id);
+      expect(active.length).toBeLessThanOrEqual(1);
+      if (active.length) expect(active[0]).toBe(run.samples[i].state.waypoint?.id);
+    });
+    expect([...states[states.length - 1].values()]).toEqual(['reached', 'reached', 'reached']);
+  });
+
+  it('counts a waypoint by proximity and starts over on reset', () => {
+    const [wp] = run.world.waypoints;
+    const hits: string[] = [];
+    const objectives = createObjectives(run.world.waypoints, (w) => hits.push(w.id));
+    expect(objectives.update([0, 0, 50], wp.id).get(wp.id)).toBe('active');
+    expect(objectives.update([wp.position[0] + REACHED_RADIUS - 0.1, 0, wp.position[2]], wp.id).get(wp.id)).toBe('reached');
+    objectives.reset();
+    expect(objectives.update([0, 0, 50], wp.id).get(wp.id)).toBe('active');
+    expect(hits).toEqual(['wp1']);
   });
 });
