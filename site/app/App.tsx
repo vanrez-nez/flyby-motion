@@ -1,17 +1,32 @@
-import React, { useEffect, useState } from 'react';
-import { LandingPage } from '../pages/landing/LandingPage';
-import { DocsPage } from '../pages/docs/DocsPage';
+import React, { lazy, startTransition, Suspense, useEffect, useState } from 'react';
+// Static on purpose: it renders with no chunk to fetch, and it brings the header and footer every
+// page shares into the main bundle.
 import { NotFoundPage } from '../pages/not-found/NotFoundPage';
 import { toRoute, withBase } from './routes';
 import { docsPages, findDocsPage, findDocsPageByHeading, type DocsPage as DocsPageData } from '../pages/docs/docsPages';
-import { Forces2DDemo } from '../pages/demos/2d/forces';
-import { Behaviors2DDemo } from '../pages/demos/2d/behaviors';
-import { Modifiers2DDemo } from '../pages/demos/2d/modifiers';
-import { Custom2DDemo } from '../pages/demos/2d/custom';
-import { Forces3DDemo } from '../pages/demos/3d/forces';
-import { Behaviors3DDemo } from '../pages/demos/3d/behaviors';
-import { Modifiers3DDemo } from '../pages/demos/3d/modifiers';
-import { Custom3DDemo } from '../pages/demos/3d/custom';
+
+/**
+ * Pages load on first visit, each in its own chunk with only the libraries it uses: three for the
+ * landing scene and the 3D demos, pixi.js for the 2D demos, tweakpane for every demo. Shared code
+ * lands in shared chunks, fetched once.
+ */
+function lazyPage<K extends string, M extends Record<K, React.ComponentType<any>>>(load: () => Promise<M>, name: K) {
+  return lazy(() => load().then((module) => ({ default: module[name] })));
+}
+
+const LandingPage = lazyPage(() => import('../pages/landing/LandingPage'), 'LandingPage');
+const DocsPage = lazyPage(() => import('../pages/docs/DocsPage'), 'DocsPage');
+
+const demoPages: Record<string, React.ComponentType> = {
+  '/2d/forces': lazyPage(() => import('../pages/demos/2d/forces'), 'Forces2DDemo'),
+  '/2d/behaviors': lazyPage(() => import('../pages/demos/2d/behaviors'), 'Behaviors2DDemo'),
+  '/2d/modifiers': lazyPage(() => import('../pages/demos/2d/modifiers'), 'Modifiers2DDemo'),
+  '/2d/custom': lazyPage(() => import('../pages/demos/2d/custom'), 'Custom2DDemo'),
+  '/3d/forces': lazyPage(() => import('../pages/demos/3d/forces'), 'Forces3DDemo'),
+  '/3d/behaviors': lazyPage(() => import('../pages/demos/3d/behaviors'), 'Behaviors3DDemo'),
+  '/3d/modifiers': lazyPage(() => import('../pages/demos/3d/modifiers'), 'Modifiers3DDemo'),
+  '/3d/custom': lazyPage(() => import('../pages/demos/3d/custom'), 'Custom3DDemo'),
+};
 
 /**
  * `/docs/<page>` → that page. `/docs` → the first page, or, for links from the single-page docs
@@ -43,8 +58,10 @@ export const App: React.FC = () => {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
 
   useEffect(() => {
+    // A transition: the current page stays on screen while the next one's chunk loads, instead
+    // of the Suspense fallback flashing in between.
     const onLocationChange = () => {
-      setCurrentPath(window.location.pathname);
+      startTransition(() => setCurrentPath(window.location.pathname));
     };
 
     // Hijack internal links to enable SPA routing without full page reloads
@@ -81,19 +98,14 @@ export const App: React.FC = () => {
   // Strip base path and index.html for route matching (important for GitHub Pages /flyby-motion/)
   const normalizedPath = toRoute(currentPath);
 
-  // Simple route matching
-  if (normalizedPath === '/') return <LandingPage />;
-  if (normalizedPath === '/docs' || normalizedPath.startsWith('/docs/')) {
-    return <DocsPage page={resolveDocsRoute(normalizedPath)} />;
-  }
-  if (normalizedPath === '/2d/forces') return <Forces2DDemo />;
-  if (normalizedPath === '/2d/behaviors') return <Behaviors2DDemo />;
-  if (normalizedPath === '/2d/modifiers') return <Modifiers2DDemo />;
-  if (normalizedPath === '/2d/custom') return <Custom2DDemo />;
-  if (normalizedPath === '/3d/forces') return <Forces3DDemo />;
-  if (normalizedPath === '/3d/behaviors') return <Behaviors3DDemo />;
-  if (normalizedPath === '/3d/modifiers') return <Modifiers3DDemo />;
-  if (normalizedPath === '/3d/custom') return <Custom3DDemo />;
-
-  return <NotFoundPage path={normalizedPath} />;
+  // The fallback only shows on the first load (navigations are transitions): the page background.
+  return <Suspense fallback={null}>{renderRoute(normalizedPath)}</Suspense>;
 };
+
+function renderRoute(path: string): React.ReactElement {
+  if (path === '/') return <LandingPage />;
+  if (path === '/docs' || path.startsWith('/docs/')) return <DocsPage page={resolveDocsRoute(path)} />;
+  const Demo = demoPages[path];
+  if (Demo) return <Demo />;
+  return <NotFoundPage path={path} />;
+}

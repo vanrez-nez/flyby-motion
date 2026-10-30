@@ -30,9 +30,10 @@ html {
 }
 
 /*
- * Every route's CSS ships in one bundle, and the demo stylesheets (demo2d.css / demo3d.css) lock
- * `html, body` to the viewport for the full-screen canvases. Pages that scroll (landing, docs)
- * restore document scrolling; the demo frame sets `.site-fixed-viewport` while it is mounted.
+ * The demo stylesheets (demo2d.css / demo3d.css) lock `html, body` to the viewport for the
+ * full-screen canvases, and once a demo has loaded its CSS stays in the document. Pages that
+ * scroll (landing, docs) restore document scrolling; the demo frame sets `.site-fixed-viewport`
+ * while it is mounted. These win on specificity, not order: page CSS loads after this file.
  */
 html:not(.site-fixed-viewport),
 html:not(.site-fixed-viewport) body {
