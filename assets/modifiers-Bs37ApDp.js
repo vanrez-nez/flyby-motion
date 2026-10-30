@@ -1,4 +1,4 @@
-import"./chunk-CilyBKbf.js";import{_ as e,o as t}from"./index-CXGvyNYB.js";import{A as n,D as r,E as i,O as a,T as o,b as s,d as c,f as l,g as u,h as d,j as f,l as p,m,p as h,u as g,x as _}from"./waitForStableSize-CaV2ELVd.js";import{t as v}from"./FeatureDemo3D-CaDYNsed.js";e();var y=`# 3D Modifiers
+import"./chunk-CilyBKbf.js";import{_ as e,o as t}from"./index-CXwaT2eW.js";import{A as n,D as r,E as i,O as a,T as o,b as s,d as c,f as l,g as u,h as d,j as f,l as p,m,p as h,u as g,x as _}from"./waitForStableSize-CaV2ELVd.js";import{t as v}from"./FeatureDemo3D-DkWmwx7z.js";e();var y=`# 3D Modifiers
 
 Modifiers compose the same way in 3D as in 2D — they wrap a force and decide *when* or *how strongly* it fires. The shape of the wrapped force is unchanged.
 

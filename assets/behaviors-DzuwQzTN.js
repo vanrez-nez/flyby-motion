@@ -1,4 +1,4 @@
-import"./chunk-CilyBKbf.js";import{_ as e,o as t}from"./index-CXGvyNYB.js";import{a as n,c as r,o as i,s as a}from"./waitForStableSize-CaV2ELVd.js";import{t as o}from"./FeatureDemo2D-CLk1v8ve.js";e();var s=`# Behaviors
+import"./chunk-CilyBKbf.js";import{_ as e,o as t}from"./index-CXwaT2eW.js";import{a as n,c as r,o as i,s as a}from"./waitForStableSize-CaV2ELVd.js";import{t as o}from"./FeatureDemo2D-CoBTidu7.js";e();var s=`# Behaviors
 
 Behaviors are pre-composed forces tuned for a familiar feel: arriving, fleeing, pursuing, orbiting. Each one is just a \`Force\` under the hood, so you can mix them with anything else.
 

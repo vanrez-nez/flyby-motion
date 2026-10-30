@@ -1,4 +1,4 @@
-import"./chunk-CilyBKbf.js";import{_ as e,o as t}from"./index-CXGvyNYB.js";import{I as n,M as r,N as i,P as a,b as o,d as s,f as c,g as l,h as u,l as d,m as f,p,u as m,x as h}from"./waitForStableSize-CaV2ELVd.js";import{t as g}from"./FeatureDemo2D-CLk1v8ve.js";e();var _=`# Modifiers
+import"./chunk-CilyBKbf.js";import{_ as e,o as t}from"./index-CXwaT2eW.js";import{I as n,M as r,N as i,P as a,b as o,d as s,f as c,g as l,h as u,l as d,m as f,p,u as m,x as h}from"./waitForStableSize-CaV2ELVd.js";import{t as g}from"./FeatureDemo2D-CoBTidu7.js";e();var _=`# Modifiers
 
 Modifiers wrap forces to change *when* or *how strongly* they apply. They take a force in and return a force out, so they compose trivially.
 

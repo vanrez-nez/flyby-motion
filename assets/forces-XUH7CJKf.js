@@ -1,4 +1,4 @@
-import"./chunk-CilyBKbf.js";import{_ as e,o as t}from"./index-CXGvyNYB.js";import{S as n,_ as r,b as i,g as a,h as o,v as s,x as c,y as l}from"./waitForStableSize-CaV2ELVd.js";import{t as u}from"./FeatureDemo2D-CLk1v8ve.js";e();var d=`# Forces
+import"./chunk-CilyBKbf.js";import{_ as e,o as t}from"./index-CXwaT2eW.js";import{S as n,_ as r,b as i,g as a,h as o,v as s,x as c,y as l}from"./waitForStableSize-CaV2ELVd.js";import{t as u}from"./FeatureDemo2D-CoBTidu7.js";e();var d=`# Forces
 
 A force is a function \`(agent, world, t) => vector\`. The library composes them per agent and the integrator does the rest. Each mode in this demo isolates a single primitive so you can feel it on its own.
 

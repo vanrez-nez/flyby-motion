@@ -1,4 +1,4 @@
-import"./chunk-CilyBKbf.js";import{_ as e,o as t}from"./index-CXGvyNYB.js";import{D as n,E as r,O as i,_ as a,b as o,f as s,g as c,h as l,j as u,k as d,m as f,v as p,x as m,y as h}from"./waitForStableSize-CaV2ELVd.js";import{t as g}from"./FeatureDemo3D-CaDYNsed.js";e();var _=`# 3D Custom
+import"./chunk-CilyBKbf.js";import{_ as e,o as t}from"./index-CXwaT2eW.js";import{D as n,E as r,O as i,_ as a,b as o,f as s,g as c,h as l,j as u,k as d,m as f,v as p,x as m,y as h}from"./waitForStableSize-CaV2ELVd.js";import{t as g}from"./FeatureDemo3D-DkWmwx7z.js";e();var _=`# 3D Custom
 
 Hand-rolled compositions in 3D. Each mode pairs a structural force (return-to-center, capture, keep-distance) with one or more conditional reactions.
 
