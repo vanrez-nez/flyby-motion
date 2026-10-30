@@ -1,6 +1,7 @@
 import * as PIXI from 'pixi.js';
 import { useEffect, useState } from 'react';
 import { demoColors } from '../2dHelpers';
+import { waitForStableSize } from '../waitForStableSize';
 
 export function usePixiDemo(playAreaRef: React.RefObject<HTMLDivElement | null>) {
   const [app, setApp] = useState<PIXI.Application | null>(null);
@@ -10,24 +11,33 @@ export function usePixiDemo(playAreaRef: React.RefObject<HTMLDivElement | null>)
     if (!playArea) return;
 
     let isMounted = true;
+    const aborter = new AbortController();
     const newApp = new PIXI.Application();
 
-    newApp.init({
-      backgroundColor: demoColors.bg,
-      antialias: true,
-      width: playArea.clientWidth,
-      height: playArea.clientHeight,
-    }).then(() => {
-      if (!isMounted) {
-        newApp.destroy(true, { children: true, texture: true });
-        return;
-      }
-      playArea.appendChild(newApp.canvas);
-      setApp(newApp);
-    });
+    // Create the renderer only once the play area has its final size, so the first frame (and the
+    // scene laid out from `app.screen`) already uses it instead of a zero-width canvas.
+    waitForStableSize(playArea, aborter.signal)
+      .then(({ width, height }) => newApp.init({
+        backgroundColor: demoColors.bg,
+        antialias: true,
+        width,
+        height,
+      }))
+      .then(() => {
+        if (!isMounted) {
+          newApp.destroy(true, { children: true, texture: true });
+          return;
+        }
+        playArea.appendChild(newApp.canvas);
+        setApp(newApp);
+      })
+      .catch((error: unknown) => {
+        if ((error as DOMException)?.name !== 'AbortError') throw error;
+      });
 
     return () => {
       isMounted = false;
+      aborter.abort();
       try {
         if (newApp.canvas && newApp.canvas.parentNode) {
           newApp.canvas.parentNode.removeChild(newApp.canvas);
