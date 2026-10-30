@@ -1,6 +1,7 @@
 import React from 'react';
 import { SiteHeader } from '../../components/SiteHeader';
 import { SiteFooter } from '../../components/SiteFooter';
+import { DisplayTitle } from '../../components/DisplayTitle';
 import { MissionView } from './mission/MissionView';
 import { DEFAULT_DEMO_PATH, withBase } from '../../app/routes';
 import { arrowRightIcon } from '../../lib/icons';
@@ -17,10 +18,7 @@ export const LandingPage: React.FC = () => {
       <div className="site-container landing__body">
         <main className="landing__hero">
           <p className="site-eyebrow">flyby-motion {version}</p>
-          <h1 className="landing__title">
-            <span className="landing__title-line">Forces in</span>
-            <span className="landing__title-line landing__title-line--outline">motion out</span>
-          </h1>
+          <DisplayTitle className="landing__title" solid="Forces in" outline="motion out" />
           <p className="landing__lead">
             A small force-based motion library. Agents sum forces, integrate to velocity, then
             integrate to position. No tweens, no keyframes. Combine simple behaviors to create fluid,

@@ -22,25 +22,9 @@
   margin: 0;
 }
 
-/* The landing headline's type: display face, solid line over an outlined accent line. */
 .not-found__title {
-  display: flex;
-  flex-direction: column;
   align-items: center;
-  margin: 0;
-  font-family: var(--site-font-display);
-  font-weight: 400;
   font-size: clamp(3.25rem, 9vw, 7.5rem);
-  line-height: 0.92;
-  letter-spacing: 0.005em;
-  text-transform: uppercase;
-  color: var(--tp-foreground);
-}
-
-.not-found__title-line--outline {
-  color: transparent;
-  -webkit-text-stroke: 2px var(--site-accent);
-  text-stroke: 2px var(--site-accent);
 }
 
 .not-found__lead {

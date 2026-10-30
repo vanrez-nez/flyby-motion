@@ -1,0 +1,50 @@
+/* Display face, solid line over an outlined accent line. Pages set the size and alignment. */
+.display-title {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  font-family: var(--site-font-display);
+  font-weight: 400;
+  line-height: 0.92;
+  letter-spacing: 0.005em;
+  text-transform: uppercase;
+  color: var(--tp-foreground);
+  /* Large type draws slower than the component's default, or the outlines barely show. */
+  --tp-mo-text-stroke-duration: 1.1s;
+}
+
+/*
+ * The hollow line. Text stroke draws its outline in the text color and then fills the text, so the
+ * text color is the accent and the fill stays transparent: the drawn outline is accent, and once
+ * filled the line is still hollow. The drawn outline matches the line's own 2px stroke.
+ */
+.display-title__line--outline {
+  -webkit-text-fill-color: transparent;
+  -webkit-text-stroke: 2px var(--site-accent);
+  text-stroke: 2px var(--site-accent);
+  --tp-mo-text-stroke-width: 2px;
+}
+
+/* On the element itself: Text stroke sets its own text color, which the line's would not reach. */
+.display-title__line--outline tp-mo-text-stroke {
+  color: var(--site-accent);
+}
+
+/* The drawn outline is an SVG text of its own: it must not also inherit the line's CSS stroke. */
+.display-title__line--outline [data-tp-outline] {
+  -webkit-text-stroke: 0;
+}
+
+/*
+ * The line's own stroke waits for the drawn outline, then fades in as the drawn one fades out
+ * (the last quarter of each glyph's reveal), so the hand-over is invisible. The timing reads Text
+ * stroke's own per-piece duration and delay.
+ */
+.display-title__line--outline tp-mo-text-stroke [data-tp-animate] {
+  transition: -webkit-text-stroke-color calc(var(--_tp-tm-duration) / 4) var(--_tp-tm-easing)
+    calc(var(--_tp-tm-piece-delay) + var(--_tp-tm-duration) * 3 / 4);
+}
+
+.display-title__line--outline tp-mo-text-stroke:not([data-revealed]) [data-tp-animate] {
+  -webkit-text-stroke-color: transparent;
+}

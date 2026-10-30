@@ -1,6 +1,7 @@
 import React from 'react';
 import { SiteHeader } from '../../components/SiteHeader';
 import { SiteFooter } from '../../components/SiteFooter';
+import { DisplayTitle } from '../../components/DisplayTitle';
 import { DEFAULT_DEMO_PATH, withBase } from '../../app/routes';
 import { arrowRightIcon } from '../../lib/icons';
 import './NotFoundPage.css';
@@ -13,10 +14,7 @@ export const NotFoundPage: React.FC<{ path: string }> = ({ path }) => {
 
       <main className="site-container not-found__body">
         <p className="site-eyebrow">Error 404</p>
-        <h1 className="not-found__title">
-          <span>Signal</span>
-          <span className="not-found__title-line--outline">lost</span>
-        </h1>
+        <DisplayTitle className="not-found__title" solid="Signal" outline="lost" />
         <p className="not-found__lead">
           Nothing is flying at <code className="not-found__path">{path}</code>. The page may have
           moved, or the link has a typo.
