@@ -44,6 +44,36 @@
   padding: var(--tp-space-10) 0 var(--tp-space-16);
 }
 
+.docs__eyebrow {
+  margin: 0 0 var(--tp-space-4);
+}
+
+/* Previous / next page */
+.docs__pager {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--tp-space-4);
+  margin-top: var(--tp-space-16);
+  padding-top: var(--tp-space-6);
+  border-top: var(--tp-border-width) solid var(--tp-border);
+}
+
+.docs__pager-link {
+  max-width: 48%;
+}
+
+.docs__pager-link--next {
+  margin-inline-start: auto;
+}
+
+.docs__pager-label {
+  color: var(--tp-muted-foreground);
+  font-size: var(--tp-text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-inline-end: var(--tp-space-2);
+}
+
 .docs__toc tp-table-of-contents {
   display: block;
   font-size: var(--tp-text-sm);

@@ -1,65 +1,88 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import type { TpTreeView } from '@tweakpad/ui';
-import { useMarkdown, getMarkdownSections, type MarkdownSection } from './shared/hooks/useMarkdown';
+import { useMarkdown } from './shared/hooks/useMarkdown';
 import { useElementEvent } from './shared/hooks/useElementEvent';
 import { SiteHeader } from './shared/components/SiteHeader';
 import { DemoFooter } from './shared/components/DemoFooter';
-import tutorialMarkdown from '../TUTORIAL.md?raw';
+import { docsNav, docsPages, type DocsPage as DocsPageData } from './shared/docsPages';
+import { navigate, withBase } from './shared/routes';
+import { arrowRightIcon } from './shared/icons';
 import './DocsPage.css';
 
-interface NavGroup {
-  section: MarkdownSection;
-  children: MarkdownSection[];
+function scrollToFragment(fallbackToTop: boolean): void {
+  const id = decodeURIComponent(window.location.hash.slice(1));
+  const target = id ? document.getElementById(id) : null;
+  if (target) target.scrollIntoView({ block: 'start' });
+  else if (fallbackToTop) window.scrollTo(0, 0);
 }
 
-/** Top-level docs (h1) with their h2 sections, for the side nav. */
-function groupSections(sections: MarkdownSection[]): NavGroup[] {
-  const groups: NavGroup[] = [];
-  for (const section of sections) {
-    if (section.level === 1) groups.push({ section, children: [] });
-    else if (section.level === 2) groups[groups.length - 1]?.children.push(section);
-  }
-  return groups;
-}
-
-/** Scrolls to the heading named by the URL fragment (on arrival and on in-app navigation). */
-function useFragmentScroll(): void {
+/**
+ * After a page change: jump to the URL fragment's heading, or back to the top. Also follows
+ * in-app navigation to another heading of the same page (a search result), which keeps the page mounted.
+ */
+function useScrollOnPageChange(pageId: string): void {
   useEffect(() => {
-    const scrollToHash = () => {
-      const id = decodeURIComponent(window.location.hash.slice(1));
-      if (!id) return;
-      document.getElementById(id)?.scrollIntoView({ block: 'start' });
-    };
-    // Wait a frame so the article is in the DOM and laid out.
-    const frame = requestAnimationFrame(scrollToHash);
-    window.addEventListener('popstate', scrollToHash);
-    window.addEventListener('hashchange', scrollToHash);
+    // Wait a frame so the new article is in the DOM and laid out.
+    const frame = requestAnimationFrame(() => scrollToFragment(true));
+    return () => cancelAnimationFrame(frame);
+  }, [pageId]);
+
+  useEffect(() => {
+    const onNavigate = () => requestAnimationFrame(() => scrollToFragment(false));
+    window.addEventListener('popstate', onNavigate);
+    window.addEventListener('hashchange', onNavigate);
     return () => {
-      cancelAnimationFrame(frame);
-      window.removeEventListener('popstate', scrollToHash);
-      window.removeEventListener('hashchange', scrollToHash);
+      window.removeEventListener('popstate', onNavigate);
+      window.removeEventListener('hashchange', onNavigate);
     };
   }, []);
 }
 
-export const DocsPage: React.FC = () => {
-  const sections = useMemo(() => getMarkdownSections(tutorialMarkdown), []);
-  const groups = useMemo(() => groupSections(sections), [sections]);
-  const tocSections = useMemo(() => sections.filter((s) => s.level === 2 || s.level === 3), [sections]);
-  const html = useMarkdown(tutorialMarkdown);
+/** Previous / next page links at the end of each page. */
+const PageNav: React.FC<{ page: DocsPageData }> = ({ page }) => {
+  const index = docsPages.indexOf(page);
+  const previous = docsPages[index - 1];
+  const next = docsPages[index + 1];
+  return (
+    <nav className="docs__pager" aria-label="Docs pages">
+      {previous ? (
+        <tp-button variant="outline" href={withBase(previous.path)} class="docs__pager-link">
+          <span className="docs__pager-label">Previous</span>
+          {previous.title}
+        </tp-button>
+      ) : <span />}
+      {next && (
+        <tp-button variant="outline" href={withBase(next.path)} class="docs__pager-link docs__pager-link--next">
+          <span className="docs__pager-label">Next</span>
+          {next.title}
+          <tp-icon slot="icon-end" icon={arrowRightIcon}></tp-icon>
+        </tp-button>
+      )}
+    </nav>
+  );
+};
+
+export const DocsPage: React.FC<{ page: DocsPageData }> = ({ page }) => {
+  const html = useMarkdown(page.markdown);
   const treeRef = useRef<TpTreeView & HTMLElement>(null);
 
-  useFragmentScroll();
+  useScrollOnPageChange(page.id);
 
-  // Section items carry their heading as `#id`; folders (`group:…`) only expand.
+  // Left sidebar: the docs pages. Pressing one opens it; its sections are in the outline on the right.
   useElementEvent<CustomEvent<{ value: string }>>(treeRef, 'tp-action', (event) => {
     const value = event.detail.value;
-    if (!value.startsWith('#')) return;
-    document.getElementById(value.slice(1))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    window.history.replaceState({}, '', value);
+    if (value.startsWith('/')) navigate(value);
   });
 
-  const defaultExpanded = JSON.stringify(groups.map((g) => `group:${g.section.id}`));
+  // The selection is controlled: it always shows the current page, whichever way it was reached
+  // (tree, pager, search, back button). Selection proposals are refused; navigation decides.
+  useElementEvent(treeRef, 'tp-value-change', (event) => event.preventDefault());
+  useEffect(() => {
+    const tree = treeRef.current;
+    if (tree) tree.value = [page.path];
+  }, [page.path]);
+
+  const defaultExpanded = JSON.stringify(docsNav.filter((entry) => entry.children.length > 0).map((entry) => entry.page.path));
 
   return (
     <div className="docs">
@@ -71,14 +94,15 @@ export const DocsPage: React.FC = () => {
             ref={treeRef}
             label="Docs"
             size="sm"
+            expansion-trigger="indicator"
             default-expanded={defaultExpanded}
+            value={[page.path]}
           >
-            {groups.map((group) => (
-              <tp-tree-item key={group.section.id} value={`group:${group.section.id}`}>
-                {group.section.text}
-                <tp-tree-item value={`#${group.section.id}`}>Overview</tp-tree-item>
-                {group.children.map((child) => (
-                  <tp-tree-item key={child.id} value={`#${child.id}`}>{child.text}</tp-tree-item>
+            {docsNav.map((entry) => (
+              <tp-tree-item key={entry.page.id} value={entry.page.path}>
+                {entry.page.title}
+                {entry.children.map((child) => (
+                  <tp-tree-item key={child.id} value={child.path}>{child.title}</tp-tree-item>
                 ))}
               </tp-tree-item>
             ))}
@@ -86,17 +110,21 @@ export const DocsPage: React.FC = () => {
         </aside>
 
         <main className="docs__main">
-          <article className="markdown-body" dangerouslySetInnerHTML={{ __html: html }} />
+          {page.groupTitle !== page.title && <p className="site-eyebrow docs__eyebrow">{page.groupTitle}</p>}
+          <article key={page.id} className="markdown-body" dangerouslySetInnerHTML={{ __html: html }} />
+          <PageNav page={page} />
         </main>
 
         <aside className="docs__toc">
-          <tp-table-of-contents label="On this page">
-            {tocSections.map((section) => (
-              <tp-table-of-contents-item key={section.id} href={`#${section.id}`} depth={section.level - 1}>
-                {section.text}
-              </tp-table-of-contents-item>
-            ))}
-          </tp-table-of-contents>
+          {page.outline.length > 0 && (
+            <tp-table-of-contents key={page.id} label="On this page">
+              {page.outline.map((section) => (
+                <tp-table-of-contents-item key={section.id} href={`#${section.id}`} depth={section.level - 1}>
+                  {section.text}
+                </tp-table-of-contents-item>
+              ))}
+            </tp-table-of-contents>
+          )}
         </aside>
       </div>
 

@@ -1,27 +1,30 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import type { CommandEntry, TpCommandPalette } from '@tweakpad/ui';
-import { getMarkdownSections } from '../hooks/useMarkdown';
 import { useElementEvent } from '../hooks/useElementEvent';
 import { demoLinks, navigate } from '../routes';
+import { docsNav } from '../docsPages';
 import { searchIcon } from '../icons';
 import { KeyHint } from './KeyHint';
-import tutorialMarkdown from '../../../TUTORIAL.md?raw';
 
 /** Header search: a Tweakpad command palette over the docs sections and the demos, opened with ⌘K / Ctrl K. */
 export const SearchPalette: React.FC = () => {
   const paletteRef = useRef<TpCommandPalette & HTMLElement>(null);
 
   const items = useMemo<CommandEntry[]>(() => {
-    const sections = getMarkdownSections(tutorialMarkdown);
-    const docs: CommandEntry[] = [];
-    let group: { type: 'group'; label: string; items: { value: string; label: string; keywords?: string[] }[] } | null = null;
-    for (const section of sections) {
-      if (section.level === 1) {
-        group = { type: 'group', label: section.text, items: [] };
-        docs.push(group);
-      }
-      group?.items.push({ value: `/docs#${section.id}`, label: section.text, keywords: ['docs'] });
-    }
+    // One group per top-level docs part: each page, then the sections of its outline.
+    const docs: CommandEntry[] = docsNav.map((entry) => ({
+      type: 'group' as const,
+      label: entry.page.title,
+      items: [entry.page, ...entry.children].flatMap((page) => [
+        { value: page.path, label: page.title, keywords: ['docs', page.groupTitle] },
+        ...page.outline.map((section) => ({
+          value: `${page.path}#${section.id}`,
+          label: section.text,
+          description: page.title,
+          keywords: ['docs', page.title],
+        })),
+      ]),
+    }));
     return [
       ...docs,
       { type: 'separator' },

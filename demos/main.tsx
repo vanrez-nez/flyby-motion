@@ -5,6 +5,7 @@ import './shared/registerTweakpad';
 import { LandingPage } from './LandingPage';
 import { DocsPage } from './DocsPage';
 import { toRoute, withBase } from './shared/routes';
+import { docsPages, findDocsPage, findDocsPageByHeading, type DocsPage as DocsPageData } from './shared/docsPages';
 import { Forces2DDemo } from './2d/forces';
 import { Behaviors2DDemo } from './2d/behaviors';
 import { Modifiers2DDemo } from './2d/modifiers';
@@ -16,6 +17,23 @@ import { Custom3DDemo } from './3d/custom';
 import './shared/colors.css';
 import './shared/site.css';
 import './shared/markdown.css';
+
+/**
+ * `/docs/<page>` → that page. `/docs` → the first page, or, for links from the single-page docs
+ * such as `/docs#falloff-within`, the page that now holds that heading. Unknown pages fall back
+ * to the first page. The URL is rewritten to the page shown.
+ */
+function resolveDocsRoute(route: string): DocsPageData {
+  const id = route.slice('/docs/'.length);
+  const hash = decodeURIComponent(window.location.hash.slice(1));
+  const found = route !== '/docs' && findDocsPage(id);
+  if (found) return found;
+  // `/docs`, an old `/docs#heading` link or an unknown page: land on the best match.
+  const page = (hash && findDocsPageByHeading(hash)) || findDocsPageByHeading(id) || docsPages[0];
+  const fragment = hash && page.id !== hash ? `#${hash}` : '';
+  window.history.replaceState({}, '', withBase(page.path) + fragment);
+  return page;
+}
 
 /** The anchor a click activated, including anchors rendered inside shadow roots (Tweakpad link buttons). */
 function findAnchor(event: MouseEvent): HTMLAnchorElement | null {
@@ -69,7 +87,9 @@ const App: React.FC = () => {
 
   // Simple route matching
   if (normalizedPath === '/') return <LandingPage />;
-  if (normalizedPath === '/docs') return <DocsPage />;
+  if (normalizedPath === '/docs' || normalizedPath.startsWith('/docs/')) {
+    return <DocsPage page={resolveDocsRoute(normalizedPath)} />;
+  }
   if (normalizedPath === '/2d/forces') return <Forces2DDemo />;
   if (normalizedPath === '/2d/behaviors') return <Behaviors2DDemo />;
   if (normalizedPath === '/2d/modifiers') return <Modifiers2DDemo />;
