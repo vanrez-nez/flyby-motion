@@ -1,24 +1,28 @@
-/* Tweakpane theme — scoped to :root as required by the library */
+/*
+ * Tweakpane theme, scoped to :root as the library requires, built from the site's color tokens
+ * (styles/colors.css) so the demo control panels follow the light / dark scheme and the theme.
+ * Tweakpane's `--tp-base-*`, `--tp-input-*`… names don't overlap with the Tweakpad UI tokens.
+ */
 :root {
-  --tp-base-background-color: hsla(0, 0%, 0%, 1.00);
-  --tp-base-shadow-color: hsla(0, 0%, 0%, 0.2);
-  --tp-button-background-color: hsla(0, 0%, 70%, 1.00);
-  --tp-button-background-color-active: hsla(0, 0%, 85%, 1.00);
-  --tp-button-background-color-focus: hsla(0, 0%, 80%, 1.00);
-  --tp-button-background-color-hover: hsla(0, 0%, 75%, 1.00);
-  --tp-button-foreground-color: hsla(0, 0%, 0%, 1.00);
-  --tp-container-background-color: hsla(0, 0%, 10%, 1.00);
-  --tp-container-background-color-active: hsla(0, 0%, 25%, 1.00);
-  --tp-container-background-color-focus: hsla(0, 0%, 20%, 1.00);
-  --tp-container-background-color-hover: hsla(0, 0%, 15%, 1.00);
-  --tp-container-foreground-color: hsla(0, 0%, 50%, 1.00);
-  --tp-groove-foreground-color: hsla(0, 0%, 10%, 1.00);
-  --tp-input-background-color: hsla(0, 0%, 10%, 1.00);
-  --tp-input-background-color-active: hsla(0, 0%, 25%, 1.00);
-  --tp-input-background-color-focus: hsla(0, 0%, 20%, 1.00);
-  --tp-input-background-color-hover: hsla(0, 0%, 15%, 1.00);
-  --tp-input-foreground-color: hsla(0, 0%, 70%, 1.00);
-  --tp-label-foreground-color: hsla(0, 0%, 50%, 1.00);
-  --tp-monitor-background-color: hsla(0, 0%, 8%, 1.00);
-  --tp-monitor-foreground-color: hsla(0, 0%, 48%, 1.00);
+  --tp-base-background-color: var(--tp-card);
+  --tp-base-shadow-color: color-mix(in srgb, black 22%, transparent);
+  --tp-button-background-color: var(--tp-secondary);
+  --tp-button-background-color-active: color-mix(in oklab, var(--tp-secondary) 70%, var(--tp-foreground));
+  --tp-button-background-color-focus: color-mix(in oklab, var(--tp-secondary) 80%, var(--tp-foreground));
+  --tp-button-background-color-hover: color-mix(in oklab, var(--tp-secondary) 88%, var(--tp-foreground));
+  --tp-button-foreground-color: var(--tp-foreground);
+  --tp-container-background-color: var(--tp-muted);
+  --tp-container-background-color-active: color-mix(in oklab, var(--tp-muted) 78%, var(--tp-foreground));
+  --tp-container-background-color-focus: color-mix(in oklab, var(--tp-muted) 84%, var(--tp-foreground));
+  --tp-container-background-color-hover: color-mix(in oklab, var(--tp-muted) 90%, var(--tp-foreground));
+  --tp-container-foreground-color: var(--tp-muted-foreground);
+  --tp-groove-foreground-color: var(--tp-border);
+  --tp-input-background-color: var(--tp-muted);
+  --tp-input-background-color-active: color-mix(in oklab, var(--tp-muted) 78%, var(--tp-foreground));
+  --tp-input-background-color-focus: color-mix(in oklab, var(--tp-muted) 84%, var(--tp-foreground));
+  --tp-input-background-color-hover: color-mix(in oklab, var(--tp-muted) 90%, var(--tp-foreground));
+  --tp-input-foreground-color: var(--tp-foreground);
+  --tp-label-foreground-color: var(--tp-muted-foreground);
+  --tp-monitor-background-color: var(--tp-muted);
+  --tp-monitor-foreground-color: var(--tp-muted-foreground);
 }

@@ -5,6 +5,7 @@ import { type DemoKey, DemoBase } from './DemoBase';
 import { Sidebar, type SidebarProps } from './Sidebar';
 import { useThreeDemo, type ThreeDemoContext as BaseContext } from './hooks/useThreeDemo';
 import { useTweakpane } from './hooks/useTweakpane';
+import { useDemoTheme } from './hooks/useDemoTheme';
 import './styles/demo3d.css';
 import './styles/tpTheme.css';
 
@@ -23,11 +24,13 @@ import {
 } from './modeUtils';
 import {
   addTrailPoint,
+  applyDemoPalette,
   colors,
   createAgentMesh,
   createMarker,
   createRadiusIndicator,
   createTrail,
+  tagColor,
   updateArrow,
   updateRadiusIndicator,
   updateTrail,
@@ -81,6 +84,10 @@ export const FeatureDemo3D: React.FC<{ config: ThreeDemoConfig, sidebarConfig: S
 
   const threeContext = useThreeDemo(playAreaRef);
   const pane = useTweakpane(tpContainerRef);
+  // The palette follows the site theme; materials are built once, so they are recolored here.
+  useDemoTheme(() => {
+    if (threeContext) applyDemoPalette(threeContext.scene, threeContext.renderer);
+  });
 
   useEffect(() => {
     if (!threeContext || !pane) return;
@@ -93,20 +100,23 @@ export const FeatureDemo3D: React.FC<{ config: ThreeDemoConfig, sidebarConfig: S
     keyLight.position.set(5, 8, 4);
     scene.add(keyLight);
 
-    const grid = new THREE.GridHelper(24, 48, colors.grid, colors.grid);
-    (grid.material as THREE.Material).transparent = true;
-    (grid.material as THREE.Material).opacity = 0.18;
+    // White vertex colors tinted by the material color, so the grid recolors with the theme.
+    const grid = new THREE.GridHelper(24, 48, 0xffffff, 0xffffff);
+    const gridMaterial = tagColor(grid.material as THREE.LineBasicMaterial, 'grid');
+    gridMaterial.color.setHex(colors.grid);
+    gridMaterial.transparent = true;
+    gridMaterial.opacity = 0.5;
     root.add(grid);
 
-    const targetMarker = createMarker(colors.target);
+    const targetMarker = createMarker('target');
     targetMarker.position.set(1.8, 0.5, -1.2);
     root.add(targetMarker);
 
-    const sourceMarker = createMarker(colors.source);
+    const sourceMarker = createMarker('source');
     sourceMarker.position.set(-1.8, 0.5, 1.2);
     root.add(sourceMarker);
 
-    const centerMarker = createMarker(0xffffff);
+    const centerMarker = createMarker('trail');
     {
       const center = centerPoint();
       centerMarker.position.set(center[0], center[1], center[2]);
@@ -114,7 +124,7 @@ export const FeatureDemo3D: React.FC<{ config: ThreeDemoConfig, sidebarConfig: S
     root.add(centerMarker);
 
     const leader = new Agent({ position: centerPoint(), velocity: [0, 0, 0], maxSpeed: 7, maxForce: 32 });
-    const leaderMarker = createMarker(colors.target);
+    const leaderMarker = createMarker('target');
     root.add(leaderMarker);
 
     const radiusIndicators: RadiusIndicator[] = [];
@@ -268,8 +278,8 @@ export const FeatureDemo3D: React.FC<{ config: ThreeDemoConfig, sidebarConfig: S
         });
         const mesh = createAgentMesh(i);
         const trail = createTrail();
-        const velocityArrow = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(), 0, colors.velocity);
-        const forceArrow = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(), 0, colors.force);
+        const velocityArrow = tagColor(new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(), 0, colors.velocity), 'velocity');
+        const forceArrow = tagColor(new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(), 0, colors.force), 'force');
         const entry: ThreeAgentEntry = {
           agent,
           mesh,

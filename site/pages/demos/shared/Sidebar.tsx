@@ -17,7 +17,7 @@ export interface SidebarProps {
 
 /**
  * The guide panel of a demo: its mini-guide (`info.md`) and source. It renders the content only;
- * DemoBase places it in the resizable, collapsible panel and passes `onClose`.
+ * DemoBase shows it in a bottom drawer and passes `onClose`.
  */
 export const Sidebar: React.FC<SidebarProps & { onClose?: () => void }> = ({ markdown, sources = [], onClose }) => {
   return (

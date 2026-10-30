@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { Vector3Fn } from '../../../../src/index';
 
-import { demoColors as colors } from './colors';
+import { demoColors as colors, type DemoColorRole } from './colors';
 export { colors };
 
 export type RadiusIndicator = {
@@ -9,26 +9,56 @@ export type RadiusIndicator = {
   material: THREE.ShaderMaterial;
 };
 
+/**
+ * Marks what a material (or arrow) shows, so `applyDemoPalette` can recolor it when the theme
+ * changes; with `emissive`, its glow follows the same role.
+ */
+export function tagColor<T extends THREE.Material | THREE.ArrowHelper>(target: T, role: DemoColorRole, emissive = false): T {
+  target.userData.colorRole = role;
+  if (emissive) target.userData.emissiveRole = role;
+  return target;
+}
+
+/** Recolors the scene from `demoColors`: the clear color, the fog and everything tagged. */
+export function applyDemoPalette(scene: THREE.Scene, renderer: THREE.WebGLRenderer): void {
+  renderer.setClearColor(colors.bg);
+  if (scene.fog instanceof THREE.Fog) scene.fog.color.setHex(colors.bg);
+  scene.traverse((object) => {
+    if (object instanceof THREE.ArrowHelper) {
+      const role = object.userData.colorRole as DemoColorRole | undefined;
+      if (role) object.setColor(colors[role]);
+      return;
+    }
+    const material = (object as THREE.Mesh).material as THREE.Material | THREE.Material[] | undefined;
+    for (const entry of Array.isArray(material) ? material : material ? [material] : []) {
+      const { colorRole, emissiveRole } = entry.userData as { colorRole?: DemoColorRole; emissiveRole?: DemoColorRole };
+      if (colorRole && 'color' in entry) (entry.color as THREE.Color).setHex(colors[colorRole]);
+      if (emissiveRole && 'emissive' in entry) (entry.emissive as THREE.Color).setHex(colors[emissiveRole]);
+    }
+  });
+}
+
 export function createAgentMesh(_index: number): THREE.Mesh {
   const geometry = new THREE.SphereGeometry(0.16, 24, 16);
-  const material = new THREE.MeshStandardMaterial({
+  const material = tagColor(new THREE.MeshStandardMaterial({
     color: colors.agent,
     roughness: 0.42,
     metalness: 0.05,
     emissive: 0x07120f,
-  });
+  }), 'agent');
   return new THREE.Mesh(geometry, material);
 }
 
-export function createMarker(color: number): THREE.Group {
+export function createMarker(role: DemoColorRole): THREE.Group {
+  const color = colors[role];
   const group = new THREE.Group();
   const sphere = new THREE.Mesh(
     new THREE.SphereGeometry(0.18, 24, 16),
-    new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.3 }),
+    tagColor(new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.3 }), role, true),
   );
   const ring = new THREE.Mesh(
     new THREE.TorusGeometry(0.34, 0.015, 8, 48),
-    new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.85 }),
+    tagColor(new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.85 }), role),
   );
   ring.rotation.x = Math.PI / 2;
   group.add(sphere, ring);
@@ -38,11 +68,11 @@ export function createMarker(color: number): THREE.Group {
 export function createTrail(): THREE.Line {
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.Float32BufferAttribute([], 3));
-  const material = new THREE.LineBasicMaterial({
+  const material = tagColor(new THREE.LineBasicMaterial({
     color: colors.trail,
     transparent: true,
     opacity: 0.45,
-  });
+  }), 'trail');
   return new THREE.Line(geometry, material);
 }
 

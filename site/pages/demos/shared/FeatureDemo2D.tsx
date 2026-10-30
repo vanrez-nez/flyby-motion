@@ -19,6 +19,7 @@ import { type DemoKey, DemoBase } from './DemoBase';
 import { Sidebar, type SidebarProps } from './Sidebar';
 import { usePixiDemo } from './hooks/usePixiDemo';
 import { useTweakpane } from './hooks/useTweakpane';
+import { useDemoTheme } from './hooks/useDemoTheme';
 import './styles/demo2d.css';
 import './styles/tpTheme.css';
 
@@ -67,13 +68,10 @@ export interface FeatureDemoConfig {
   modes: FeatureMode[];
 }
 
+// Colors are read from `demoColors` at draw time, so they follow theme changes.
 const AGENT_STYLE = {
   radius: 10,
-  fill: demoColors.agent,
-  stroke: 0xffffff,
   strokeWidth: 2,
-  dotRadius: 2.5,
-  dotColor: 0xffffff,
 };
 
 const TRAIL_LIMIT = 95;
@@ -91,6 +89,10 @@ export const FeatureDemo2D: React.FC<{ config: FeatureDemoConfig, sidebarConfig:
 
   const app = usePixiDemo(playAreaRef);
   const pane = useTweakpane(tpContainerRef);
+  // The palette follows the site theme; shapes redraw from it every frame, the background is set here.
+  useDemoTheme(() => {
+    if (app) app.renderer.background.color = demoColors.bg;
+  });
 
   useEffect(() => {
     if (!app || !pane) return;
@@ -301,9 +303,8 @@ export const FeatureDemo2D: React.FC<{ config: FeatureDemoConfig, sidebarConfig:
       entries.forEach((entry, _index) => {
         entry.graphics.clear();
         entry.trailLayer.clear();
-        const fill = demoColors.agent;
         drawTrail(entry.trailLayer, entry.trailPoints);
-        drawAgentDot(entry.graphics, entry.agent.position, { ...AGENT_STYLE, fill });
+        drawAgentDot(entry.graphics, entry.agent.position, { ...AGENT_STYLE, fill: demoColors.agent, stroke: demoColors.trail });
         drawMotionVectors(entry.graphics, entry.agent.position, AGENT_STYLE.radius, entry.agent.velocity, entry.force);
       });
     }

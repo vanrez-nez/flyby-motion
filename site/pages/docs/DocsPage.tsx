@@ -1,12 +1,12 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import type { MarkdownHeadingTarget, TpTableOfContentsItem, TpTreeView } from '@tweakpad/ui';
-import { useElementEvent } from '../../hooks/useElementEvent';
+import type { MarkdownHeadingTarget, TpTableOfContentsItem } from '@tweakpad/ui';
 import { SiteHeader } from '../../components/SiteHeader';
 import { SiteFooter } from '../../components/SiteFooter';
 import { Markdown } from '../../components/Markdown';
-import { docsNav, docsPages, type DocsPage as DocsPageData } from './docsPages';
-import { navigate, withBase } from '../../app/routes';
-import { arrowRightIcon, chevronDownIcon } from '../../lib/icons';
+import { SectionNav } from '../../components/SectionNav';
+import { docsNavGroups, docsPages, type DocsPage as DocsPageData } from './docsPages';
+import { withBase } from '../../app/routes';
+import { arrowRightIcon } from '../../lib/icons';
 import './DocsPage.css';
 
 /** After a page change: back to the top, unless the URL names a heading (tp-markdown scrolls to it). */
@@ -57,83 +57,20 @@ const OutlineItem: React.FC<{ heading: MarkdownHeadingTarget }> = ({ heading }) 
 };
 
 export const DocsPage: React.FC<{ page: DocsPageData }> = ({ page }) => {
-  const treeRef = useRef<TpTreeView & HTMLElement>(null);
   const [headings, setHeadings] = useState<readonly MarkdownHeadingTarget[]>([]);
-  // Narrow screens fold the sidebar into a bar under the header; this opens it. Wide screens
-  // always show the sidebar and ignore it.
-  const [navOpen, setNavOpen] = useState(false);
   // The page's sections: `##` and `###`; the `#` is the page title.
   const outline = headings.filter((heading) => heading.depth === 2 || heading.depth === 3);
 
   useScrollOnPageChange(page.id);
-
-  // Left sidebar: the docs pages. Pressing one opens it; its sections are in the outline on the right.
-  useElementEvent<CustomEvent<{ value: string }>>(treeRef, 'tp-action', (event) => {
-    const value = event.detail.value;
-    if (!value.startsWith('/')) return;
-    setNavOpen(false);
-    navigate(value);
-  });
-  // Any other way to a new page (pager, search, back button) folds the bar too.
-  useEffect(() => setNavOpen(false), [page.path]);
-
-  // The selection is controlled: it always shows the current page, whichever way it was reached
-  // (tree, pager, search, back button). Selection proposals are refused; navigation decides.
-  useElementEvent(treeRef, 'tp-value-change', (event) => event.preventDefault());
-  useEffect(() => {
-    const tree = treeRef.current;
-    if (tree) tree.value = [page.path];
-  }, [page.path]);
-
-  const defaultExpanded = JSON.stringify(docsNav.filter((entry) => entry.children.length > 0).map((entry) => entry.page.path));
 
   return (
     <div className="docs">
       <SiteHeader active="docs" />
 
       <div className="site-container docs__layout">
-        <aside className="docs__nav" data-open={navOpen || undefined}>
-          {/* Narrow screens only: where you are, and the way to the other pages. */}
-          <button
-            type="button"
-            className="docs__nav-toggle"
-            aria-expanded={navOpen}
-            aria-controls="docs-nav-panel"
-            onClick={() => setNavOpen((open) => !open)}
-          >
-            <span className="docs__crumbs">
-              {page.groupTitle !== page.title && (
-                <>
-                  <span className="docs__crumb">{page.groupTitle}</span>
-                  <span className="docs__crumb-separator" aria-hidden="true">/</span>
-                </>
-              )}
-              <span className="docs__crumb docs__crumb--current">{page.title}</span>
-            </span>
-            <tp-icon class="docs__nav-chevron" icon={chevronDownIcon}></tp-icon>
-          </button>
-          <tp-scroll-area id="docs-nav-panel" class="docs__nav-scroll" scrollbar-visibility="on-hover">
-            <nav aria-label="Docs">
-              <tp-tree-view
-                ref={treeRef}
-                label="Docs"
-                size="sm"
-                guides="none"
-                expansion-trigger="indicator"
-                default-expanded={defaultExpanded}
-                value={[page.path]}
-              >
-                {docsNav.map((entry) => (
-                  <tp-tree-item key={entry.page.id} value={entry.page.path} data-section="">
-                    {entry.page.title}
-                    {entry.children.map((child) => (
-                      <tp-tree-item key={child.id} value={child.path}>{child.title}</tp-tree-item>
-                    ))}
-                  </tp-tree-item>
-                ))}
-              </tp-tree-view>
-            </nav>
-          </tp-scroll-area>
+        {/* Left: the docs pages; the current page's sections are in the outline on the right. */}
+        <aside className="docs__nav">
+          <SectionNav label="Docs" groups={docsNavGroups} currentPath={page.path} />
         </aside>
 
         <main className="docs__main">

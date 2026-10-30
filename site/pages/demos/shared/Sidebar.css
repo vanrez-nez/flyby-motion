@@ -1,4 +1,4 @@
-/* Guide panel contents; the panel itself (size, resize, collapse) is a tp-resizable-panel in DemoBase. */
+/* Guide contents; DemoBase shows them in a bottom drawer. */
 .demo-sidebar {
   display: flex;
   flex-direction: column;

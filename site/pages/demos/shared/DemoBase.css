@@ -1,4 +1,13 @@
+/*
+ * A demo page fills the window: the site header, then the demo list and the canvas side by side,
+ * then the site footer. The header and footer keep the page column like every other page; the demo
+ * list is indented by the column's left edge in the window (`--demo-inset`), so it lines up under
+ * the logo, and the canvas runs from it to the window edge. The guide opens over the canvas from
+ * the bottom, in a drawer.
+ */
 .demo-base {
+  --demo-inset: max(var(--site-gutter), (100vw - var(--site-max)) / 2 + var(--site-gutter));
+  --demo-top: var(--tp-space-8);
   display: flex;
   flex-direction: column;
   width: 100vw;
@@ -14,73 +23,138 @@
   z-index: 20;
 }
 
-/* Canvas and guide: two panels of a library Resizable panel group, side by side or stacked. */
 .demo-base__body {
   flex: 1 1 auto;
   display: flex;
   min-height: 0;
 }
 
-.demo-base__body > tp-resizable-panel-group {
-  flex: 1 1 auto;
-  min-width: 0;
+/* The demo list: aligned with the logo, its first row level with the canvas controls. */
+.demo-base__nav {
+  flex: 0 0 auto;
+  inline-size: calc(var(--demo-inset) + 11rem + var(--tp-space-6));
+  padding: var(--demo-top) var(--tp-space-6) var(--demo-top) var(--demo-inset);
+  overflow-y: auto;
+  border-inline-end: var(--tp-border-width) solid var(--tp-border);
 }
 
 .demo-base__content {
   position: relative;
-  height: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
   overflow: hidden;
-  /* The canvases stay black in both themes: the scenes and the Tweakpane theme are tuned for it. */
-  background: #000;
-}
-
-.demo-base__guide {
-  border: 0 solid var(--tp-border);
-}
-
-tp-resizable-panel-group[orientation='horizontal'] > .demo-base__guide {
-  border-left-width: var(--tp-border-width);
-}
-
-tp-resizable-panel-group[orientation='vertical'] > .demo-base__guide {
-  border-top-width: var(--tp-border-width);
-}
-
-/*
- * The Tweakpane container: demo2d.css / demo3d.css place it 44px from the top of the window,
- * i.e. 12px under the old 32px header. Anchor it to the canvas area instead, so it keeps that
- * 12px inset under the taller header + demo toolbar. Size and contents are untouched.
- */
-.demo-base__content #tp-container {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-}
-
-@media (max-width: 560px) {
-  .demo-base__content #tp-container {
-    left: 10px;
-  }
-}
-
-/* Demo sub-navigation: full-width rule, content in the page container. */
-.demo-toolbar {
-  border-bottom: var(--tp-border-width) solid var(--tp-border);
   background: var(--tp-background);
 }
 
-.demo-toolbar__inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--tp-space-3);
-  min-height: 44px;
-  padding-block: var(--tp-space-1-5);
-  overflow-x: auto;
+/*
+ * The Tweakpane container: demo2d.css / demo3d.css place it in the window; anchor it to the canvas
+ * instead, level with the first row of the demo list. Size and contents are untouched.
+ */
+.demo-base__content #tp-container {
+  position: absolute;
+  top: var(--demo-top);
+  left: var(--tp-space-6);
 }
 
-.demo-toolbar__end {
-  display: flex;
-  align-items: center;
-  gap: var(--tp-space-2);
+/* The guide button, bottom-right on the canvas, its right edge on the page column's (the header's). */
+.demo-base__guide {
+  position: absolute;
+  right: var(--demo-inset);
+  bottom: var(--demo-top);
+  z-index: 11;
+}
+
+/*
+ * The guide sheet: half the window tall, so its own scroll area is all on screen and scrolls to
+ * the end of the guide (snap points would push a full-height sheet half off-screen instead). The
+ * title and the text share one centered column of a readable measure.
+ */
+.demo-base {
+  --demo-guide-measure: 52rem;
+}
+
+.demo-base__guide tp-drawer::part(drawer-surface) {
+  max-height: 55dvh;
+}
+
+/*
+ * Opening focuses the sheet itself (`initial-focus="popup"`), and the browser would outline it
+ * like a control. It is a container: the controls inside keep their own focus rings.
+ */
+.demo-base__guide tp-drawer::part(drawer-surface):focus-visible {
+  outline: none;
+}
+
+.demo-base__guide tp-drawer::part(drawer-header) {
+  /* The text column's edge plus its inner padding, so the title starts where the text does. */
+  padding-inline: max(var(--tp-space-12), calc((100% - var(--demo-guide-measure)) / 2 + var(--tp-space-8)));
+}
+
+/* The drawer brings its own title and close button, so the guide's bar goes. */
+tp-drawer .demo-sidebar {
+  height: auto;
+  background: none;
+}
+
+tp-drawer .demo-sidebar__bar {
+  display: none;
+}
+
+tp-drawer .demo-sidebar__content {
+  max-inline-size: var(--demo-guide-measure);
+  margin-inline: auto;
+  padding: 0 var(--tp-space-8) var(--tp-space-8);
+}
+
+/*
+ * Narrow screens: the demo list becomes SectionNav's fold-out bar ("2D / Forces") over the canvas;
+ * opened, the list drops over the canvas instead of squeezing it. The controls sit closer to the
+ * edges, and start folded (useTweakpane) so the canvas stays visible.
+ */
+@media (width < 48rem) {
+  .demo-base {
+    --demo-top: var(--tp-space-3);
+  }
+
+  .demo-base__body {
+    flex-direction: column;
+  }
+
+  .demo-base__nav {
+    position: relative;
+    z-index: 15;
+    inline-size: auto;
+    padding: 0 var(--demo-inset);
+    overflow: visible;
+    background: var(--tp-background);
+    border-inline-end: 0;
+    border-bottom: var(--tp-border-width) solid var(--tp-border);
+  }
+
+  .demo-base__nav .section-nav__panel {
+    position: absolute;
+    inset-inline: 0;
+    top: 100%;
+    padding: var(--tp-space-4) var(--demo-inset) var(--tp-space-5);
+    background: var(--tp-background);
+    border-bottom: var(--tp-border-width) solid var(--tp-border);
+  }
+
+  .demo-base__content #tp-container {
+    left: var(--tp-space-3);
+  }
+
+  .demo-base__guide tp-drawer::part(drawer-surface) {
+    max-height: 70dvh;
+  }
+
+  /* Title and text on the page margin; the header keeps room on the right for the close button. */
+  .demo-base__guide tp-drawer::part(drawer-header) {
+    padding-inline: var(--demo-inset) var(--tp-space-12);
+  }
+
+  /* The drawer's body already pads its content by the page margin on narrow screens. */
+  tp-drawer .demo-sidebar__content {
+    padding-inline: 0;
+  }
 }

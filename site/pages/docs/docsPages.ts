@@ -120,6 +120,32 @@ export const docsNav: DocsNavEntry[] = buildNav(tutorialMarkdown);
 /** Every page in reading order, for previous / next links. */
 export const docsPages: DocsPage[] = docsNav.flatMap((entry) => [entry.page, ...entry.children]);
 
+export interface DocsNavGroup {
+  label: string;
+  items: Array<{ label: string; path: string }>;
+}
+
+/**
+ * The sidebar's groups: guides (single pages) together under "Guide"; each reference part a group
+ * of its own, its overview page first as "Overview", then one link per section page.
+ */
+export function groupDocsNav(nav: DocsNavEntry[]): DocsNavGroup[] {
+  const guides = nav.filter((entry) => entry.children.length === 0);
+  const references = nav.filter((entry) => entry.children.length > 0);
+  return [
+    ...(guides.length ? [{ label: 'Guide', items: guides.map(({ page }) => ({ label: page.title, path: page.path })) }] : []),
+    ...references.map(({ page, children }) => ({
+      label: page.title,
+      items: [
+        { label: 'Overview', path: page.path },
+        ...children.map((child) => ({ label: child.title, path: child.path })),
+      ],
+    })),
+  ];
+}
+
+export const docsNavGroups: DocsNavGroup[] = groupDocsNav(docsNav);
+
 export function findDocsPage(id: string | undefined): DocsPage | undefined {
   return id ? docsPages.find((page) => page.id === id) : undefined;
 }

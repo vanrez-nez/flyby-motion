@@ -24,44 +24,11 @@
   align-self: start;
 }
 
-/* The fold-out bar is for narrow screens; wide ones always show the sidebar. */
-.docs__nav-toggle {
-  display: none;
-}
-
-/* The sidebar scrolls on its own, inside a Scroll area, when the page list is taller than the window. */
-.docs__nav-scroll {
-  display: block;
-  block-size: calc(100dvh - var(--site-header-height));
-}
-
-.docs__nav nav {
-  padding-block: var(--tp-space-8);
-}
-
-/*
- * Rows: muted text, the current page in the foreground on the library's accent role, which the
- * sidebar sets to the neutral muted one. Top-level rows read as section headings.
- */
-.docs__nav tp-tree-view {
-  display: block;
-  --tp-tree-view-indent: 0.75rem;
-  --tp-accent: var(--tp-muted);
-  --tp-accent-foreground: var(--tp-foreground);
-}
-
-.docs__nav tp-tree-item::part(row) {
-  color: var(--tp-muted-foreground);
-}
-
-.docs__nav tp-tree-item::part(row):hover,
-.docs__nav tp-tree-item[data-selected]::part(row) {
-  color: var(--tp-foreground);
-}
-
-.docs__nav tp-tree-item[data-section]::part(row) {
-  color: var(--tp-foreground);
-  font-weight: var(--tp-font-semibold);
+/* The page list scrolls on its own when it is taller than the window. */
+.docs__nav {
+  max-block-size: calc(100dvh - var(--site-header-height));
+  overflow-y: auto;
+  padding-block: var(--tp-space-10);
 }
 
 .docs__main {
@@ -118,11 +85,7 @@
   }
 }
 
-/*
- * Narrow screens: the sidebar folds into a bar under the header, showing where you are
- * ("API Reference / forces") with a chevron; it stays in reach while the page scrolls, and opens
- * the page list over the top of the article.
- */
+/* Narrow screens: the page list is a fold-out bar (SectionNav) pinned under the header. */
 @media (width < 48rem) {
   .docs__layout {
     display: block;
@@ -130,71 +93,11 @@
 
   .docs__nav {
     z-index: 1;
+    max-block-size: none;
+    overflow: visible;
+    padding-block: 0;
     background: var(--tp-background);
     border-bottom: var(--tp-border-width) solid var(--tp-border);
-  }
-
-  .docs__nav-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--tp-space-3);
-    inline-size: 100%;
-    padding: var(--tp-space-4) 0;
-    border: 0;
-    background: none;
-    color: var(--tp-foreground);
-    font: inherit;
-    font-size: var(--tp-text-base);
-    text-align: start;
-    cursor: pointer;
-  }
-
-  .docs__crumbs {
-    display: flex;
-    align-items: baseline;
-    gap: var(--tp-space-2);
-    min-inline-size: 0;
-    white-space: nowrap;
-  }
-
-  .docs__crumb {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    color: var(--tp-muted-foreground);
-  }
-
-  .docs__crumb--current {
-    color: var(--tp-foreground);
-    font-weight: var(--tp-font-medium);
-  }
-
-  .docs__crumb-separator {
-    color: var(--tp-border);
-  }
-
-  .docs__nav-chevron {
-    flex: none;
-    color: var(--tp-muted-foreground);
-    transition: rotate var(--tp-duration-normal) var(--tp-easing-standard);
-  }
-
-  .docs__nav[data-open] .docs__nav-chevron {
-    rotate: 180deg;
-  }
-
-  .docs__nav:not([data-open]) .docs__nav-scroll {
-    display: none;
-  }
-
-  /* Open: the list scrolls within the window below the header and the bar. */
-  .docs__nav-scroll {
-    block-size: auto;
-    max-block-size: calc(100dvh - var(--site-header-height) - 3.5rem);
-  }
-
-  .docs__nav nav {
-    padding-block: 0 var(--tp-space-4);
   }
 
   .docs__main {

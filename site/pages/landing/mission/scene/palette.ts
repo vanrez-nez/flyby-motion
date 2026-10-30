@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { isDarkScheme, resolveCssColor as resolve } from '../../../../lib/cssColor';
 import { DEFAULT_THEME } from '../../../../lib/theme/presets';
 
 /**
@@ -16,25 +17,8 @@ export interface MissionPalette {
   css: Record<'info' | 'lock' | 'warn', string>;
 }
 
-function cssColor(element: Element, property: string, fallback: string): string {
-  const value = getComputedStyle(element).getPropertyValue(property).trim();
-  return value || fallback;
-}
-
-/** Resolves a CSS color (including `light-dark()` and `color-mix()`) to an rgb string the canvas understands. */
-function resolve(element: HTMLElement, property: string, fallback: string): string {
-  const probe = document.createElement('span');
-  probe.style.color = `var(${property}, ${fallback})`;
-  probe.style.display = 'none';
-  element.appendChild(probe);
-  const color = getComputedStyle(probe).color || cssColor(element, property, fallback);
-  probe.remove();
-  return color;
-}
-
 export function readPalette(element: HTMLElement): MissionPalette {
-  const theme = document.documentElement.dataset.theme;
-  const dark = theme ? theme === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const dark = isDarkScheme();
   const fallback = DEFAULT_THEME[dark ? 'dark' : 'light'];
   const background = resolve(element, '--tp-background', fallback.background);
   const foreground = resolve(element, '--tp-foreground', fallback.foreground);

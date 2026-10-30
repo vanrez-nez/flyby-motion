@@ -1,0 +1,120 @@
+/*
+ * Section navigation: group labels over flat links on a rail, the current page marked with the
+ * accent. The page that hosts it decides where it sits (sticky sidebar, demo column); this file
+ * only styles the list and, on narrow screens, the fold-out bar.
+ */
+.section-nav__toggle {
+  display: none;
+}
+
+.section-nav__panel {
+  display: grid;
+  gap: var(--tp-space-6);
+}
+
+.section-nav__group-label {
+  margin: 0 0 var(--tp-space-2);
+  color: var(--tp-muted-foreground);
+  font-family: var(--tp-font-mono);
+  font-size: var(--tp-text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.section-nav__list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.section-nav__link {
+  display: block;
+  padding: var(--tp-space-1-5) 0 var(--tp-space-1-5) var(--tp-space-3);
+  border-inline-start: 2px solid var(--tp-border);
+  color: var(--tp-muted-foreground);
+  font-size: var(--tp-text-sm);
+  text-decoration: none;
+  transition: color var(--tp-duration-fast) var(--tp-easing-standard),
+    border-color var(--tp-duration-fast) var(--tp-easing-standard);
+}
+
+.section-nav__link:hover {
+  color: var(--tp-foreground);
+}
+
+.section-nav__link:focus-visible {
+  outline: 2px solid var(--tp-ring);
+  outline-offset: 2px;
+}
+
+.section-nav__link[aria-current='page'] {
+  border-inline-start-color: var(--site-accent);
+  color: var(--tp-foreground);
+  font-weight: var(--tp-font-medium);
+}
+
+/*
+ * Narrow screens: the list folds into a bar showing where you are ("API Reference / forces")
+ * with a chevron; the list opens under it and scrolls within the window.
+ */
+@media (width < 48rem) {
+  .section-nav__toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--tp-space-3);
+    inline-size: 100%;
+    padding: var(--tp-space-4) 0;
+    border: 0;
+    background: none;
+    color: var(--tp-foreground);
+    font: inherit;
+    font-size: var(--tp-text-base);
+    text-align: start;
+    cursor: pointer;
+  }
+
+  .section-nav__crumbs {
+    display: flex;
+    align-items: baseline;
+    gap: var(--tp-space-2);
+    min-inline-size: 0;
+    white-space: nowrap;
+  }
+
+  .section-nav__crumb {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--tp-muted-foreground);
+  }
+
+  .section-nav__crumb--current {
+    color: var(--tp-foreground);
+    font-weight: var(--tp-font-medium);
+  }
+
+  .section-nav__crumb-separator {
+    color: var(--tp-border);
+  }
+
+  .section-nav__chevron {
+    flex: none;
+    color: var(--tp-muted-foreground);
+    transition: rotate var(--tp-duration-normal) var(--tp-easing-standard);
+  }
+
+  .section-nav[data-open] .section-nav__chevron {
+    rotate: 180deg;
+  }
+
+  .section-nav:not([data-open]) .section-nav__panel {
+    display: none;
+  }
+
+  .section-nav__panel {
+    max-block-size: calc(100dvh - var(--site-header-height) - 3.5rem);
+    overflow-y: auto;
+    padding-block-end: var(--tp-space-5);
+  }
+}

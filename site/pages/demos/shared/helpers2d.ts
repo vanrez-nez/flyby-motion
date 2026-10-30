@@ -11,8 +11,6 @@ export type AgentDotStyle = {
   fill: number;
   stroke?: number;
   strokeWidth?: number;
-  dotRadius?: number;
-  dotColor?: number;
 };
 
 export function drawAgentDot(
@@ -24,7 +22,7 @@ export function drawAgentDot(
     .circle(point[0], point[1], style.radius)
     .fill(style.fill)
     .stroke({
-      color: style.stroke ?? 0xffffff,
+      color: style.stroke ?? demoColors.trail,
       width: style.strokeWidth ?? 2
     });
 }

@@ -59,13 +59,3 @@ export function navigate(path: string): void {
   window.history.pushState({}, '', withBase(path));
   window.dispatchEvent(new PopStateEvent('popstate'));
 }
-
-export function demoDimension(key: DemoKey | undefined): DemoDimension {
-  return key?.startsWith('three-') ? '3d' : '2d';
-}
-
-/** The same demo in the other dimension: Forces 2D ↔ Forces 3D. */
-export function counterpartPath(key: DemoKey | undefined, dimension: DemoDimension): string {
-  const current = demoLinks[demoDimension(key)].findIndex((link) => link.key === key);
-  return demoLinks[dimension][Math.max(0, current)].path;
-}

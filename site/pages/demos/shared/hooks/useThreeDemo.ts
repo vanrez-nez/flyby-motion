@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { useEffect, useState } from 'react';
 import { waitForStableSize } from '../../../../lib/waitForStableSize';
+import { demoColors } from '../colors';
 
 
 export interface ThreeDemoContext {
@@ -26,13 +27,13 @@ export function useThreeDemo(playAreaRef: React.RefObject<HTMLDivElement | null>
     waitForStableSize(playArea, aborter.signal)
       .then(({ width, height }) => {
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-        renderer.setClearColor(0x000000);
+        renderer.setClearColor(demoColors.bg);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.setSize(width, height);
         playArea.appendChild(renderer.domElement);
 
         const scene = new THREE.Scene();
-        scene.fog = new THREE.Fog(0x000000, 20, 60);
+        scene.fog = new THREE.Fog(demoColors.bg, 20, 60);
 
         const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
         camera.position.set(0, 12, 20);

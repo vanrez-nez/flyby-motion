@@ -18,22 +18,18 @@ type TpTag =
   | 'tp-code-block'
   | 'tp-collapsible'
   | 'tp-command-palette'
+  | 'tp-drawer'
   | 'tp-icon'
   | 'tp-key-hint'
   | 'tp-key-hint-group'
   | 'tp-markdown'
   | 'tp-mo-text-stroke'
-  | 'tp-resizable-handle'
-  | 'tp-resizable-panel'
-  | 'tp-resizable-panel-group'
   | 'tp-scroll-area'
   | 'tp-scroll-trigger'
   | 'tp-status-dot'
   | 'tp-table-of-contents'
   | 'tp-table-of-contents-item'
-  | 'tp-theme-switcher'
-  | 'tp-tree-item'
-  | 'tp-tree-view';
+  | 'tp-theme-switcher';
 
 declare module 'react' {
   namespace JSX {
