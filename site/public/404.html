@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>flyby-motion</title>
+    <script>
+      // GitHub Pages serves this file for any path it has no file for, such as a reload on
+      // /flyby-motion/docs/forces. It sends the browser back to the app with the path in the query
+      // (/flyby-motion/?/docs/forces); the script in index.html restores the real URL before the
+      // app starts, and the app shows that page, or its own not-found page.
+      // Single Page Apps for GitHub Pages, MIT License: https://github.com/rafgraph/spa-github-pages
+      //
+      // Copied to the build as-is (it lives in `public/`), so it runs only on GitHub Pages: the dev
+      // server already serves the app for every path.
+      //
+      // Path segments that belong to the site, not the app: 1 for the project page
+      // (/flyby-motion/, the `base` in vite.config.js).
+      var pathSegmentsToKeep = 1;
+
+      var l = window.location;
+      l.replace(
+        l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+        l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?/' +
+        l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
+        (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+        l.hash
+      );
+    </script>
+  </head>
+  <body></body>
+</html>

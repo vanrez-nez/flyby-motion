@@ -1,0 +1,71 @@
+/* Header on top, footer at the bottom, the message centred both ways in what's left. */
+.not-found {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--tp-background);
+}
+
+.not-found__body {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--tp-space-6);
+  text-align: center;
+  padding-block: var(--tp-space-12);
+}
+
+.not-found__body .site-eyebrow {
+  margin: 0;
+}
+
+/* The landing headline's type: display face, solid line over an outlined accent line. */
+.not-found__title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0;
+  font-family: var(--site-font-display);
+  font-weight: 400;
+  font-size: clamp(3.25rem, 9vw, 7.5rem);
+  line-height: 0.92;
+  letter-spacing: 0.005em;
+  text-transform: uppercase;
+  color: var(--tp-foreground);
+}
+
+.not-found__title-line--outline {
+  color: transparent;
+  -webkit-text-stroke: 2px var(--site-accent);
+  text-stroke: 2px var(--site-accent);
+}
+
+.not-found__lead {
+  max-width: 34rem;
+  margin: 0;
+  color: var(--tp-muted-foreground);
+  font-size: var(--tp-text-base);
+  line-height: var(--tp-leading-relaxed);
+  text-wrap: balance;
+}
+
+/* The missing path, in the mono face, so a typo in it is easy to spot. */
+.not-found__path {
+  padding: 0.1em 0.4em;
+  border-radius: var(--tp-radius-sm);
+  background: var(--tp-muted);
+  color: var(--tp-foreground);
+  font-family: var(--tp-font-mono);
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
+}
+
+.not-found__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--tp-space-3);
+}

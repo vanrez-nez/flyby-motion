@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { LandingPage } from '../pages/landing/LandingPage';
 import { DocsPage } from '../pages/docs/DocsPage';
+import { NotFoundPage } from '../pages/not-found/NotFoundPage';
 import { toRoute, withBase } from './routes';
 import { docsPages, findDocsPage, findDocsPageByHeading, type DocsPage as DocsPageData } from '../pages/docs/docsPages';
 import { Forces2DDemo } from '../pages/demos/2d/forces';
@@ -94,12 +95,5 @@ export const App: React.FC = () => {
   if (normalizedPath === '/3d/modifiers') return <Modifiers3DDemo />;
   if (normalizedPath === '/3d/custom') return <Custom3DDemo />;
 
-  // Fallback for unmatched routes
-  return (
-    <div style={{ color: 'white', padding: '20px' }}>
-      <h1>Demo Route Placeholder</h1>
-      <p>Path: {currentPath}</p>
-      <a href={withBase('/')}>Return Home</a>
-    </div>
-  );
+  return <NotFoundPage path={normalizedPath} />;
 };
