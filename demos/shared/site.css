@@ -1,0 +1,115 @@
+/* Page defaults on top of @tweakpad/ui/styles.css */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  margin: 0;
+  padding: 0;
+  scroll-padding-block-start: calc(var(--site-header-height) + var(--tp-space-6));
+}
+
+/*
+ * Every route's CSS ships in one bundle, and the demo stylesheets (2dDemo.css / 3dDemo.css) lock
+ * `html, body` to the viewport for the full-screen canvases. Pages that scroll (landing, docs)
+ * restore document scrolling; the demo frame sets `.site-fixed-viewport` while it is mounted.
+ */
+html:not(.site-fixed-viewport),
+html:not(.site-fixed-viewport) body {
+  width: 100%;
+  height: auto;
+  min-height: 100%;
+}
+
+/* Only the root scrolls: any overflow other than `visible` on body would make it the scroll
+   container that sticky headers and columns attach to, and it never scrolls. */
+html:not(.site-fixed-viewport) {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+html:not(.site-fixed-viewport) body {
+  overflow: visible;
+}
+
+body {
+  margin: 0;
+  min-width: 0;
+  background: var(--tp-background);
+  color: var(--tp-foreground);
+  font-family: var(--tp-font-sans);
+  font-size: var(--tp-text-base);
+  line-height: var(--tp-leading-normal);
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  display: contents;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--site-accent) 35%, transparent);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--tp-border) transparent;
+}
+
+/* Shared footer */
+.site-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tp-space-4);
+  min-height: 36px;
+  padding-inline: var(--tp-space-6);
+  border-top: var(--tp-border-width) solid var(--tp-border);
+  background: var(--tp-background);
+  color: var(--tp-muted-foreground);
+  font-family: var(--tp-font-sans);
+  font-size: var(--tp-text-xs);
+}
+
+.site-footer a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.site-footer a:hover {
+  color: var(--tp-foreground);
+}
+
+.site-footer__links {
+  display: flex;
+  gap: var(--tp-space-4);
+}
+
+@media (max-width: 640px) {
+  .site-footer {
+    padding-inline: var(--tp-space-3);
+  }
+}
+
+/* Eyebrow label: "● FLYBY-MOTION 0.0.2" */
+.site-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tp-space-2);
+  font-family: var(--tp-font-mono);
+  font-size: var(--tp-text-sm);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tp-muted-foreground);
+}
+
+.site-eyebrow::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--site-accent);
+  box-shadow: 0 0 12px var(--site-accent);
+}
