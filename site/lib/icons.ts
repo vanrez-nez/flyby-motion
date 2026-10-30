@@ -2,6 +2,7 @@ import type { IconDefinition } from '@tweakpad/ui';
 
 export { xIcon } from '@tweakpad/ui/icons/x';
 export { copyIcon } from '@tweakpad/ui/icons/copy';
+export { chevronDownIcon } from '@tweakpad/ui/icons/chevron-down';
 
 /** Icons the library does not ship, drawn in its 24×24 outline style. */
 export const searchIcon: IconDefinition = {
