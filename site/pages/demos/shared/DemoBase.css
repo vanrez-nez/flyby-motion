@@ -48,12 +48,14 @@
 
 /*
  * The Tweakpane container: demo2d.css / demo3d.css place it in the window; anchor it to the canvas
- * instead, level with the first row of the demo list. Size and contents are untouched.
+ * instead, top-right, level with the first row of the demo list and its right edge on the page
+ * column's (like the Guide button below it). Size and contents are untouched.
  */
 .demo-base__content #tp-container {
   position: absolute;
   top: var(--demo-top);
-  left: var(--tp-space-6);
+  right: var(--demo-inset);
+  left: auto;
 }
 
 /* The guide button, bottom-right on the canvas, its right edge on the page column's (the header's). */
@@ -140,9 +142,6 @@ tp-drawer .demo-sidebar__content {
     border-bottom: var(--tp-border-width) solid var(--tp-border);
   }
 
-  .demo-base__content #tp-container {
-    left: var(--tp-space-3);
-  }
 
   .demo-base__guide tp-drawer::part(drawer-surface) {
     max-height: 70dvh;

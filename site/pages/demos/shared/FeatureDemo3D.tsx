@@ -100,8 +100,9 @@ export const FeatureDemo3D: React.FC<{ config: ThreeDemoConfig, sidebarConfig: S
     keyLight.position.set(5, 8, 4);
     scene.add(keyLight);
 
-    // White vertex colors tinted by the material color, so the grid recolors with the theme.
-    const grid = new THREE.GridHelper(24, 48, 0xffffff, 0xffffff);
+    // A circular floor: rings and spokes around the origin, where the agents gather. White vertex
+    // colors tinted by the material color, so the grid recolors with the theme.
+    const grid = new THREE.PolarGridHelper(12, 16, 12, 96, 0xffffff, 0xffffff);
     const gridMaterial = tagColor(grid.material as THREE.LineBasicMaterial, 'grid');
     gridMaterial.color.setHex(colors.grid);
     gridMaterial.transparent = true;

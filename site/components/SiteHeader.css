@@ -77,21 +77,11 @@
   color: var(--tp-foreground);
 }
 
-.site-search__trigger {
-  min-width: 15rem;
-}
-
 .site-search__label {
-  flex: 1;
-  text-align: start;
   color: var(--tp-muted-foreground);
 }
 
 @media (max-width: 860px) {
-  .site-search__trigger {
-    min-width: 0;
-  }
-
   .site-search__label {
     display: none;
   }
