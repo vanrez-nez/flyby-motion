@@ -62,6 +62,9 @@ export function createDrone(agent: Agent, color: THREE.Color, accent: THREE.Colo
   const look = new THREE.Matrix4();
   const up = new THREE.Vector3(0, 1, 0);
   const local = new THREE.Vector3();
+  const origin = new THREE.Vector3();
+  const inverse = new THREE.Vector3();
+  const inverseQuat = new THREE.Quaternion();
   let time = 0;
 
   return {
@@ -71,20 +74,21 @@ export function createDrone(agent: Agent, color: THREE.Color, accent: THREE.Colo
       const [x, y, z] = agent.position;
       group.position.set(x, y, z);
 
-      // Face the direction of travel (on the ground plane), smoothly.
+      // Face the direction of travel (on the ground plane), smoothly; hold heading when hovering.
       velocity.set(agent.velocity[0], 0, agent.velocity[2]);
-      if (velocity.lengthSq() > 0.05) {
-        look.lookAt(new THREE.Vector3(), velocity.clone().negate(), up);
+      if (velocity.lengthSq() > 1) {
+        look.lookAt(origin, inverse.copy(velocity).negate(), up);
         heading.setFromRotationMatrix(look);
-        group.quaternion.slerp(heading, Math.min(1, dt * 4));
+        group.quaternion.slerp(heading, Math.min(1, dt * 3));
       }
 
-      // Bank into turns and pitch into acceleration: the steering force in the drone's frame.
-      local.copy(steering).applyQuaternion(group.quaternion.clone().invert());
-      const bank = THREE.MathUtils.clamp(-local.x * 0.025, -0.5, 0.5);
-      const pitch = THREE.MathUtils.clamp(local.z * 0.02, -0.35, 0.35);
-      frame.rotation.z += (bank - frame.rotation.z) * Math.min(1, dt * 5);
-      frame.rotation.x += (pitch - frame.rotation.x) * Math.min(1, dt * 5);
+      // A gentle bank into turns and pitch into acceleration, from the steering force in the
+      // drone's frame. Small angles and slow easing: it should lean, not twitch.
+      local.copy(steering).applyQuaternion(inverseQuat.copy(group.quaternion).invert());
+      const bank = THREE.MathUtils.clamp(-local.x * 0.012, -0.3, 0.3);
+      const pitch = THREE.MathUtils.clamp(local.z * 0.01, -0.2, 0.2);
+      frame.rotation.z += (bank - frame.rotation.z) * Math.min(1, dt * 2.5);
+      frame.rotation.x += (pitch - frame.rotation.x) * Math.min(1, dt * 2.5);
 
       for (let i = 0; i < rotors.length; i++) rotors[i].rotation.y += dt * (i % 2 ? 38 : -38);
       lightMaterial.opacity = 0.55 + Math.sin(time * 6) * 0.45;

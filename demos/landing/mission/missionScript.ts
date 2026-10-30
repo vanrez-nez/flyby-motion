@@ -1,7 +1,7 @@
 import { Agent, falloff, forces, step, type Force } from '../../../src/index';
 import type { InstrumentedForce } from './instruments';
 import { createPhases, type HudEvent, type PhaseContext, type PhaseScratch } from './phases';
-import { CRUISE_ALTITUDE, corridorX, terrainHeight, type Spire, type World } from './world';
+import { CRUISE_ALTITUDE, type Spire, type World } from './world';
 
 export type { HudEvent, HudTone } from './phases';
 
@@ -35,68 +35,34 @@ export interface Mission {
 }
 
 /**
- * The target vehicle. It loiters near WP 3 until the drone acquires it, then runs back along
- * the corridor (towards base) weaving left and right, so the drone tails it through the valley.
- * Moving = the lane point advances; loitering = it stays put and the target drifts around it.
+ * The target: waits at its start point, then, once acquired, flies a straight line back along the
+ * return lane (parallel to the route, clear of the slalom) and stops, so the drone can orbit it.
+ * Straight and steady on purpose: the drone's pursuit is what the scene is showing.
  */
-function addTargetForces(target: Agent, world: World, mode: () => 'loiter' | 'run' | 'escape'): void {
-  const lane = [0, 0, 0];
-  const loiter = world.waypoints[2].position;
-  const updateLane: Force = (agent) => {
-    const current = mode();
-    // Slower than the drone (11) while it can be tailed; a burst of speed when it escapes.
-    agent.maxSpeed = current === 'escape' ? 14 : 5.5;
-    if (current === 'loiter') {
-      lane[0] = loiter[0] + 4;
-      lane[1] = loiter[1] - 1;
-      lane[2] = loiter[2] - 6;
-    } else if (current === 'run') {
-      // Run back down the valley (+z), weaving across the corridor. It stops short of the obstacle
-      // field, so the hold (keep distance) plays out in open ground beyond WP 2.
-      const z = Math.min(agent.position[2] + 10, world.waypoints[1].position[2] - 8);
-      lane[0] = corridorX(z) + Math.sin(z * 0.09) * 6;
-      lane[1] = terrainHeight(lane[0], z) + CRUISE_ALTITUDE - 1;
-      lane[2] = z;
-    } else {
-      // Escape: climb out over the eastern ridge, out of the drone's sight, so the search fails.
-      const z = agent.position[2];
-      lane[0] = corridorX(z) + 80;
-      lane[1] = terrainHeight(lane[0], z) + 18;
-      lane[2] = z - 30;
-    }
+function addTargetForces(target: Agent, world: World, moving: () => boolean): void {
+  const [sx, sy, sz] = world.targetStart;
+  const stop = [world.returnLaneX, sy, -50];
+  const goal = [sx, sy, sz];
+  const pickGoal: Force = () => {
+    const destination = moving() ? stop : world.targetStart;
+    goal[0] = destination[0];
+    goal[1] = destination[1];
+    goal[2] = destination[2];
     return [0, 0, 0];
   };
-  target.add(updateLane, { label: 'lane' });
-  // The lane pull is stronger while escaping, so the target clears the ridge quickly.
-  const cruise = falloff.arrive(10, 4);
-  const sprint = falloff.arrive(16, 4);
-  target.add(forces.attract(() => lane, (d) => (mode() === 'escape' ? sprint(d) : cruise(d))), { label: 'follow lane' });
-  target.add(forces.drift({ strength: 1.5, scale: 0.3, seed: 11 }), { label: 'drift' });
-  target.add(forces.damp(0.9), { label: 'damp' });
+  target.add(pickGoal, { label: 'goal' });
+  target.add(forces.attract(() => goal, falloff.arrive(6, 10)), { label: 'run' });
+  target.add(forces.damp(1.1), { label: 'damp' });
 }
 
 export function createMission(world: World, onEvent: (event: HudEvent) => void): Mission {
-  const pad = [world.base[0], world.base[1] + 1, world.base[2]];
-  const targetStart = () => {
-    const wp3 = world.waypoints[2].position;
-    return [wp3[0] + 4, wp3[1] - 1, wp3[2] - 6];
-  };
-
-  const drone = new Agent({ position: [...pad], velocity: [0, 0, 0], maxSpeed: 11, maxForce: 40 });
-  // Its speed limit changes with its mode (see addTargetForces).
-  const target = new Agent({ position: targetStart(), velocity: [0, 0, 0], maxSpeed: 5.5, maxForce: 24 });
+  const pad = [world.base[0], world.base[1] + 0.6, world.base[2]];
+  const drone = new Agent({ position: [...pad], velocity: [0, 0, 0], maxSpeed: 9, maxForce: 24 });
+  const target = new Agent({ position: [...world.targetStart], velocity: [0, 0, 0], maxSpeed: 5, maxForce: 12 });
 
   const phases = createPhases();
-  // The target loiters at WP 3, runs once acquired, and escapes over the ridge when the lock drops.
-  const targetMode = (): 'loiter' | 'run' | 'escape' => {
-    const code = phaseIndex >= 0 ? phases[phaseIndex].code : 'LAUNCH';
-    if (code === 'ACQUIRE' || code === 'FOLLOW' || code === 'HOLD') return 'run';
-    if (code === 'SEARCH' || code === 'RTB') return 'escape';
-    return 'loiter';
-  };
-  addTargetForces(target, world, targetMode);
   const duration = phases.reduce((sum, phase) => sum + phase.duration, 0);
-  const scratch: PhaseScratch = { nearest: null, lastReroute: -Infinity, scanned: false };
+  const scratch: PhaseScratch = { nearest: null, lastReroute: -Infinity };
   const ctx: PhaseContext = { drone, target, world, scratch, emit: onEvent };
 
   let loopStart = 0;
@@ -104,17 +70,19 @@ export function createMission(world: World, onEvent: (event: HudEvent) => void):
   let phaseStart = 0;
   let active: InstrumentedForce[] = [];
 
+  // The target runs while it is pursued, then holds where it stopped (orbit) until the loop ends.
+  addTargetForces(target, world, () => phaseIndex >= 0 && ['PURSUE', 'ORBIT', 'RTB'].includes(phases[phaseIndex].code));
+
   const enterPhase = (index: number, t: number) => {
     phaseIndex = index;
     phaseStart = t;
     scratch.nearest = null;
     scratch.lastReroute = -Infinity;
-    scratch.scanned = false;
     drone.clear();
     if (index === 0) {
       drone.position = [...pad];
       drone.velocity = [0, 0, 0];
-      target.position = targetStart();
+      target.position = [...world.targetStart];
       target.velocity = [0, 0, 0];
     }
     active = phases[index].enter(ctx);
@@ -168,3 +136,5 @@ export function createMission(world: World, onEvent: (event: HudEvent) => void):
     },
   };
 }
+
+export { CRUISE_ALTITUDE };

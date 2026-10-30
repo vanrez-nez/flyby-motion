@@ -25,16 +25,23 @@
 .hud[data-tone='lock'] { --hud-tone: var(--hud-lock); }
 .hud[data-tone='warn'] { --hud-tone: var(--hud-warn); }
 
-/* Top bar */
+/*
+ * Top bar. Laid out from a fixed left edge with fixed-width chips, so a longer mode name or a
+ * ticking clock never re-centres (and so never shifts) the whole bar.
+ */
 .hud__bar {
   position: absolute;
   top: 9%;
-  left: 50%;
-  translate: -50% 0;
+  left: 9%;
+  right: 9%;
   display: flex;
+  justify-content: center;
   gap: 0.5em;
   white-space: nowrap;
 }
+
+.hud__chip--mode { min-width: 9.5em; text-align: center; }
+.hud__chip--clock { min-width: 7em; text-align: center; }
 
 .hud__chip {
   padding: 0.35em 0.7em;
@@ -47,21 +54,27 @@
 .hud__chip--mode { color: var(--hud-tone); border-color: var(--hud-tone); }
 .hud__chip--clock { font-variant-numeric: tabular-nums; }
 
-/* Reticle and lock: positioned by transform from the scene every frame. */
-.hud__reticle,
+/* Reticle: fixed at the centre, where the chase camera keeps the drone. */
+.hud__reticle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+}
+
+.hud-reticle {
+  display: block;
+  width: clamp(6rem, 22cqi, 11rem);
+  translate: -50% -50%;
+  color: var(--hud-faint);
+}
+
+/* Lock bracket: the one element that tracks the scene, glided by Hud.tsx. */
 .hud__lock {
   position: absolute;
   top: 0;
   left: 0;
   will-change: transform;
   transition: opacity var(--tp-duration-normal);
-}
-
-.hud-reticle {
-  display: block;
-  width: clamp(5rem, 16cqi, 9rem);
-  translate: -50% -50%;
-  color: var(--hud-dim);
 }
 
 .hud-reticle .hud-reticle__brackets { stroke: var(--hud-tone); }
@@ -80,11 +93,6 @@
   display: block;
   width: clamp(2.5rem, 7cqi, 4rem);
   translate: 0 -50%;
-}
-
-.hud__lock-label {
-  translate: 0 -20%;
-  white-space: nowrap;
 }
 
 /* Side panels */
@@ -134,7 +142,25 @@
   column-gap: 0.6em;
 }
 
-.hud__force-name { color: var(--hud-fg); }
+.hud__force-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  color: var(--hud-fg);
+}
+
+/* The swatch and bar use the arrow color of the force's kind, so list and scene read together. */
+.hud__force { --force-color: var(--hud-fg); }
+.hud__force[data-kind='avoid'] { --force-color: var(--hud-warn); }
+.hud__force[data-kind='hold'] { --force-color: var(--hud-lock); }
+.hud__force[data-kind='stabilize'] { --force-color: var(--hud-faint); }
+.hud__force[data-kind='stabilize'] .hud__force-name { color: var(--hud-dim); }
+
+.hud__force-swatch {
+  width: 0.9em;
+  height: 2px;
+  background: var(--force-color);
+}
 
 .hud__force-bar {
   height: 0.35em;
@@ -144,7 +170,7 @@
 .hud__force-bar > span {
   display: block;
   height: 100%;
-  background: var(--hud-tone);
+  background: var(--force-color);
   transform-origin: left;
   transition: transform 0.15s linear;
 }
@@ -182,32 +208,28 @@
   font-size: 0.8em;
 }
 
-/* Ticker */
+/* Ticker: a fixed full-width row; the message is centred inside it, so the row never moves. */
 .hud__ticker {
   position: absolute;
   bottom: 10%;
-  left: 50%;
-  translate: -50% 0;
-  display: grid;
-  justify-items: center;
-  gap: 0.3em;
+  left: 9%;
+  right: 9%;
+  display: flex;
+  justify-content: center;
 }
 
+/* One message at a time, in a fixed spot: it is replaced, never scrolled. */
 .hud__message {
   display: inline-flex;
   align-items: center;
   gap: 0.6em;
   margin: 0;
-  color: var(--hud-dim);
-  white-space: nowrap;
-}
-
-.hud__message:last-child {
   padding: 0.4em 0.9em;
   border: 1px solid var(--hud-tone);
   color: var(--hud-tone);
   background: color-mix(in srgb, var(--tp-background) 60%, transparent);
   font-size: 1.15em;
+  white-space: nowrap;
 }
 
 .hud__message[data-tone='lock'] { --hud-tone: var(--hud-lock); }

@@ -44,18 +44,24 @@ function makeNoise(seed: number): (x: number, z: number) => number {
 
 const noise = makeNoise(7);
 
-/** Centre line of the valley the drone flies along: a gentle S curve. */
-export function corridorX(z: number): number {
-  return Math.sin(z * 0.018) * 14 + Math.sin(z * 0.041 + 1.3) * 5;
+/**
+ * Centre line of the valley the drone flies along. Straight on purpose: every leg of the mission
+ * is a clean line, so each swerve on screen is caused by a force, not by the route.
+ */
+export function corridorX(_z: number): number {
+  return 0;
 }
 
+/** Half width of the flat valley floor; the mountains rise beyond it. */
+export const VALLEY_HALF_WIDTH = 22;
+
 /**
- * Terrain height: low in the corridor, rising to ridged mountains on both sides, with a peak
- * ahead of the base so the contour lines bunch like the reference.
+ * Terrain height: a flat, smooth valley floor (so altitude hold has nothing to chase), rising to
+ * ridged mountains on both sides, with a peak at the far end so the contours bunch like the reference.
  */
 export function terrainHeight(x: number, z: number): number {
   const fromCorridor = Math.abs(x - corridorX(z));
-  const valley = Math.min(1, Math.max(0, (fromCorridor - 9) / 38));
+  const valley = Math.min(1, Math.max(0, (fromCorridor - VALLEY_HALF_WIDTH) / 36));
   let ridges = 0;
   let amplitude = 1;
   let frequency = 0.035;
@@ -65,8 +71,9 @@ export function terrainHeight(x: number, z: number): number {
     amplitude *= 0.5;
     frequency *= 2.1;
   }
-  const peak = Math.exp(-(((x + 34) ** 2) / 900 + ((z + 150) ** 2) / 1400)) * 30;
-  return valley * valley * ridges * 26 + peak * valley + noise(x * 0.08, z * 0.08) * 1.2;
+  const peak = Math.exp(-(((x + 40) ** 2) / 900 + ((z + 170) ** 2) / 1400)) * 30;
+  // Fine detail only on the slopes; the floor stays smooth.
+  return valley * valley * ridges * 26 + peak * valley + noise(x * 0.08, z * 0.08) * 1.2 * valley;
 }
 
 export interface Spire {
@@ -86,29 +93,37 @@ export interface World {
   index: spatial.Octree<Spire>;
   waypoints: Waypoint[];
   base: [number, number, number];
-  /** Where the obstacle field is densest; the mission reroutes through it. */
-  obstacleField: { start: number; end: number };
+  /** Where the target waits before it is acquired. */
+  targetStart: [number, number, number];
+  /** The lane the target runs on when chased: parallel to the route, clear of the slalom. */
+  returnLaneX: number;
 }
 
 function groundPoint(x: number, z: number, lift = 0): [number, number, number] {
   return [x, terrainHeight(x, z) + lift, z];
 }
 
+/**
+ * The slalom: three pillars on the straight line from WP 1 to WP 2, each a little off-centre and
+ * alternating sides, spaced so the drone is back on the line before the next one: three distinct
+ * swerves, left, right, left.
+ */
+export const SLALOM: ReadonlyArray<{ x: number; z: number }> = [
+  { x: 0.8, z: -34 },
+  { x: -0.8, z: -54 },
+  { x: 0.8, z: -74 },
+];
+
 export function createWorld(spireCount = 46): World {
   const random = seededRandom(42);
-  const obstacleField = { start: -40, end: -95 };
 
-  const spires: Spire[] = [];
-  for (let i = 0; i < spireCount; i++) {
-    // Most spires stand in the obstacle field, across the corridor; the rest line the valley.
-    const inField = i < spireCount * 0.65;
-    const z = inField
-      ? obstacleField.start + (obstacleField.end - obstacleField.start) * random()
-      : 20 - random() * (WORLD_LENGTH - 30);
-    const spread = inField ? 16 : 30;
-    const x = corridorX(z) + (random() * 2 - 1) * spread;
-    const height = 7 + random() * (inField ? 10 : 14);
-    spires.push({ position: groundPoint(x, z), height, radius: 1.4 + random() * 1.6 });
+  const spires: Spire[] = SLALOM.map(({ x, z }) => ({ position: groundPoint(x, z), height: 13, radius: 1.6 }));
+  // The rest are scenery along the valley walls, out of the drone's avoidance range.
+  for (let i = spires.length; i < spireCount; i++) {
+    const side = i % 2 === 0 ? 1 : -1;
+    const x = side * (VALLEY_HALF_WIDTH + 6 + random() * 26);
+    const z = 30 - random() * (WORLD_LENGTH + 10);
+    spires.push({ position: groundPoint(x, z), height: 8 + random() * 14, radius: 1.4 + random() * 1.6 });
   }
 
   const index = new spatial.Octree<Spire>({
@@ -130,11 +145,13 @@ export function createWorld(spireCount = 46): World {
     spires,
     index,
     waypoints: [
-      waypointAt(-25, 'WP 1', 'wp1'),
-      waypointAt(-110, 'WP 2', 'wp2'),
-      waypointAt(-150, 'WP 3', 'wp3'),
+      waypointAt(-16, 'WP 1', 'wp1'),
+      waypointAt(-90, 'WP 2', 'wp2'),
+      waypointAt(-116, 'WP 3', 'wp3'),
     ],
-    base: groundPoint(corridorX(20), 20, 0),
-    obstacleField,
+    // Off to the side of the route, so the way home stays clear of the slalom.
+    base: groundPoint(10, 20, 0),
+    targetStart: groundPoint(6, -124, CRUISE_ALTITUDE - 1),
+    returnLaneX: 14,
   };
 }

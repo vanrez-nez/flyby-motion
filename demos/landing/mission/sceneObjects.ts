@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { createDrone, createTargetView, type DroneView } from './drone';
-import { createScenePanel, createSpires, createWaypointPin, makeDotTexture, type ScenePanel, type WaypointPin } from './markers';
+import { createForceArrows, createGoalLine, type ForceArrows } from './forceArrows';
+import { createSpires, createWaypointPin, makeDotTexture, type WaypointPin } from './markers';
 import type { Mission } from './missionScript';
 import type { MissionPalette } from './palette';
 import { createGrid, createTerrain } from './terrain';
@@ -12,7 +13,8 @@ export interface SceneObjects {
   drone: DroneView;
   target: ReturnType<typeof createTargetView>;
   pins: Map<string, WaypointPin>;
-  panel: ScenePanel;
+  arrows: ForceArrows;
+  goalLine: ReturnType<typeof createGoalLine>;
   trail: { line: THREE.Line; push(point: number[]): void; reset(): void };
   applyPalette(palette: MissionPalette): void;
   dispose(): void;
@@ -24,7 +26,7 @@ export interface Detail {
   pointsPerSpire: number;
 }
 
-export function createSceneObjects(mission: Mission, palette: MissionPalette, detail: Detail, fontFamily: string): SceneObjects {
+export function createSceneObjects(mission: Mission, palette: MissionPalette, detail: Detail): SceneObjects {
   const root = new THREE.Group();
   const { world } = mission;
 
@@ -50,8 +52,9 @@ export function createSceneObjects(mission: Mission, palette: MissionPalette, de
   const target = createTargetView(mission.target, palette.accent);
   root.add(drone.group, target.group);
 
-  const panel = createScenePanel(fontFamily, palette.css);
-  root.add(panel.sprite);
+  const arrows = createForceArrows(mission.drone, palette);
+  const goalLine = createGoalLine(palette.line);
+  root.add(arrows.group, goalLine.line);
 
   // Trail behind the drone: a fixed-length ring buffer of recent positions.
   const TRAIL = 90;
@@ -89,6 +92,8 @@ export function createSceneObjects(mission: Mission, palette: MissionPalette, de
     // Additive glow reads on dark; on light, normal blending keeps lines dark on white.
     spireMaterial.blending = p.dark ? THREE.AdditiveBlending : THREE.NormalBlending;
     spireMaterial.needsUpdate = true;
+    arrows.applyPalette(p);
+    (goalLine.line.material as THREE.LineDashedMaterial).color.copy(p.line);
   };
   applyPalette(palette);
 
@@ -97,7 +102,8 @@ export function createSceneObjects(mission: Mission, palette: MissionPalette, de
     drone,
     target,
     pins,
-    panel,
+    arrows,
+    goalLine,
     trail,
     applyPalette,
     dispose() {
@@ -109,7 +115,8 @@ export function createSceneObjects(mission: Mission, palette: MissionPalette, de
       dot.dispose();
       drone.dispose();
       target.dispose();
-      panel.dispose();
+      arrows.dispose();
+      goalLine.dispose();
       root.traverse((object) => {
         const mesh = object as THREE.Mesh;
         if (mesh.isMesh || (object as THREE.Line).isLine) {

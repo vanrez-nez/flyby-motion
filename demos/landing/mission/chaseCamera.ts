@@ -15,20 +15,23 @@ export interface ChaseCamera {
 }
 
 export function createChaseCamera(camera: THREE.PerspectiveCamera, drone: Agent): ChaseCamera {
-  const offset = { back: 9, up: 3.6 };
+  // Higher and further back than a tight chase, so the force arrows read around the drone.
+  const offset = { back: 11, up: 6 };
   const anchor = [0, 0, 0];
   const cameraAgent = new Agent({ position: [...drone.position], velocity: [0, 0, 0], maxSpeed: 30, maxForce: 140 });
   cameraAgent.add(behaviors.arrive(() => anchor, { strength: 60, slowR: 6, damp: 3.2 }), { label: 'chase' });
 
   const heading = new THREE.Vector3(0, 0, -1);
+  const travel = new THREE.Vector3();
   const lookAt = new THREE.Vector3();
   const smoothLook = new THREE.Vector3();
 
-  const placeAnchor = () => {
+  const placeAnchor = (dt: number) => {
     const [vx, , vz] = drone.velocity;
     const speed = Math.hypot(vx, vz);
-    // Keep the last heading while hovering, so the camera doesn't swing around.
-    if (speed > 0.6) heading.lerp(new THREE.Vector3(vx / speed, 0, vz / speed), 0.08).normalize();
+    // The camera's heading swings slowly (about a second behind the drone's), so swerves and
+    // orbits show as the drone moving in the frame rather than the whole world spinning.
+    if (speed > 1) heading.lerp(travel.set(vx / speed, 0, vz / speed), Math.min(1, dt * 0.9)).normalize();
     const [x, y, z] = drone.position;
     anchor[0] = x - heading.x * offset.back;
     anchor[2] = z - heading.z * offset.back;
@@ -37,25 +40,25 @@ export function createChaseCamera(camera: THREE.PerspectiveCamera, drone: Agent)
 
   const aim = (blend: number) => {
     const [x, y, z] = drone.position;
-    lookAt.set(x + heading.x * 6, y + 0.4, z + heading.z * 6);
+    lookAt.set(x + heading.x * 4, y, z + heading.z * 4);
     smoothLook.lerp(lookAt, blend);
     camera.lookAt(smoothLook);
   };
 
   return {
     update(t, dt) {
-      placeAnchor();
+      placeAnchor(dt);
       step(cameraAgent, {}, t, dt);
       const [cx, cy, cz] = cameraAgent.position;
       camera.position.set(cx, cy, cz);
       aim(Math.min(1, dt * 6));
     },
     setCompact(compact) {
-      offset.back = compact ? 12 : 9;
-      offset.up = compact ? 4.6 : 3.6;
+      offset.back = compact ? 14 : 11;
+      offset.up = compact ? 7.5 : 6;
     },
     snap() {
-      placeAnchor();
+      placeAnchor(1);
       cameraAgent.position = [...anchor];
       cameraAgent.velocity = [0, 0, 0];
       camera.position.set(anchor[0], anchor[1], anchor[2]);

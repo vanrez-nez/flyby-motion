@@ -33,7 +33,7 @@ export function createHudPublisher(mission: Mission, camera: THREE.Camera, conta
         phaseCode: state.phaseCode,
         phaseTitle: state.phaseTitle,
         missionTime: state.missionTime,
-        forces: state.activeForces.map((f) => ({ label: f.label, recipe: f.recipe, level: Math.min(1, f.magnitude / drone.maxForce) })),
+        forces: state.activeForces.map((f) => ({ label: f.label, recipe: f.recipe, kind: f.kind, level: Math.min(1, f.magnitude / drone.maxForce) })),
         speed: Math.hypot(vx, vy, vz),
         altitude: y - terrainHeight(x, z),
         heading: (THREE.MathUtils.radToDeg(Math.atan2(vx, -vz)) + 360) % 360,

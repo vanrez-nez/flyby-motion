@@ -1,48 +1,40 @@
-/* HUD motion: rotating reticle rings, typed-in text, lock-in, and the one-shot glitch per event. */
-.hud-reticle .hud-reticle__ticks { transform-origin: 50px 50px; animation: hud-spin 40s linear infinite; }
-.hud-reticle .hud-reticle__ring { transform-origin: 50px 50px; animation: hud-spin 18s linear infinite reverse; }
+/*
+ * HUD motion, kept quiet so text stays readable: the reticle rings turn slowly, new messages and
+ * force rows fade in (no movement), the lock bracket snaps in once, and each event sweeps a single
+ * thin scan line across the box.
+ */
+.hud-reticle .hud-reticle__ticks { transform-origin: 50px 50px; animation: hud-spin 60s linear infinite; }
+.hud-reticle .hud-reticle__ring { transform-origin: 50px 50px; animation: hud-spin 30s linear infinite reverse; }
 
-.hud__lock[data-locked='true'] .hud-lock { animation: hud-lock-in 0.5s var(--tp-easing-enter) both; }
+.hud__lock[data-locked='true'] .hud-lock { animation: hud-lock-in 0.45s var(--tp-easing-enter) both; }
 
-.hud__force { animation: hud-type 0.4s steps(6) both; }
-.hud__message:last-child { animation: hud-type 0.6s steps(12) both; }
-.hud__message:last-child .hud__message-dot { animation: hud-blink 1s steps(2) infinite; }
+.hud__force,
+.hud__message { animation: hud-fade 0.35s var(--tp-easing-standard) both; }
+.hud__message .hud__message-dot { animation: hud-blink 1.2s steps(2) infinite; }
 
-/* Re-keyed per message in Hud.tsx, so this replays on each event: a scan bar and offset blocks. */
+/* Re-keyed per message in Hud.tsx, so this replays on each event. */
 .hud__scan {
   position: absolute;
   inset: 0;
   overflow: hidden;
 }
 
-.hud__scan::before,
-.hud__scan::after {
+.hud__scan::before {
   content: '';
   position: absolute;
   left: 0;
   right: 0;
-  opacity: 0;
-}
-
-.hud__scan::before {
-  height: 2px;
+  height: 1px;
   background: var(--hud-tone);
-  animation: hud-scan 0.7s var(--tp-easing-standard) both;
-}
-
-.hud__scan::after {
-  top: 6%;
-  height: 0.6em;
-  background: linear-gradient(90deg, transparent 12%, var(--hud-faint) 12% 22%, transparent 22% 70%, var(--hud-faint) 70% 76%, transparent 76%);
-  animation: hud-glitch 0.28s steps(3) both;
+  opacity: 0;
+  animation: hud-scan 0.9s var(--tp-easing-standard) both;
 }
 
 @keyframes hud-spin { to { rotate: 360deg; } }
 @keyframes hud-blink { 50% { opacity: 0; } }
-@keyframes hud-type { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
-@keyframes hud-lock-in { from { scale: 1.8; opacity: 0; } to { scale: 1; opacity: 1; } }
-@keyframes hud-scan { 0% { top: 0; opacity: 0.8; } 100% { top: 100%; opacity: 0; } }
-@keyframes hud-glitch { 0%, 100% { opacity: 0; } 33% { opacity: 1; translate: 4% 0; } 66% { opacity: 1; translate: -3% 140%; } }
+@keyframes hud-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes hud-lock-in { from { scale: 1.6; opacity: 0; } to { scale: 1; opacity: 1; } }
+@keyframes hud-scan { 0% { top: 0; opacity: 0.6; } 100% { top: 100%; opacity: 0; } }
 
 @media (prefers-reduced-motion: reduce) {
   .hud *,

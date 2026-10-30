@@ -4,6 +4,8 @@ import type { HudTone } from './missionScript';
 export interface HudForce {
   label: string;
   recipe: string;
+  /** Matches the arrow color in the scene; `stabilize` forces are listed but not drawn. */
+  kind: 'goal' | 'avoid' | 'hold' | 'stabilize';
   /** 0..1, relative to the drone's maxForce. */
   level: number;
 }

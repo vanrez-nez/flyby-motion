@@ -2,30 +2,39 @@ import { falloff, forces, Vector3Fn, type Force } from '../../../src/index';
 import { terrainHeight, type Spire, type World } from './world';
 
 /**
- * Forces the drone flies on, each wrapped so the HUD can show what is steering it.
+ * Forces the drone flies on, each wrapped so the scene can show what is steering it.
  *
- * `instrument()` records a force's magnitude every step without changing its output, and the
- * label is the one the HUD lists. The custom forces (avoidance, terrain follow, keep distance)
- * follow the tutorial's "Writing your own force" pattern: plain `(agent, world, t, dt) => vector`
- * functions composed from library forces and falloffs.
+ * `instrument()` records a force's last output (direction and magnitude) without changing it:
+ * the HUD lists the label and the scene draws it as an arrow on the drone, like the demos do.
+ * The custom forces follow the tutorial's "Writing your own force" pattern.
  */
+
+export type ForceKind = 'goal' | 'avoid' | 'hold' | 'stabilize';
 
 export interface InstrumentedForce {
   force: Force;
   label: string;
   /** Library pieces the force is built from, shown under its label. */
   recipe: string;
-  /** Magnitude of the last output. */
+  /** Picks the arrow color; `stabilize` (damping, altitude hold) is listed but not drawn. */
+  kind: ForceKind;
+  /** The last output vector. */
+  vector: number[];
   magnitude: number;
 }
 
-export function instrument(label: string, recipe: string, force: Force): InstrumentedForce {
+export function instrument(label: string, recipe: string, kind: ForceKind, force: Force): InstrumentedForce {
   const record: InstrumentedForce = {
     label,
     recipe,
+    kind,
+    vector: [0, 0, 0],
     magnitude: 0,
     force: (agent, world, t, dt) => {
       const out = force(agent, world, t, dt);
+      record.vector[0] = out[0];
+      record.vector[1] = out[1];
+      record.vector[2] = out[2];
       record.magnitude = Vector3Fn.length(out);
       return out;
     },
@@ -33,83 +42,80 @@ export function instrument(label: string, recipe: string, force: Force): Instrum
   return record;
 }
 
-const ZERO = [0, 0, 0];
-
 /**
- * Obstacle avoidance: repel from each spire within `range`, found through the world's Octree
- * (`spatial`), with `falloff.within` + `falloff.invSquare` so nearby spires dominate. Spires are
- * vertical, so distance is measured to the spire's axis at the drone's height.
+ * Obstacle avoidance: repel from each spire within `range` (found through the world's Octree,
+ * `spatial`), shaped by `falloff.within` + `falloff.linear` so it rises smoothly from zero at the
+ * edge of the range; no spikes, so the swerve is one clean arc.
  *
- * A plain repel cancels out a goal that is straight behind the obstacle and leaves the drone
- * stuck in front of it. So part of the push is turned sideways, around the spire, on the side the
- * drone is already moving towards: it flows around obstacles instead of stalling.
+ * A plain repel cancels a goal straight behind the obstacle, so the push is turned partly
+ * sideways, on the side the drone already passes. The side is fixed per spire on first contact,
+ * so the drone commits to one way round instead of wobbling.
  */
 export function avoidObstacles(
   world: World,
   opts: { range?: number; strength?: number; onNearest?: (spire: Spire | null, distance: number) => void } = {},
 ): Force {
-  const { range = 9, strength = 420, onNearest } = opts;
-  const shape = falloff.within(falloff.invSquare(strength, 1.2), range);
+  const { range = 5, strength = 18, onNearest } = opts;
+  const shape = falloff.within((gap) => strength * (1 - gap / range), range);
+  const sides = new Map<Spire, number>();
   const axis = [0, 0, 0];
   return (agent) => {
     const [px, py, pz] = agent.position;
-    const nearby = world.index.query(agent.position, range + 14);
     const total = [0, 0, 0];
     let nearest: Spire | null = null;
-    let nearestDistance = Infinity;
-    for (const spire of nearby) {
+    let nearestGap = Infinity;
+    for (const spire of world.index.query(agent.position, range + 10)) {
       const [sx, sy, sz] = spire.position;
-      if (py > sy + spire.height + 2) continue; // flying over it
+      if (py > sy + spire.height + 1) continue; // flying over it
       axis[0] = sx;
-      axis[1] = Math.min(Math.max(py, sy), sy + spire.height);
+      axis[1] = py; // vertical spire: push only on the ground plane
       axis[2] = sz;
-      // Distance is measured from the spire's surface, not its axis.
-      const away = forces.repel(() => axis, (d) => shape(Math.max(0.05, d - spire.radius)))(agent, {}, 0, 0);
-      // Sideways around the spire (perpendicular on the ground plane), towards the side the
-      // drone is already drifting to, so it commits to one way round.
-      let sideX = -away[2];
-      let sideZ = away[0];
-      if (sideX * agent.velocity[0] + sideZ * agent.velocity[2] < 0) {
-        sideX = -sideX;
-        sideZ = -sideZ;
+      const gap = Math.hypot(px - sx, pz - sz) - spire.radius;
+      const away = forces.repel(() => axis, () => shape(Math.max(0, gap)))(agent, {}, 0, 0);
+      if (away[0] === 0 && away[2] === 0) continue;
+      let side = sides.get(spire);
+      if (side === undefined) {
+        // Pass on the side the drone is already offset to (or drifting to).
+        const cross = (px - sx) * agent.velocity[2] - (pz - sz) * agent.velocity[0];
+        side = cross >= 0 ? 1 : -1;
+        sides.set(spire, side);
       }
-      total[0] += away[0] * 0.6 + sideX * 0.9;
-      total[1] += away[1] * 0.3; // mostly steer around, not over
-      total[2] += away[2] * 0.6 + sideZ * 0.9;
-      const d = Math.hypot(px - sx, pz - sz) - spire.radius;
-      if (d < nearestDistance) {
-        nearestDistance = d;
+      // Mostly sideways: the drone keeps its forward speed and slides around the pillar.
+      total[0] += away[0] * 0.35 - away[2] * side;
+      total[2] += away[2] * 0.35 + away[0] * side;
+      if (gap < nearestGap) {
+        nearestGap = gap;
         nearest = spire;
       }
     }
-    onNearest?.(nearestDistance <= range ? nearest : null, nearestDistance);
+    onNearest?.(nearest, nearestGap);
     return total;
   };
 }
 
 /**
- * Terrain follow: hold `altitude` above the ground under the drone. Below it, a firm push up
- * (`falloff.linear`); above it, `attract` back down with `falloff.arrive` so it settles.
+ * Altitude hold: `attract` towards cruise height straight below/above the drone, with
+ * `falloff.arrive` so it eases in, plus vertical-only damping. The ground is flat under the route,
+ * so this holds a steady line instead of chasing bumps.
  */
-export function terrainFollow(opts: { altitude: number; strength?: number }): Force {
-  const { altitude, strength = 9 } = opts;
+export function holdAltitude(altitude: number, strength = 6): Force {
   const target = [0, 0, 0];
-  const settle = forces.attract(() => target, falloff.arrive(strength * 2, 3));
+  const settle = forces.attract(() => target, falloff.arrive(strength, 2));
   return (agent, world, t, dt) => {
-    const [x, y, z] = agent.position;
-    const floor = terrainHeight(x, z) + altitude;
+    const [x, , z] = agent.position;
     target[0] = x;
-    target[1] = floor;
+    target[1] = terrainHeight(x, z) + altitude;
     target[2] = z;
-    if (y < floor) return [0, (floor - y) * strength * 2, 0];
-    return settle(agent, world, t, dt);
+    const out = settle(agent, world, t, dt);
+    out[1] -= agent.velocity[1] * 2.2; // damp only the vertical motion
+    return out;
   };
 }
 
 /**
  * Keep distance: a band around a moving point. Inside `near`, repel (`falloff.within`); beyond
- * `far`, attract (`falloff.beyond` + `falloff.arrive`, which caps the pull at `strength` however far
- * the target gets, so obstacle avoidance can still win); in between, nothing: the drone holds the ring.
+ * `far`, attract (`falloff.beyond` + `falloff.arrive`, capped at `strength` however far the target
+ * gets, so obstacle avoidance can still win); in between, nothing: the drone holds the ring.
  */
 export function keepDistance(
   targetFn: () => number[],
@@ -118,13 +124,9 @@ export function keepDistance(
   const { near, far, strength = 14 } = opts;
   const push = forces.repel(targetFn, falloff.within((d) => strength * (1 - d / near) * 2, near));
   const pull = forces.attract(targetFn, falloff.beyond(falloff.arrive(strength, far + 8), far));
-  // Only pushes and pulls; settling inside the band comes from the phase's `forces.damp`.
   return (agent, world, t, dt) => {
     const a = push(agent, world, t, dt);
     const b = pull(agent, world, t, dt);
-    return [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+    return [a[0] + b[0], 0, a[2] + b[2]];
   };
 }
-
-/** A force that outputs nothing; placeholder so a phase can list a passive entry. */
-export const idle: Force = () => [...ZERO];

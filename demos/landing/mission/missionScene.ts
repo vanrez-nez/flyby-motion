@@ -4,7 +4,7 @@ import { waitForStableSize } from '../../shared/waitForStableSize';
 import { createChaseCamera } from './chaseCamera';
 import { createHudPublisher } from './hudPublisher';
 import type { HudAnchors, HudMessage, HudSnapshot } from './hudState';
-import { createMission, type HudEvent } from './missionScript';
+import { createMission, type HudEvent, type MissionState } from './missionScript';
 import { readPalette } from './palette';
 import { createSceneObjects, type Detail } from './sceneObjects';
 import { createWorld } from './world';
@@ -54,7 +54,7 @@ export async function createMissionScene(options: MissionSceneOptions, signal: A
 
   const pending: HudEvent[] = [];
   const mission = createMission(createWorld(compact ? 34 : 46), (event) => pending.push(event));
-  const objects = createSceneObjects(mission, palette, detailFor(compact), getComputedStyle(container).fontFamily || 'monospace');
+  const objects = createSceneObjects(mission, palette, detailFor(compact));
   scene.add(objects.root);
   const chase = createChaseCamera(camera, mission.drone);
   chase.setCompact(compact);
@@ -86,20 +86,9 @@ export async function createMissionScene(options: MissionSceneOptions, signal: A
   };
   compactQuery.addEventListener('change', onCompactChange);
 
-  // Where the floating panel goes: beside the thing it is about, offset up and to the side so it
-  // never sits on the drone. The drone's own messages are in the HUD ticker already, so they float
-  // at the obstacle or target instead when that is what they refer to.
-  const anchorFor = (event: HudEvent): THREE.Vector3 => {
-    const nearest = mission.world.spires.reduce((best, spire) => {
-      const d = Math.hypot(spire.position[0] - mission.drone.position[0], spire.position[2] - mission.drone.position[2]);
-      return d < best.d && spire.position[2] < mission.drone.position[2] ? { d, spire } : best;
-    }, { d: Infinity, spire: mission.world.spires[0] });
-    const pick = event.anchor === 'target' ? mission.target.position
-      : event.anchor === 'base' ? mission.world.base
-        : event.anchor === 'obstacle' ? [nearest.spire.position[0], nearest.spire.position[1] + nearest.spire.height, nearest.spire.position[2]]
-          : mission.drone.position;
-    return new THREE.Vector3(pick[0] + 1.5, pick[1] + 2.2, pick[2]);
-  };
+  // Where the drone is heading, for the dashed goal line: the waypoint, or the target when locked.
+  const goalOf = (state: MissionState): number[] | null =>
+    state.targetLocked ? mission.target.position : state.waypoint?.position ?? null;
 
   let messageId = 0;
   let lastPhase = -1;
@@ -119,14 +108,14 @@ export async function createMissionScene(options: MissionSceneOptions, signal: A
     }
     for (const event of pending.splice(0)) {
       onMessage({ id: ++messageId, text: event.text, tone: event.tone, at: t });
-      objects.panel.show(event.text, anchorFor(event), event.tone);
     }
 
-    const targetShown = state.targetVisible || state.phaseCode === 'SCOUT';
+    const targetShown = state.targetVisible;
     objects.drone.update(dt);
     objects.target.update(dt);
     objects.target.group.visible = targetShown;
-    objects.panel.update(dt);
+    objects.arrows.update(state.activeForces, dt);
+    objects.goalLine.set(mission.drone.position, goalOf(state));
     objects.trail.push(mission.drone.position);
     for (const pin of objects.pins.values()) {
       pin.rings.forEach((ring, i) => ring.scale.setScalar(1 + ((t * 0.8 + i * 0.5) % 1) * 0.35));
@@ -146,6 +135,9 @@ export async function createMissionScene(options: MissionSceneOptions, signal: A
     pending.length = 0;
     objects.drone.update(1);
     objects.target.update(0);
+    objects.target.group.visible = state.targetVisible;
+    objects.arrows.update(state.activeForces, 1);
+    objects.goalLine.set(mission.drone.position, goalOf(state));
     chase.snap();
     renderer.render(scene, camera);
     hud.projectAnchors(anchors, state.targetVisible);
@@ -162,6 +154,11 @@ export async function createMissionScene(options: MissionSceneOptions, signal: A
     else updater.stop();
   });
   visibility.observe(container);
+
+  // Dev-only hook for checking the scene from the browser console (stripped from production builds).
+  if (import.meta.env.DEV) {
+    (container as HTMLElement & { __missionDebug?: unknown }).__missionDebug = { objects, mission, camera };
+  }
 
   return {
     dispose() {

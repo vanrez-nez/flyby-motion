@@ -2,100 +2,110 @@ import { describe, expect, it } from 'vitest';
 import { createWorld, terrainHeight } from '../world';
 import { createMission, type HudEvent, type MissionState } from '../missionScript';
 
-/** Runs the mission headless at 60 fps and records what the HUD would show. */
-function fly(seconds: number) {
+const DT = 1 / 60;
+
+interface Sample {
+  state: MissionState;
+  drone: number[];
+  velocity: number[];
+  target: number[];
+}
+
+/** Flies one full loop headless at 60 fps and records every frame. */
+function flyLoop() {
   const world = createWorld();
   const events: HudEvent[] = [];
   const mission = createMission(world, (event) => events.push(event));
-  const dt = 1 / 60;
-  const states: MissionState[] = [];
-  let minClearance = Infinity;
-  let maxSpeed = 0;
-  let spireHits = 0;
-  for (let t = dt; t <= seconds; t += dt) {
-    const state = mission.update(t, dt);
-    states.push(state);
-    const [x, y, z] = mission.drone.position;
-    minClearance = Math.min(minClearance, y - terrainHeight(x, z));
-    maxSpeed = Math.max(maxSpeed, Math.hypot(...mission.drone.velocity));
-    for (const spire of world.spires) {
-      const [sx, sy, sz] = spire.position;
-      if (y < sy + spire.height && Math.hypot(x - sx, z - sz) < spire.radius * 0.6) spireHits++;
-    }
+  const samples: Sample[] = [];
+  for (let t = DT; t < mission.duration; t += DT) {
+    const state = mission.update(t, DT);
+    samples.push({ state, drone: [...mission.drone.position], velocity: [...mission.drone.velocity], target: [...mission.target.position] });
   }
-  return { world, mission, events, states, minClearance, maxSpeed, spireHits };
+  return { world, mission, events, samples };
 }
 
+const run = flyLoop();
+const during = (code: string, settle = 0) => {
+  const all = run.samples.filter((s) => s.state.phaseCode === code);
+  return all.slice(Math.round(settle / DT));
+};
+const ground = (a: number[], b: number[]) => Math.hypot(a[0] - b[0], a[2] - b[2]);
+const p95 = (values: number[]) => [...values].sort((a, b) => a - b)[Math.floor(values.length * 0.95)];
+
 describe('drone mission', () => {
-  it('runs every phase in order and loops', () => {
-    const { mission, states } = fly(80);
-    const codes = [...new Set(states.map((s) => s.phaseCode))];
-    expect(codes).toEqual(['LAUNCH', 'NAV', 'AVOID', 'SCOUT', 'ACQUIRE', 'FOLLOW', 'HOLD', 'SEARCH', 'RTB']);
-    // Past the loop length the mission starts over.
-    expect(mission.duration).toBeLessThan(80);
-    expect(states[states.length - 1].missionTime).toBeLessThan(80 - mission.duration + 0.1);
-  });
-
-  /** Samples drone–target ground distance during a phase, after it has settled for `settle` seconds. */
-  function distancesDuring(code: string, settle: number) {
-    const world = createWorld();
-    const run = createMission(world, () => {});
-    const dt = 1 / 60;
-    const out: number[] = [];
-    let phaseStart = -1;
-    for (let t = dt; t < run.duration; t += dt) {
-      const state = run.update(t, dt);
-      if (state.phaseCode !== code) continue;
-      if (phaseStart < 0) phaseStart = t;
-      if (t - phaseStart < settle) continue;
-      const [a, b] = [run.drone.position, run.target.position];
-      out.push(Math.hypot(a[0] - b[0], a[2] - b[2]));
-    }
-    return out;
-  }
-
-  const mean = (values: number[]) => values.reduce((s, v) => s + v, 0) / values.length;
-
-  it('follows the target without sitting on it', () => {
-    const distances = distancesDuring('FOLLOW', 2);
-    expect(distances.length).toBeGreaterThan(0);
-    expect(Math.min(...distances)).toBeGreaterThan(2.5);
-    expect(mean(distances)).toBeLessThan(14);
-  });
-
-  it('loses the target once it escapes', () => {
-    const distances = distancesDuring('SEARCH', 4);
-    expect(mean(distances)).toBeGreaterThan(25);
+  it('runs every phase in order, then loops', () => {
+    const codes = [...new Set(run.samples.map((s) => s.state.phaseCode))];
+    expect(codes).toEqual(['LAUNCH', 'NAVIGATE', 'AVOID', 'APPROACH', 'PURSUE', 'ORBIT', 'RTB']);
+    const mission = createMission(createWorld(), () => {});
+    let state = mission.update(DT, DT);
+    for (let t = 2 * DT; t < mission.duration + 1; t += DT) state = mission.update(t, DT);
+    expect(state.phaseCode).toBe('LAUNCH');
   });
 
   it('lists the forces actually on the drone', () => {
-    const world = createWorld();
-    const mission = createMission(world, () => {});
-    const state = mission.update(1 / 60, 1 / 60);
-    expect(state.activeForces.map((f) => f.label)).toEqual(['ASCEND', 'HOVER', 'STABILIZE']);
+    for (const { state } of run.samples.filter((_, i) => i % 300 === 0)) {
+      expect(state.activeForces.length).toBeGreaterThan(0);
+    }
+    const mission = createMission(createWorld(), () => {});
+    const state = mission.update(DT, DT);
     expect(mission.drone.forces.size).toBe(state.activeForces.length);
   });
 
-  it('stays above ground, inside its speed limit, and clear of the spires', () => {
-    const { minClearance, maxSpeed, spireHits } = fly(70);
-    expect(Number.isFinite(minClearance)).toBe(true);
-    expect(minClearance).toBeGreaterThan(-0.5);
-    expect(maxSpeed).toBeLessThanOrEqual(11 + 1e-6);
-    expect(spireHits).toBe(0);
+  it('flies smoothly: steady altitude and gentle turns', () => {
+    // Vertical speed stays small once launched: no bouncing over terrain.
+    const cruising = run.samples.filter((s) => s.state.phaseCode !== 'LAUNCH');
+    expect(p95(cruising.map((s) => Math.abs(s.velocity[1])))).toBeLessThan(0.6);
+    // Turn rate (heading change) stays readable while moving.
+    const turns: number[] = [];
+    for (let i = 1; i < cruising.length; i++) {
+      const [a, b] = [cruising[i - 1].velocity, cruising[i].velocity];
+      if (Math.hypot(a[0], a[2]) < 2 || Math.hypot(b[0], b[2]) < 2) continue;
+      let d = Math.atan2(b[0], b[2]) - Math.atan2(a[0], a[2]);
+      d = Math.atan2(Math.sin(d), Math.cos(d));
+      turns.push(Math.abs(d) / DT * 180 / Math.PI);
+    }
+    expect(p95(turns)).toBeLessThan(60);
+  });
+
+  it('flies a straight line to waypoint 1', () => {
+    const xs = during('NAVIGATE').map((s) => s.drone[0]);
+    const drift = Math.max(...xs) - Math.min(...xs);
+    expect(drift).toBeLessThan(10.5); // from the pad at x=10 to the route at x=0, then straight
+  });
+
+  it('swerves around every slalom pillar without touching one', () => {
+    const samples = during('AVOID');
+    for (const spire of run.world.spires.slice(0, 3)) {
+      const closest = Math.min(...samples.map((s) => ground(s.drone, spire.position) - spire.radius));
+      expect(closest).toBeGreaterThan(1.2);
+      expect(closest).toBeLessThan(6); // it does pass close: the swerve is visible
+    }
+    expect(ground(samples[samples.length - 1].drone, run.world.waypoints[1].position)).toBeLessThan(4);
+  });
+
+  it('closes on the target and never overlaps it', () => {
+    const distances = during('PURSUE', 3).map((s) => ground(s.drone, s.target));
+    expect(Math.min(...distances)).toBeGreaterThan(4);
+    expect(distances[distances.length - 1]).toBeLessThan(12);
+  });
+
+  it('orbits at the keep-distance ring', () => {
+    const distances = during('ORBIT', 3).map((s) => ground(s.drone, s.target));
+    expect(Math.min(...distances)).toBeGreaterThan(7.5);
+    expect(Math.max(...distances)).toBeLessThan(12.5);
+  });
+
+  it('returns to base and stays above ground', () => {
+    const last = run.samples[run.samples.length - 1];
+    expect(ground(last.drone, run.world.base)).toBeLessThan(5);
+    const clearance = Math.min(...run.samples.map((s) => s.drone[1] - terrainHeight(s.drone[0], s.drone[2])));
+    expect(clearance).toBeGreaterThan(0);
   });
 
   it('emits the mission messages', () => {
-    const { events } = fly(72);
-    const texts = events.map((e) => e.text);
-    for (const text of ['SYSTEMS ONLINE', 'OBSTACLE FIELD AHEAD', 'TARGET ACQUIRED', 'TRACKING', 'TARGET LOST', 'RETURN TO BASE']) {
+    const texts = run.events.map((e) => e.text);
+    for (const text of ['SYSTEMS ONLINE', 'OBSTACLES AHEAD', 'REROUTING', 'TARGET ACQUIRED', 'HOLDING 10M · ORBIT', 'TARGET RELEASED · RTB']) {
       expect(texts).toContain(text);
     }
-  });
-
-  it('holds the keep-distance band around the target', () => {
-    const distances = distancesDuring('HOLD', 3);
-    expect(distances.length).toBeGreaterThan(0);
-    expect(mean(distances)).toBeGreaterThan(7);
-    expect(mean(distances)).toBeLessThan(15);
   });
 });

@@ -10,33 +10,40 @@ function missionClock(seconds: number): string {
   return `T+${pad(seconds / 60)}:${pad(seconds % 60)}`;
 }
 
+/** Force colors match the arrows in the scene. */
+const KIND_LABEL: Record<string, string> = { goal: 'goal', avoid: 'avoid', hold: 'hold', stabilize: '' };
+
 /**
- * The HUD over the scene. Panels re-render from the throttled snapshot; the reticle and lock
- * brackets follow the drone and target from `anchors` on their own animation frame, by transform
- * only, so following them costs no React renders and no layout.
+ * The HUD over the scene. Everything with text stays fixed in place: the bar, the panels, the
+ * ticker and the reticle (screen centre, where the chase camera keeps the drone). The only thing
+ * that tracks the scene is the target lock bracket, smoothed so it glides instead of jittering.
  */
 export const Hud: React.FC<{
   snapshot: HudSnapshot | null;
   messages: HudMessage[];
   anchors: HudAnchors;
 }> = ({ snapshot, messages, anchors }) => {
-  const reticleRef = useRef<HTMLDivElement>(null);
   const lockRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let frame = 0;
+    const shown = { x: 0, y: 0, ready: false };
     const tick = () => {
       frame = requestAnimationFrame(tick);
-      const reticle = reticleRef.current;
       const lock = lockRef.current;
-      if (reticle) {
-        reticle.style.transform = `translate3d(${anchors.drone.x}px, ${anchors.drone.y}px, 0)`;
-        reticle.style.opacity = anchors.drone.visible ? '' : '0';
+      if (!lock) return;
+      const { x, y, visible } = anchors.target;
+      if (!shown.ready || !visible) {
+        shown.x = x;
+        shown.y = y;
+        shown.ready = visible;
+      } else {
+        // Critically damped-ish follow: the bracket glides after the target, never jitters.
+        shown.x += (x - shown.x) * 0.18;
+        shown.y += (y - shown.y) * 0.18;
       }
-      if (lock) {
-        lock.style.transform = `translate3d(${anchors.target.x}px, ${anchors.target.y}px, 0)`;
-        lock.dataset.visible = String(anchors.target.visible);
-      }
+      lock.style.transform = `translate3d(${shown.x.toFixed(1)}px, ${shown.y.toFixed(1)}px, 0)`;
+      lock.dataset.visible = String(visible);
     };
     tick();
     return () => cancelAnimationFrame(frame);
@@ -61,16 +68,12 @@ export const Hud: React.FC<{
         )}
       </div>
 
-      <div className="hud__reticle" ref={reticleRef}>
+      <div className="hud__reticle">
         <Reticle className="hud-reticle" />
       </div>
 
       <div className="hud__lock" ref={lockRef} data-locked={String(!!snapshot?.targetLocked)}>
         <LockBrackets className="hud-lock" />
-        <span className="hud__lock-label">
-          {snapshot?.targetLocked ? 'LOCK' : 'CONTACT'}
-          {snapshot?.targetDistance != null && ` · ${snapshot.targetDistance.toFixed(0)}M`}
-        </span>
       </div>
 
       {snapshot && (
@@ -78,10 +81,13 @@ export const Hud: React.FC<{
           <h3 className="hud__heading">Active forces</h3>
           <ul className="hud__forces">
             {snapshot.forces.map((force) => (
-              <li key={force.label} className="hud__force">
-                <span className="hud__force-name">{force.label}</span>
+              <li key={force.label} className="hud__force" data-kind={force.kind}>
+                <span className="hud__force-name">
+                  <span className="hud__force-swatch" />
+                  {force.label}
+                </span>
                 <span className="hud__force-bar"><span style={{ transform: `scaleX(${Math.max(0.02, force.level)})` }} /></span>
-                <span className="hud__force-recipe">{force.recipe}</span>
+                <span className="hud__force-recipe">{force.recipe}{KIND_LABEL[force.kind] ? '' : ' · not drawn'}</span>
               </li>
             ))}
           </ul>
@@ -95,20 +101,20 @@ export const Hud: React.FC<{
             <div><dt>SPD</dt><dd>{snapshot.speed.toFixed(1)}<small>m/s</small></dd></div>
             <div><dt>ALT</dt><dd>{snapshot.altitude.toFixed(1)}<small>m</small></dd></div>
             <div><dt>HDG</dt><dd>{pad(snapshot.heading, 3)}<small>°</small></dd></div>
-            <div><dt>THR</dt><dd>{Math.round(snapshot.thrust * 100)}<small>%</small></dd></div>
-            <div><dt>TGT</dt><dd>{snapshot.targetDistance == null ? '---' : snapshot.targetDistance.toFixed(0)}<small>m</small></dd></div>
-            <div><dt>NAV</dt><dd>{snapshot.waypoint ?? '---'}</dd></div>
+            <div><dt>THR</dt><dd>{pad(snapshot.thrust * 100, 3)}<small>%</small></dd></div>
+            <div><dt>TGT</dt><dd>{snapshot.targetDistance == null ? '---' : pad(snapshot.targetDistance, 3)}<small>m</small></dd></div>
+            <div><dt>NAV</dt><dd>{snapshot.targetLocked ? 'TARGET' : snapshot.waypoint ?? '---'}</dd></div>
           </dl>
         </section>
       )}
 
       <div className="hud__ticker">
-        {messages.slice(-3).map((message) => (
-          <p key={message.id} className="hud__message" data-tone={message.tone}>
+        {latest && (
+          <p key={latest.id} className="hud__message" data-tone={latest.tone}>
             <span className="hud__message-dot" />
-            {message.text}
+            {latest.text}
           </p>
-        ))}
+        )}
       </div>
     </div>
   );

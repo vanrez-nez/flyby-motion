@@ -3,7 +3,7 @@ import { seededRandom, type Spire, type Waypoint } from './world';
 
 /**
  * World markers in the style of docs/ideas/drone-hud-reference-map.png: point-cloud spires, pins
- * with a flag and ground rings for waypoints, and framed text panels floating in the scene.
+ * with a flag and ground rings for waypoints.
  */
 
 /** Soft round dot, so points read as glowing particles instead of squares. */
@@ -86,66 +86,6 @@ export function createWaypointPin(waypoint: Waypoint, groundY: number, color: TH
     setActive(active) {
       lineMaterial.opacity = active ? 1 : 0.45;
       group.scale.setScalar(active ? 1.15 : 1);
-    },
-  };
-}
-
-export interface ScenePanel {
-  sprite: THREE.Sprite;
-  show(text: string, at: THREE.Vector3, tone: 'info' | 'lock' | 'warn'): void;
-  update(dt: number): void;
-  dispose(): void;
-}
-
-/**
- * A framed text panel that floats in the scene (the reference's tilted "HAVE NICE DAY!" label):
- * drawn on a canvas once per message, shown on a sprite that faces the camera, fading out.
- */
-export function createScenePanel(fontFamily: string, colors: Record<'info' | 'lock' | 'warn', string>): ScenePanel {
-  const canvas = document.createElement('canvas');
-  canvas.width = 512;
-  canvas.height = 128;
-  const ctx = canvas.getContext('2d')!;
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  // `sizeAttenuation: false`: the panel keeps one size on screen however close the camera is to
-  // its anchor (an attenuated sprite near the chase camera filled the whole view).
-  const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false, depthTest: false, opacity: 0, sizeAttenuation: false });
-  const sprite = new THREE.Sprite(material);
-  sprite.scale.set(0.24, 0.06, 1);
-  sprite.center.set(0, 0.5); // grows to the right of its anchor, like a callout
-  sprite.renderOrder = 10;
-  let life = 0;
-
-  return {
-    sprite,
-    show(text, at, tone) {
-      const color = colors[tone];
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 3;
-      // Frame with clipped corners.
-      const m = 6, c = 18, w = canvas.width - m * 2, h = canvas.height - m * 2;
-      ctx.beginPath();
-      ctx.moveTo(m + c, m); ctx.lineTo(m + w, m); ctx.lineTo(m + w, m + h - c);
-      ctx.lineTo(m + w - c, m + h); ctx.lineTo(m, m + h); ctx.lineTo(m, m + c); ctx.closePath();
-      ctx.stroke();
-      ctx.fillStyle = color;
-      ctx.font = `500 48px ${fontFamily}`;
-      ctx.textBaseline = 'middle';
-      ctx.fillText(text, m + 28, canvas.height / 2 + 2, w - 48);
-      texture.needsUpdate = true;
-      sprite.position.copy(at);
-      life = 3.2;
-    },
-    update(dt) {
-      life = Math.max(0, life - dt);
-      material.opacity = Math.min(1, life / 0.6) * 0.95;
-      sprite.visible = life > 0;
-    },
-    dispose() {
-      texture.dispose();
-      material.dispose();
     },
   };
 }
