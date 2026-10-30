@@ -14,3 +14,8 @@ if (!(mountPoint as any).__reactRoot) {
   (mountPoint as any).__reactRoot = createRoot(mountPoint);
 }
 (mountPoint as any).__reactRoot.render(<App />);
+
+// Development only: the theme color configurator (stripped from the build, Tweakpane with it).
+if (import.meta.env.DEV) {
+  void import('./lib/theme/themeConfigurator').then(({ mountThemeConfigurator }) => mountThemeConfigurator());
+}

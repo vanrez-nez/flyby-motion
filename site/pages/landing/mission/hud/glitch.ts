@@ -16,7 +16,8 @@ const step = { easing: 'steps(1, end)' } as const;
 
 const SPLIT: Record<Tone, string> = {
   info: '1.5px 0 rgba(255, 60, 120, 0.55), -1.5px 0 rgba(60, 200, 255, 0.55)',
-  lock: '2px 0 rgba(139, 124, 255, 0.7), -2px 0 rgba(60, 200, 255, 0.6)',
+  // The theme accent, so a lock glitch matches the lock bracket in any theme.
+  lock: '2px 0 color-mix(in srgb, var(--site-accent) 70%, transparent), -2px 0 rgba(60, 200, 255, 0.6)',
   warn: '2.5px 0 rgba(255, 60, 110, 0.8), -2.5px 0 rgba(60, 200, 255, 0.6)',
 };
 

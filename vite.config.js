@@ -40,6 +40,8 @@ export default defineConfig(({ mode, command }) => {
     })],
     test: {
       environment: 'node',
+      // CSS imports are empty strings in tests unless included; the theme test reads colors.css.
+      css: { include: [/site\/styles\/colors\.css/] },
     },
     build: {
       lib: {

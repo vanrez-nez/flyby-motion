@@ -51,6 +51,8 @@ export interface WaypointPin {
   group: THREE.Group;
   setState(state: BeaconState): void;
   update(dt: number): void;
+  /** Recolors every part of the pin (theme changes). */
+  setColor(color: THREE.Color): void;
 }
 
 const WAVES = 3;
@@ -114,6 +116,7 @@ export function createWaypointPin(waypoint: Waypoint, groundY: number, color: TH
 
   let state: BeaconState = 'pending';
   let time = 0;
+  const materials = [lineMaterial, footMaterial, coreMaterial, haloMaterial, dropMaterial, ...waves.map((w) => w.material)];
 
   const showLight = (visible: boolean) => {
     core.visible = visible;
@@ -122,6 +125,9 @@ export function createWaypointPin(waypoint: Waypoint, groundY: number, color: TH
 
   return {
     group,
+    setColor(next) {
+      materials.forEach((material) => material.color.copy(next));
+    },
     setState(next) {
       if (next === state) return;
       state = next;

@@ -39,8 +39,10 @@
   margin: 0;
 }
 
+/* Bungee is wide: "MOTION OUT" is ~6.75em, so the size tracks the hero column (22–28rem, 30vw) and
+   both lines stay on one line from small phones up. */
 .landing__title {
-  font-size: clamp(3.25rem, 6vw, 6rem);
+  font-size: clamp(3rem, 4.3vw, 4rem);
 }
 
 .landing__lead {

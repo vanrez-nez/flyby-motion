@@ -1,3 +1,11 @@
+/*
+ * Full width of the column: Text stroke freezes its line breaks at the width it measures, and a
+ * shrink-to-fit box would measure its own previous lines and keep wrapping them.
+ */
+.display-title-trigger {
+  align-self: stretch;
+}
+
 /* Display face, solid line over an outlined accent line. Pages set the size and alignment. */
 .display-title {
   display: flex;
@@ -38,9 +46,10 @@
 /*
  * The line's own stroke waits for the drawn outline, then fades in as the drawn one fades out
  * (the last quarter of each glyph's reveal), so the hand-over is invisible. The timing reads Text
- * stroke's own per-piece duration and delay.
+ * stroke's own per-piece duration and delay. Only until the reveal settles: after that a theme
+ * change recolors the stroke at once.
  */
-.display-title__line--outline tp-mo-text-stroke [data-tp-animate] {
+.display-title__line--outline tp-mo-text-stroke:not([data-tp-at-rest]) [data-tp-animate] {
   transition: -webkit-text-stroke-color calc(var(--_tp-tm-duration) / 4) var(--_tp-tm-easing)
     calc(var(--_tp-tm-piece-delay) + var(--_tp-tm-duration) * 3 / 4);
 }

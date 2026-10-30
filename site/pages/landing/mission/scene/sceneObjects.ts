@@ -93,6 +93,9 @@ export function createSceneObjects(mission: Mission, palette: MissionPalette, de
     spireMaterial.blending = p.dark ? THREE.AdditiveBlending : THREE.NormalBlending;
     spireMaterial.needsUpdate = true;
     arrows.applyPalette(p);
+    drone.setColors(p.line, p.accent);
+    target.setColor(p.accent);
+    pins.forEach((pin) => pin.setColor(p.line));
     (goalLine.line.material as THREE.LineDashedMaterial).color.copy(p.line);
   };
   applyPalette(palette);

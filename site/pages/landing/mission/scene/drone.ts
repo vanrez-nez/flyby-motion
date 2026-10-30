@@ -9,6 +9,8 @@ import type { Agent } from '../../../../../src/index';
 export interface DroneView {
   group: THREE.Group;
   update(dt: number): void;
+  /** Recolors the frame and the nav light (theme changes). */
+  setColors(color: THREE.Color, accent: THREE.Color): void;
   dispose(): void;
 }
 
@@ -93,6 +95,10 @@ export function createDrone(agent: Agent, color: THREE.Color, accent: THREE.Colo
       for (let i = 0; i < rotors.length; i++) rotors[i].rotation.y += dt * (i % 2 ? 38 : -38);
       lightMaterial.opacity = 0.55 + Math.sin(time * 6) * 0.45;
     },
+    setColors(color, accent) {
+      line.color.copy(color);
+      lightMaterial.color.copy(accent);
+    },
     dispose() {
       off();
       armGeometry.dispose();
@@ -106,7 +112,12 @@ export function createDrone(agent: Agent, color: THREE.Color, accent: THREE.Colo
 }
 
 /** The target vehicle: a smaller wireframe diamond with a ring, so it reads as "the contact". */
-export function createTargetView(agent: Agent, color: THREE.Color): { group: THREE.Group; update(dt: number): void; dispose(): void } {
+export function createTargetView(agent: Agent, color: THREE.Color): {
+  group: THREE.Group;
+  update(dt: number): void;
+  setColor(color: THREE.Color): void;
+  dispose(): void;
+} {
   const group = new THREE.Group();
   const material = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.95 });
   const shape = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.OctahedronGeometry(0.55)), material);
@@ -124,6 +135,9 @@ export function createTargetView(agent: Agent, color: THREE.Color): { group: THR
       group.position.set(agent.position[0], agent.position[1], agent.position[2]);
       shape.rotation.y = time * 1.6;
       ring.rotation.x = Math.sin(time * 1.3) * 0.4;
+    },
+    setColor(next) {
+      material.color.copy(next);
     },
     dispose() {
       shape.geometry.dispose();

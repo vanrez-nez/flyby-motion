@@ -1,52 +1,78 @@
 /*
  * Site palette.
  *
- * Tweakpad UI tokens tuned to the black-and-white look of tweakpad.com, with a violet accent.
- * Every role is a light-dark() pair, so the header theme switcher re-themes the whole chrome.
- * The legacy names below (--background, --text-muted…) map onto those tokens, so the demo
- * chrome and the Tweakpad components share one theme.
+ * Six base colors (background, foreground and accent, for the light and the dark scheme) and every
+ * other Tweakpad UI role mixed from them in OKLab, so any theme stays coherent: cards and borders
+ * are the background nudged toward the foreground, muted text is the foreground pulled toward the
+ * background, accent tints are the accent in the background. Each role is a light-dark() pair, so
+ * the header theme switcher re-themes the whole site.
+ *
+ * The base colors are the default preset in lib/theme/presets.ts (a test keeps them in step). In
+ * development the theme configurator overrides them live on <html>; its "Copy CSS" button gives
+ * the block to paste here.
  *
  * Tweakpane uses its own `--tp-base-*`, `--tp-container-*`… names (see tpTheme.css); none of
  * them overlap with the Tweakpad UI tokens, so the demo control panels are unaffected.
  */
 :root {
-  --tp-background: light-dark(#ffffff, #09090b);
-  --tp-foreground: light-dark(#111113, #f4f4f5);
-  --tp-card: light-dark(#ffffff, #101012);
-  --tp-popover: light-dark(#ffffff, #131316);
-  --tp-primary: light-dark(#111113, #f4f4f5);
-  --tp-primary-foreground: light-dark(#ffffff, #09090b);
-  --tp-secondary: light-dark(#ececef, #1c1c20);
-  --tp-muted: light-dark(#f4f4f5, #141417);
-  --tp-muted-foreground: light-dark(#5f5f69, #9a9aa5);
-  --tp-accent: light-dark(#ede9fe, #1f1b3a);
-  --tp-accent-foreground: light-dark(#3b197a, #e9e5ff);
-  --tp-border: light-dark(#e2e2e6, #232328);
-  --tp-ring: light-dark(#6d5dfc, #8b7cff);
+  /* Base colors: "Radar". */
+  --theme-light-background: #f3f8f5;
+  --theme-light-foreground: #0a1a11;
+  --theme-light-accent: #0f7a40;
+  --theme-dark-background: #06110c;
+  --theme-dark-foreground: #dcf2e5;
+  --theme-dark-accent: #3ddc84;
+
+  /* Base roles: plain colors, so the 3D scene can read them (mission/scene/palette.ts). */
+  --tp-background: light-dark(var(--theme-light-background), var(--theme-dark-background));
+  --tp-foreground: light-dark(var(--theme-light-foreground), var(--theme-dark-foreground));
+  --site-accent: light-dark(var(--theme-light-accent), var(--theme-dark-accent));
+  --tp-primary: var(--tp-foreground);
+  --tp-primary-foreground: var(--tp-background);
+  --tp-ring: var(--site-accent);
+
+  /* Surfaces: the background nudged toward the foreground. */
+  --tp-card: light-dark(
+    color-mix(in oklab, var(--theme-light-background) 99%, var(--theme-light-foreground)),
+    color-mix(in oklab, var(--theme-dark-background) 96%, var(--theme-dark-foreground))
+  );
+  --tp-popover: light-dark(
+    color-mix(in oklab, var(--theme-light-background) 99%, var(--theme-light-foreground)),
+    color-mix(in oklab, var(--theme-dark-background) 94%, var(--theme-dark-foreground))
+  );
+  --tp-muted: light-dark(
+    color-mix(in oklab, var(--theme-light-background) 95%, var(--theme-light-foreground)),
+    color-mix(in oklab, var(--theme-dark-background) 93%, var(--theme-dark-foreground))
+  );
+  --tp-secondary: light-dark(
+    color-mix(in oklab, var(--theme-light-background) 91%, var(--theme-light-foreground)),
+    color-mix(in oklab, var(--theme-dark-background) 88%, var(--theme-dark-foreground))
+  );
+  --tp-border: light-dark(
+    color-mix(in oklab, var(--theme-light-background) 87%, var(--theme-light-foreground)),
+    color-mix(in oklab, var(--theme-dark-background) 85%, var(--theme-dark-foreground))
+  );
+
+  /* Secondary text: the foreground pulled toward the background (≥ 5.7:1 on every preset). */
+  --tp-muted-foreground: light-dark(
+    color-mix(in oklab, var(--theme-light-foreground) 62%, var(--theme-light-background)),
+    color-mix(in oklab, var(--theme-dark-foreground) 62%, var(--theme-dark-background))
+  );
+
+  /* Accent tints: highlighted rows and selected items. */
+  --tp-accent: light-dark(
+    color-mix(in oklab, var(--theme-light-accent) 14%, var(--theme-light-background)),
+    color-mix(in oklab, var(--theme-dark-accent) 16%, var(--theme-dark-background))
+  );
+  --tp-accent-foreground: light-dark(
+    color-mix(in oklab, var(--theme-light-accent) 60%, var(--theme-light-foreground)),
+    color-mix(in oklab, var(--theme-dark-accent) 35%, var(--theme-dark-foreground))
+  );
+
   --tp-font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --tp-font-mono: "JetBrains Mono", ui-monospace, sfmono-regular, menlo, consolas, monospace;
 
   /* Site-only roles */
-  --site-font-display: "Anton", "Impact", "Haettenschweiler", sans-serif;
-  --site-accent: light-dark(#6d5dfc, #8b7cff);
-  --site-accent-pink: #ff4fd8;
-  --site-accent-cyan: #4fc3ff;
+  --site-font-display: "Bungee", "Impact", "Haettenschweiler", sans-serif;
   --site-header-height: 56px;
-
-  /* Legacy names used by the demo chrome */
-  --background: var(--tp-background);
-  --foreground: var(--tp-foreground);
-  --accent: var(--site-accent);
-  --border: var(--tp-border);
-  --border-muted: light-dark(#ececef, #1a1a1e);
-  --surface: var(--tp-card);
-  --surface-elevated: var(--tp-muted);
-  --surface-active: var(--tp-secondary);
-  --text-primary: var(--tp-foreground);
-  --text-muted: var(--tp-muted-foreground);
-  --text-dimmed: light-dark(#3a3a42, #c4c4cc);
-  --text-highlight: var(--tp-foreground);
-  --text-link: light-dark(#5b4ae6, #a99dff);
-  --text-link-hover: light-dark(#3b2bd0, #c7beff);
-  --shadow: light-dark(rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.45));
 }

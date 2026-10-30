@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { DEFAULT_THEME } from '../../../../lib/theme/presets';
 
 /**
  * Scene colors from the page theme: monochrome lines on the theme background (white on black in
@@ -34,9 +35,10 @@ function resolve(element: HTMLElement, property: string, fallback: string): stri
 export function readPalette(element: HTMLElement): MissionPalette {
   const theme = document.documentElement.dataset.theme;
   const dark = theme ? theme === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const background = resolve(element, '--tp-background', dark ? '#09090b' : '#ffffff');
-  const foreground = resolve(element, '--tp-foreground', dark ? '#f4f4f5' : '#111113');
-  const accent = resolve(element, '--site-accent', '#8b7cff');
+  const fallback = DEFAULT_THEME[dark ? 'dark' : 'light'];
+  const background = resolve(element, '--tp-background', fallback.background);
+  const foreground = resolve(element, '--tp-foreground', fallback.foreground);
+  const accent = resolve(element, '--site-accent', fallback.accent);
   const warn = dark ? '#ff6b8b' : '#d6336c';
   const toColor = (css: string) => new THREE.Color().setStyle(css, THREE.SRGBColorSpace);
   const line = toColor(foreground);
