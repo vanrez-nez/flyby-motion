@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import '@tweakpad/ui/styles.css';
+import './shared/registerTweakpad';
 import { LandingPage } from './LandingPage';
+import { DocsPage } from './DocsPage';
+import { toRoute, withBase } from './shared/routes';
 import { Forces2DDemo } from './2d/forces';
 import { Behaviors2DDemo } from './2d/behaviors';
 import { Modifiers2DDemo } from './2d/modifiers';
@@ -10,9 +14,16 @@ import { Behaviors3DDemo } from './3d/behaviors';
 import { Modifiers3DDemo } from './3d/modifiers';
 import { Custom3DDemo } from './3d/custom';
 import './shared/colors.css';
-import './style.css';
+import './shared/site.css';
 import './shared/markdown.css';
-import 'highlight.js/styles/github-dark.css';
+
+/** The anchor a click activated, including anchors rendered inside shadow roots (Tweakpad link buttons). */
+function findAnchor(event: MouseEvent): HTMLAnchorElement | null {
+  for (const node of event.composedPath()) {
+    if (node instanceof HTMLAnchorElement && node.href) return node;
+  }
+  return null;
+}
 
 const App: React.FC = () => {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
@@ -24,18 +35,24 @@ const App: React.FC = () => {
 
     // Hijack internal links to enable SPA routing without full page reloads
     const handleClick = (e: MouseEvent) => {
-      const target = (e.target as HTMLElement).closest('a');
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const target = findAnchor(e);
       // Only hijack local, non-target-_blank links
       if (
-        target &&
-        target.href &&
-        target.href.startsWith(window.location.origin) &&
-        target.target !== '_blank'
-      ) {
-        e.preventDefault();
-        window.history.pushState({}, '', target.href);
-        onLocationChange();
-      }
+        !target ||
+        !target.href.startsWith(window.location.origin) ||
+        target.target === '_blank' ||
+        target.hasAttribute('download')
+      ) return;
+
+      const url = new URL(target.href);
+      // Same-page fragment links (the table of contents) scroll natively.
+      if (url.pathname === window.location.pathname && url.hash) return;
+
+      e.preventDefault();
+      window.history.pushState({}, '', target.href);
+      onLocationChange();
+      if (!url.hash) window.scrollTo(0, 0);
     };
 
     window.addEventListener('popstate', onLocationChange);
@@ -47,20 +64,12 @@ const App: React.FC = () => {
     };
   }, []);
 
-  // Strip base path for route matching (important for GitHub Pages /flyby-motion/)
-  const BASE_PATH = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
-  let normalizedPath = currentPath.startsWith(BASE_PATH)
-    ? currentPath.slice(BASE_PATH.length) || '/'
-    : currentPath;
-
-  // Handle index.html suffix
-  if (normalizedPath.endsWith('/index.html') && normalizedPath !== '/index.html') {
-    normalizedPath = normalizedPath.replace(/\/index\.html$/, '');
-  }
-  if (normalizedPath === '/index.html') normalizedPath = '/';
+  // Strip base path and index.html for route matching (important for GitHub Pages /flyby-motion/)
+  const normalizedPath = toRoute(currentPath);
 
   // Simple route matching
   if (normalizedPath === '/') return <LandingPage />;
+  if (normalizedPath === '/docs') return <DocsPage />;
   if (normalizedPath === '/2d/forces') return <Forces2DDemo />;
   if (normalizedPath === '/2d/behaviors') return <Behaviors2DDemo />;
   if (normalizedPath === '/2d/modifiers') return <Modifiers2DDemo />;
@@ -75,7 +84,7 @@ const App: React.FC = () => {
     <div style={{ color: 'white', padding: '20px' }}>
       <h1>Demo Route Placeholder</h1>
       <p>Path: {currentPath}</p>
-      <a href="/">Return Home</a>
+      <a href={withBase('/')}>Return Home</a>
     </div>
   );
 };
