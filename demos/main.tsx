@@ -16,7 +16,6 @@ import { Modifiers3DDemo } from './3d/modifiers';
 import { Custom3DDemo } from './3d/custom';
 import './shared/colors.css';
 import './shared/site.css';
-import './shared/markdown.css';
 
 /**
  * `/docs/<page>` → that page. `/docs` → the first page, or, for links from the single-page docs

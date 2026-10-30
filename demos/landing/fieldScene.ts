@@ -99,7 +99,7 @@ export function createFieldScene({ container, logoUrl, onFormationChange }: Fiel
   const onPointerDown = (event: PointerEvent) => {
     // Only from the background itself, not from the hero's buttons and links.
     const target = event.target as HTMLElement | null;
-    if (target?.closest('a, button, input, tp-button, tp-copy-button, tp-command-palette, header')) return;
+    if (target?.closest('a, button, input, tp-button, tp-code-block, tp-command-palette, header')) return;
     if (projectPointer(event, burstOrigin)) field.burst(burstOrigin);
   };
 

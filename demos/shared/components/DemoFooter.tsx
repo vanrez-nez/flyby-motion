@@ -7,7 +7,9 @@ import { version } from '../../../package.json';
 export const DemoFooter: React.FC = () => {
   return (
     <footer className="site-footer">
-      <a href={withBase('/')}>flyby-motion {version}</a>
+      <div className="site-container site-footer__inner">
+        <a href={withBase('/')}>flyby-motion {version}</a>
+      </div>
     </footer>
   );
 };

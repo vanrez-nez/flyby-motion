@@ -1,41 +1,19 @@
-import React, { useEffect, useRef } from 'react';
-import type { TpTreeView } from '@tweakpad/ui';
-import { useMarkdown } from './shared/hooks/useMarkdown';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import type { MarkdownHeadingTarget, TpTableOfContentsItem, TpTreeView } from '@tweakpad/ui';
 import { useElementEvent } from './shared/hooks/useElementEvent';
 import { SiteHeader } from './shared/components/SiteHeader';
 import { DemoFooter } from './shared/components/DemoFooter';
+import { Markdown } from './shared/components/Markdown';
 import { docsNav, docsPages, type DocsPage as DocsPageData } from './shared/docsPages';
 import { navigate, withBase } from './shared/routes';
 import { arrowRightIcon } from './shared/icons';
 import './DocsPage.css';
 
-function scrollToFragment(fallbackToTop: boolean): void {
-  const id = decodeURIComponent(window.location.hash.slice(1));
-  const target = id ? document.getElementById(id) : null;
-  if (target) target.scrollIntoView({ block: 'start' });
-  else if (fallbackToTop) window.scrollTo(0, 0);
-}
-
-/**
- * After a page change: jump to the URL fragment's heading, or back to the top. Also follows
- * in-app navigation to another heading of the same page (a search result), which keeps the page mounted.
- */
+/** After a page change: back to the top, unless the URL names a heading (tp-markdown scrolls to it). */
 function useScrollOnPageChange(pageId: string): void {
   useEffect(() => {
-    // Wait a frame so the new article is in the DOM and laid out.
-    const frame = requestAnimationFrame(() => scrollToFragment(true));
-    return () => cancelAnimationFrame(frame);
+    if (!window.location.hash) window.scrollTo(0, 0);
   }, [pageId]);
-
-  useEffect(() => {
-    const onNavigate = () => requestAnimationFrame(() => scrollToFragment(false));
-    window.addEventListener('popstate', onNavigate);
-    window.addEventListener('hashchange', onNavigate);
-    return () => {
-      window.removeEventListener('popstate', onNavigate);
-      window.removeEventListener('hashchange', onNavigate);
-    };
-  }, []);
 }
 
 /** Previous / next page links at the end of each page. */
@@ -62,9 +40,27 @@ const PageNav: React.FC<{ page: DocsPageData }> = ({ page }) => {
   );
 };
 
+/**
+ * One "On this page" entry. The rendered headings are inside tp-markdown's shadow root, so the
+ * item targets the heading element (its `target` property) and keeps `#id` as its link.
+ */
+const OutlineItem: React.FC<{ heading: MarkdownHeadingTarget }> = ({ heading }) => {
+  const ref = useRef<TpTableOfContentsItem & HTMLElement>(null);
+  useLayoutEffect(() => {
+    if (ref.current) ref.current.target = heading.element;
+  }, [heading.element]);
+  return (
+    <tp-table-of-contents-item ref={ref} href={heading.id ? `#${heading.id}` : undefined} depth={heading.depth - 1}>
+      {heading.label}
+    </tp-table-of-contents-item>
+  );
+};
+
 export const DocsPage: React.FC<{ page: DocsPageData }> = ({ page }) => {
-  const html = useMarkdown(page.markdown);
   const treeRef = useRef<TpTreeView & HTMLElement>(null);
+  const [headings, setHeadings] = useState<readonly MarkdownHeadingTarget[]>([]);
+  // The page's sections: `##` and `###`; the `#` is the page title.
+  const outline = headings.filter((heading) => heading.depth === 2 || heading.depth === 3);
 
   useScrollOnPageChange(page.id);
 
@@ -88,40 +84,43 @@ export const DocsPage: React.FC<{ page: DocsPageData }> = ({ page }) => {
     <div className="docs">
       <SiteHeader active="docs" />
 
-      <div className="docs__layout">
-        <aside className="docs__nav" aria-label="Docs navigation">
-          <tp-tree-view
-            ref={treeRef}
-            label="Docs"
-            size="sm"
-            expansion-trigger="indicator"
-            default-expanded={defaultExpanded}
-            value={[page.path]}
-          >
-            {docsNav.map((entry) => (
-              <tp-tree-item key={entry.page.id} value={entry.page.path}>
-                {entry.page.title}
-                {entry.children.map((child) => (
-                  <tp-tree-item key={child.id} value={child.path}>{child.title}</tp-tree-item>
+      <div className="site-container docs__layout">
+        <aside className="docs__nav">
+          <tp-scroll-area class="docs__nav-scroll" scrollbar-visibility="on-hover">
+            <nav aria-label="Docs">
+              <tp-tree-view
+                ref={treeRef}
+                label="Docs"
+                size="sm"
+                guides="none"
+                expansion-trigger="indicator"
+                default-expanded={defaultExpanded}
+                value={[page.path]}
+              >
+                {docsNav.map((entry) => (
+                  <tp-tree-item key={entry.page.id} value={entry.page.path} data-section="">
+                    {entry.page.title}
+                    {entry.children.map((child) => (
+                      <tp-tree-item key={child.id} value={child.path}>{child.title}</tp-tree-item>
+                    ))}
+                  </tp-tree-item>
                 ))}
-              </tp-tree-item>
-            ))}
-          </tp-tree-view>
+              </tp-tree-view>
+            </nav>
+          </tp-scroll-area>
         </aside>
 
         <main className="docs__main">
           {page.groupTitle !== page.title && <p className="site-eyebrow docs__eyebrow">{page.groupTitle}</p>}
-          <article key={page.id} className="markdown-body" dangerouslySetInnerHTML={{ __html: html }} />
+          <Markdown key={page.id} source={page.markdown} onHeadings={setHeadings} />
           <PageNav page={page} />
         </main>
 
         <aside className="docs__toc">
-          {page.outline.length > 0 && (
+          {outline.length > 0 && (
             <tp-table-of-contents key={page.id} label="On this page">
-              {page.outline.map((section) => (
-                <tp-table-of-contents-item key={section.id} href={`#${section.id}`} depth={section.level - 1}>
-                  {section.text}
-                </tp-table-of-contents-item>
+              {outline.map((heading) => (
+                <OutlineItem key={heading.id ?? heading.label} heading={heading} />
               ))}
             </tp-table-of-contents>
           )}

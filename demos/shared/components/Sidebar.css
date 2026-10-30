@@ -1,61 +1,11 @@
+/* Guide panel contents; the panel itself (size, resize, collapse) is a tp-resizable-panel in DemoBase. */
 .demo-sidebar {
-  position: relative;
-  z-index: 30;
   display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
   background: var(--tp-background);
   color: var(--tp-foreground);
-  font-family: var(--tp-font-sans);
-  border: 0 solid var(--tp-border);
-  transition: margin var(--tp-duration-normal) var(--tp-easing-standard);
-}
-
-.demo-sidebar--right {
-  flex-direction: row;
-  border-left-width: var(--tp-border-width);
-}
-
-.demo-sidebar--right .demo-sidebar__handle {
-  flex: 0 0 5px;
-  margin-left: -3px;
-  cursor: ew-resize;
-  background: transparent;
-  transition: background var(--tp-duration-fast) var(--tp-easing-standard);
-}
-
-.demo-sidebar--right .demo-sidebar__handle:hover,
-.demo-sidebar--right .demo-sidebar__handle:focus-visible,
-.demo-sidebar--bottom .demo-sidebar__handle:hover,
-.demo-sidebar--bottom .demo-sidebar__handle:focus-visible {
-  background: var(--site-accent);
-  outline: none;
-}
-
-.demo-sidebar--right.demo-sidebar--closed {
-  margin-right: calc(-1 * var(--sidebar-width));
-}
-
-.demo-sidebar--bottom {
-  flex-direction: column;
-  border-top-width: var(--tp-border-width);
-}
-
-.demo-sidebar--bottom .demo-sidebar__handle {
-  flex: 0 0 6px;
-  margin-top: -3px;
-  cursor: ns-resize;
-  transition: background var(--tp-duration-fast) var(--tp-easing-standard);
-}
-
-.demo-sidebar--bottom.demo-sidebar--closed {
-  margin-bottom: calc(-1 * var(--sidebar-height));
-}
-
-.demo-sidebar__panel {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
 }
 
 .demo-sidebar__bar {
@@ -77,25 +27,14 @@
   font-size: var(--tp-text-xs);
 }
 
-.demo-sidebar__content {
+.demo-sidebar__scroll {
+  display: block;
   flex: 1 1 auto;
-  min-width: 0;
   min-height: 0;
-  overflow: auto;
+}
+
+.demo-sidebar__content {
   padding: var(--tp-space-6) var(--tp-space-6) var(--tp-space-10);
-}
-
-.demo-sidebar__content .markdown-body {
-  font-size: var(--tp-text-sm);
-}
-
-.demo-sidebar__content .markdown-body h1 {
-  font-size: var(--tp-text-2xl);
-}
-
-.demo-sidebar__content .markdown-body h2 {
-  font-size: var(--tp-text-lg);
-  margin-top: 2rem;
 }
 
 .demo-sidebar__sources {
@@ -110,31 +49,5 @@
 .demo-sidebar__source-label {
   font-family: var(--tp-font-mono);
   font-size: var(--tp-text-xs);
-  letter-spacing: 0.04em;
   color: var(--tp-muted-foreground);
-}
-
-.demo-sidebar__source tp-code-block {
-  display: block;
-  margin-top: var(--tp-space-2);
-  max-height: 60vh;
-  overflow: auto;
-  font-size: var(--tp-text-xs);
-}
-
-.demo-sidebar__reopen {
-  position: fixed;
-  z-index: 30;
-  right: var(--tp-space-4);
-  bottom: 48px;
-  display: none;
-  box-shadow: var(--tp-shadow-lg);
-}
-
-.demo-sidebar__reopen.is-visible {
-  display: inline-flex;
-}
-
-body.demo-sidebar-resizing {
-  user-select: none;
 }

@@ -20,7 +20,7 @@ export const LandingPage: React.FC = () => {
 
       <SiteHeader active="home" variant="overlay" />
 
-      <main className="landing__hero">
+      <main className="site-container landing__hero">
         <p className="site-eyebrow">flyby-motion {version}</p>
         <h1 className="landing__title">
           <span className="landing__title-line">Motion,</span>
@@ -40,18 +40,15 @@ export const LandingPage: React.FC = () => {
           </tp-button>
         </div>
 
-        <div className="landing__install">
-          <code className="landing__install-code">
-            <span className="landing__install-prompt" aria-hidden="true">$</span> {INSTALL_COMMAND}
-          </code>
-          <tp-copy-button value={INSTALL_COMMAND} variant="ghost" size="sm" label="Copy install command"></tp-copy-button>
-        </div>
+        <tp-code-block class="landing__install" language="bash" code={INSTALL_COMMAND}></tp-code-block>
       </main>
 
-      <p className="landing__caption" aria-live="polite">
-        <span className="landing__caption-dot" aria-hidden="true" />
-        {formation} · attract + arrive · drift · swirl · repel
-      </p>
+      <div className="site-container landing__caption-row">
+        <p className="landing__caption" aria-live="polite">
+          <tp-status-dot variant="default" motion="pulse" aria-hidden="true"></tp-status-dot>
+          {formation} · attract + arrive · drift · swirl · repel
+        </p>
+      </div>
 
       <div className="landing__footer">
         <DemoFooter />

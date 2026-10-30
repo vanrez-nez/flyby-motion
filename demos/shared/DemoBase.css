@@ -8,31 +8,42 @@
   background: var(--tp-background);
 }
 
-.demo-base__header {
+.demo-base__header,
+.demo-base__footer {
   flex: 0 0 auto;
   z-index: 20;
 }
 
+/* Canvas and guide: two panels of a library Resizable panel group, side by side or stacked. */
 .demo-base__body {
   flex: 1 1 auto;
   display: flex;
-  flex-direction: row;
-  position: relative;
-  overflow: hidden;
+  min-height: 0;
 }
 
-@media (orientation: portrait) {
-  .demo-base__body {
-    flex-direction: column;
-  }
+.demo-base__body > tp-resizable-panel-group {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .demo-base__content {
-  flex: 1 1 auto;
   position: relative;
+  height: 100%;
   overflow: hidden;
   /* The canvases stay black in both themes: the scenes and the Tweakpane theme are tuned for it. */
   background: #000;
+}
+
+.demo-base__guide {
+  border: 0 solid var(--tp-border);
+}
+
+tp-resizable-panel-group[orientation='horizontal'] > .demo-base__guide {
+  border-left-width: var(--tp-border-width);
+}
+
+tp-resizable-panel-group[orientation='vertical'] > .demo-base__guide {
+  border-top-width: var(--tp-border-width);
 }
 
 /*
@@ -52,36 +63,24 @@
   }
 }
 
-.demo-base__sidebar {
-  flex: 0 0 auto;
-  z-index: 30;
-}
-
-.demo-base__footer {
-  flex: 0 0 auto;
-  z-index: 20;
-}
-
-/* Demo sub-navigation */
+/* Demo sub-navigation: full-width rule, content in the page container. */
 .demo-toolbar {
+  border-bottom: var(--tp-border-width) solid var(--tp-border);
+  background: var(--tp-background);
+}
+
+.demo-toolbar__inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--tp-space-3);
   min-height: 44px;
-  padding: var(--tp-space-1-5) var(--tp-space-6);
-  border-bottom: var(--tp-border-width) solid var(--tp-border);
-  background: var(--tp-background);
+  padding-block: var(--tp-space-1-5);
   overflow-x: auto;
 }
 
-.demo-toolbar__demos {
+.demo-toolbar__end {
   display: flex;
-  gap: var(--tp-space-1);
-}
-
-@media (max-width: 640px) {
-  .demo-toolbar {
-    padding-inline: var(--tp-space-3);
-  }
+  align-items: center;
+  gap: var(--tp-space-2);
 }

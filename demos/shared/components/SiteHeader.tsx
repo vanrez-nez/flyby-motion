@@ -22,37 +22,39 @@ export interface SiteHeaderProps {
 export const SiteHeader: React.FC<SiteHeaderProps> = ({ active, variant = 'solid' }) => {
   return (
     <header className={`site-header site-header--${variant}`}>
-      <div className="site-header__start">
-        <a className="site-header__brand" href={withBase('/')} aria-label="flyby-motion home">
-          <img src={logoUrl} alt="" className="site-header__logo" />
-        </a>
-        <nav className="site-header__nav" aria-label="Main">
-          {sections.map((section) => (
-            <a
-              key={section.key}
-              href={withBase(section.path)}
-              className="site-header__link"
-              aria-current={section.key === active ? 'page' : undefined}
-            >
-              {section.label}
-            </a>
-          ))}
-        </nav>
-      </div>
-      <div className="site-header__end">
-        <SearchPalette />
-        <tp-button
-          variant="ghost"
-          size="icon-sm"
-          href={GITHUB_URL}
-          target="_blank"
-          rel="noreferrer"
-          aria-label="GitHub repository"
-        >
-          <tp-icon slot="icon-start" icon={githubIcon}></tp-icon>
-          GitHub
-        </tp-button>
-        <tp-theme-switcher variant="button" size="sm" default-value="dark"></tp-theme-switcher>
+      <div className="site-container site-header__inner">
+        <div className="site-header__start">
+          <a className="site-header__brand" href={withBase('/')} aria-label="flyby-motion home">
+            <img src={logoUrl} alt="" className="site-header__logo" />
+          </a>
+          <nav className="site-header__nav" aria-label="Main">
+            {sections.map((section) => (
+              <a
+                key={section.key}
+                href={withBase(section.path)}
+                className="site-header__link"
+                aria-current={section.key === active ? 'page' : undefined}
+              >
+                {section.label}
+              </a>
+            ))}
+          </nav>
+        </div>
+        <div className="site-header__end">
+          <SearchPalette />
+          <tp-button
+            variant="ghost"
+            size="icon-sm"
+            href={GITHUB_URL}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="GitHub repository"
+          >
+            <tp-icon slot="icon-start" icon={githubIcon}></tp-icon>
+            GitHub
+          </tp-button>
+          <tp-theme-switcher variant="button" size="sm" default-value="dark"></tp-theme-switcher>
+        </div>
       </div>
     </header>
   );

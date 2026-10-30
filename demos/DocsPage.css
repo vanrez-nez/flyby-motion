@@ -9,15 +9,12 @@
   top: 0;
 }
 
+/* The page grid sits in `.site-container`, so its edges match the header and footer. */
 .docs__layout {
   flex: 1 0 auto;
   display: grid;
-  grid-template-columns: 15rem minmax(0, 1fr) 14rem;
-  gap: var(--tp-space-12);
-  width: 100%;
-  max-width: 88rem;
-  margin: 0 auto;
-  padding: 0 var(--tp-space-6);
+  grid-template-columns: 14rem minmax(0, 1fr) 12rem;
+  gap: clamp(2rem, 4vw, 4rem);
 }
 
 .docs__nav,
@@ -25,23 +22,50 @@
   position: sticky;
   top: var(--site-header-height);
   align-self: start;
-  max-height: calc(100vh - var(--site-header-height));
-  overflow-y: auto;
-  padding: var(--tp-space-8) 0;
 }
 
-.docs__nav {
-  margin-left: calc(-1 * var(--tp-space-2));
+/* The sidebar scrolls on its own, inside a Scroll area, when the page list is taller than the window. */
+.docs__nav-scroll {
+  display: block;
+  block-size: calc(100dvh - var(--site-header-height));
 }
 
+.docs__nav nav {
+  padding-block: var(--tp-space-8);
+}
+
+/*
+ * Rows: muted text, the current page in the foreground on the library's accent role, which the
+ * sidebar sets to the neutral muted one. Top-level rows read as section headings.
+ */
 .docs__nav tp-tree-view {
   display: block;
+  --tp-tree-view-indent: 0.75rem;
+  --tp-accent: var(--tp-muted);
+  --tp-accent-foreground: var(--tp-foreground);
+}
+
+.docs__nav tp-tree-item::part(row) {
+  color: var(--tp-muted-foreground);
+}
+
+.docs__nav tp-tree-item::part(row):hover,
+.docs__nav tp-tree-item[data-selected]::part(row) {
+  color: var(--tp-foreground);
+}
+
+.docs__nav tp-tree-item[data-section]::part(row) {
+  color: var(--tp-foreground);
+  font-weight: var(--tp-font-semibold);
 }
 
 .docs__main {
   min-width: 0;
-  max-width: 48rem;
-  padding: var(--tp-space-10) 0 var(--tp-space-16);
+  padding-block: var(--tp-space-10) var(--tp-space-16);
+}
+
+.docs__toc {
+  padding-block: var(--tp-space-10);
 }
 
 .docs__eyebrow {
@@ -79,10 +103,9 @@
   font-size: var(--tp-text-sm);
 }
 
-@media (max-width: 1180px) {
+@media (width < 72rem) {
   .docs__layout {
     grid-template-columns: 14rem minmax(0, 1fr);
-    gap: var(--tp-space-10);
   }
 
   .docs__toc {
@@ -90,18 +113,22 @@
   }
 }
 
-@media (max-width: 820px) {
+@media (width < 48rem) {
   .docs__layout {
-    grid-template-columns: minmax(0, 1fr);
-    padding: 0 var(--tp-space-4);
+    display: block;
   }
 
   .docs__nav {
     position: static;
-    max-height: none;
-    margin: 0;
-    padding: var(--tp-space-6) 0 0;
     border-bottom: var(--tp-border-width) solid var(--tp-border);
+  }
+
+  .docs__nav-scroll {
+    block-size: auto;
+  }
+
+  .docs__nav nav {
+    padding-block: var(--tp-space-6);
   }
 
   .docs__main {
