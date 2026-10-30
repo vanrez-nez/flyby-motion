@@ -1,4 +1,4 @@
-import"./chunk-CilyBKbf.js";import{_ as e,o as t}from"./index-FSF-g8v5.js";import{C as n,_ as r,b as i,g as a,v as o,x as s,y as c}from"./waitForStableSize-CaV2ELVd.js";import{a as l,i as u,n as d,r as f,t as p}from"./FeatureDemo3D-BZ6upnis.js";e();var m=`# 3D Forces
+import"./chunk-CilyBKbf.js";import{_ as e,o as t}from"./index-CXGvyNYB.js";import{C as n,_ as r,b as i,g as a,v as o,x as s,y as c}from"./waitForStableSize-CaV2ELVd.js";import{a as l,i as u,n as d,r as f,t as p}from"./FeatureDemo3D-CaDYNsed.js";e();var m=`# 3D Forces
 
 The same force primitives as the 2D demo, applied to agents living in 3D. Vectors automatically dispatch on \`agent.position.length\`, so a force you write once works in either dimensionality.
 

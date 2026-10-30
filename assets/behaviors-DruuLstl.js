@@ -1,4 +1,4 @@
-import"./chunk-CilyBKbf.js";import{_ as e,o as t}from"./index-FSF-g8v5.js";import{C as n,a as r,c as i,g as a,m as o,o as s,v as c}from"./waitForStableSize-CaV2ELVd.js";import{t as l}from"./FeatureDemo3D-BZ6upnis.js";e();var u=`# 3D Behaviors
+import"./chunk-CilyBKbf.js";import{_ as e,o as t}from"./index-CXGvyNYB.js";import{C as n,a as r,c as i,g as a,m as o,o as s,v as c}from"./waitForStableSize-CaV2ELVd.js";import{t as l}from"./FeatureDemo3D-CaDYNsed.js";e();var u=`# 3D Behaviors
 
 Pre-composed behaviors (\`arrive\`, \`flee\`, \`pursue\`, \`orbit\`) running in 3D. The 2D and 3D builds share the same code path — pass 3-vectors and you get 3D motion.
 

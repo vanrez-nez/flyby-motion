@@ -1,4 +1,4 @@
-import"./chunk-CilyBKbf.js";import{_ as e,o as t}from"./index-FSF-g8v5.js";import{F as n,I as r,M as i,N as a,P as o,_ as s,b as c,f as l,g as u,h as d,m as f,v as p,x as m,y as h}from"./waitForStableSize-CaV2ELVd.js";import{n as g,r as _,t as v}from"./FeatureDemo2D-BktVBYxS.js";import{a as y}from"./tpTheme-C4g62pr-.js";e();var b=`# Custom
+import"./chunk-CilyBKbf.js";import{_ as e,o as t}from"./index-CXGvyNYB.js";import{F as n,I as r,M as i,N as a,P as o,_ as s,b as c,f as l,g as u,h as d,m as f,v as p,x as m,y as h}from"./waitForStableSize-CaV2ELVd.js";import{n as g,r as _,t as v}from"./FeatureDemo2D-CLk1v8ve.js";import{a as y}from"./tpTheme-Cvxk0Jj-.js";e();var b=`# Custom
 
 Three small recipes that show how forces, modifiers, and per-agent state combine into expressive motion.
 
