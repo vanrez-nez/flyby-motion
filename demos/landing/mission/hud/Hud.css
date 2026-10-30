@@ -1,0 +1,228 @@
+/*
+ * Mission HUD: monochrome on the theme, accent for locks, warn color for reroutes / lost.
+ * Sizes use `cqi` against the scene box, so the HUD scales with the box, not the window.
+ * Animations live in HudEffects.css.
+ */
+.hud {
+  --hud-fg: var(--tp-foreground);
+  --hud-dim: color-mix(in srgb, var(--tp-foreground) 55%, transparent);
+  --hud-faint: color-mix(in srgb, var(--tp-foreground) 18%, transparent);
+  --hud-lock: var(--site-accent);
+  --hud-warn: light-dark(#d6336c, #ff6b8b);
+  --hud-tone: var(--hud-fg);
+
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  color: var(--hud-fg);
+  font-family: var(--tp-font-mono);
+  font-size: clamp(0.6rem, 1.05cqi, 0.75rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  container-type: inline-size;
+}
+
+.hud[data-tone='lock'] { --hud-tone: var(--hud-lock); }
+.hud[data-tone='warn'] { --hud-tone: var(--hud-warn); }
+
+/* Top bar */
+.hud__bar {
+  position: absolute;
+  top: 9%;
+  left: 50%;
+  translate: -50% 0;
+  display: flex;
+  gap: 0.5em;
+  white-space: nowrap;
+}
+
+.hud__chip {
+  padding: 0.35em 0.7em;
+  border: 1px solid var(--hud-faint);
+  color: var(--hud-dim);
+  background: color-mix(in srgb, var(--tp-background) 55%, transparent);
+}
+
+.hud__chip--strong { color: var(--hud-fg); }
+.hud__chip--mode { color: var(--hud-tone); border-color: var(--hud-tone); }
+.hud__chip--clock { font-variant-numeric: tabular-nums; }
+
+/* Reticle and lock: positioned by transform from the scene every frame. */
+.hud__reticle,
+.hud__lock {
+  position: absolute;
+  top: 0;
+  left: 0;
+  will-change: transform;
+  transition: opacity var(--tp-duration-normal);
+}
+
+.hud-reticle {
+  display: block;
+  width: clamp(5rem, 16cqi, 9rem);
+  translate: -50% -50%;
+  color: var(--hud-dim);
+}
+
+.hud-reticle .hud-reticle__brackets { stroke: var(--hud-tone); }
+
+.hud__lock {
+  display: grid;
+  justify-items: center;
+  color: var(--hud-lock);
+  opacity: 0;
+}
+
+.hud__lock[data-visible='true'] { opacity: 1; }
+.hud__lock[data-locked='false'] { color: var(--hud-dim); }
+
+.hud-lock {
+  display: block;
+  width: clamp(2.5rem, 7cqi, 4rem);
+  translate: 0 -50%;
+}
+
+.hud__lock-label {
+  translate: 0 -20%;
+  white-space: nowrap;
+}
+
+/* Side panels */
+.hud__panel {
+  position: absolute;
+  top: 24%;
+  width: clamp(11rem, 26cqi, 15rem);
+  padding: 0.8em 0.9em;
+  border: 1px solid var(--hud-faint);
+  background: color-mix(in srgb, var(--tp-background) 50%, transparent);
+  backdrop-filter: blur(3px);
+}
+
+.hud__panel::before,
+.hud__panel::after {
+  content: '';
+  position: absolute;
+  width: 0.7em;
+  height: 0.7em;
+  border: 1px solid var(--hud-fg);
+}
+
+.hud__panel::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
+.hud__panel::after { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
+
+.hud__panel--forces { left: 9%; }
+.hud__panel--telemetry { right: 9%; width: clamp(8.5rem, 18cqi, 11rem); }
+
+.hud__heading {
+  margin: 0 0 0.7em;
+  font: inherit;
+  color: var(--hud-dim);
+}
+
+.hud__forces {
+  display: grid;
+  gap: 0.65em;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hud__force {
+  display: grid;
+  grid-template-columns: 1fr 3.5em;
+  align-items: center;
+  column-gap: 0.6em;
+}
+
+.hud__force-name { color: var(--hud-fg); }
+
+.hud__force-bar {
+  height: 0.35em;
+  background: var(--hud-faint);
+}
+
+.hud__force-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--hud-tone);
+  transform-origin: left;
+  transition: transform 0.15s linear;
+}
+
+.hud__force-recipe {
+  grid-column: 1 / -1;
+  color: var(--hud-dim);
+  font-size: 0.85em;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.hud__readouts {
+  display: grid;
+  gap: 0.45em;
+  margin: 0;
+}
+
+.hud__readouts > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6em;
+}
+
+.hud__readouts dt { color: var(--hud-dim); }
+
+.hud__readouts dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.hud__readouts small {
+  margin-left: 0.2em;
+  color: var(--hud-dim);
+  font-size: 0.8em;
+}
+
+/* Ticker */
+.hud__ticker {
+  position: absolute;
+  bottom: 10%;
+  left: 50%;
+  translate: -50% 0;
+  display: grid;
+  justify-items: center;
+  gap: 0.3em;
+}
+
+.hud__message {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  margin: 0;
+  color: var(--hud-dim);
+  white-space: nowrap;
+}
+
+.hud__message:last-child {
+  padding: 0.4em 0.9em;
+  border: 1px solid var(--hud-tone);
+  color: var(--hud-tone);
+  background: color-mix(in srgb, var(--tp-background) 60%, transparent);
+  font-size: 1.15em;
+}
+
+.hud__message[data-tone='lock'] { --hud-tone: var(--hud-lock); }
+.hud__message[data-tone='warn'] { --hud-tone: var(--hud-warn); }
+
+.hud__message-dot {
+  width: 0.45em;
+  height: 0.45em;
+  background: currentColor;
+}
+
+/* Narrow boxes: just the reticle, lock, current mode and ticker. */
+@container (max-width: 560px) {
+  .hud__panel { display: none; }
+  .hud__chip:not(.hud__chip--mode):not(.hud__chip--clock) { display: none; }
+  .hud__bar { top: 6%; }
+  .hud__ticker { bottom: 6%; }
+}

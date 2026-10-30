@@ -4,54 +4,31 @@
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  isolation: isolate;
-  background:
-    radial-gradient(60rem 40rem at 72% 45%, color-mix(in srgb, var(--site-accent) 10%, transparent), transparent 70%),
-    var(--tp-background);
-}
-
-.landing__field {
-  position: absolute;
-  inset: 0;
-  z-index: -2;
-}
-
-.landing__field canvas {
-  display: block;
-}
-
-/* Keeps the hero legible over the field: a fade from the left edge. */
-.landing__veil {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background: linear-gradient(
-    to right,
-    var(--tp-background) 0%,
-    color-mix(in srgb, var(--tp-background) 80%, transparent) 30%,
-    transparent 58%
-  );
+  overflow-x: hidden;
+  background: var(--tp-background);
 }
 
 .landing .site-header {
   position: relative;
 }
 
-/* The hero shares the page container with the header and footer; its own content stays narrow. */
-.landing__hero {
+/* Hero on the left, the mission on the right; both in the page container. */
+.landing__body {
   flex: 1 0 auto;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: flex-start;
-  gap: var(--tp-space-6);
-  padding-block: var(--tp-space-16);
+  display: grid;
+  grid-template-columns: minmax(0, 36rem) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(1rem, 3vw, 3rem);
+  padding-block: var(--tp-space-8);
 }
 
-.landing__hero > * {
-  max-width: 36rem;
+.landing__hero {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--tp-space-6);
+  position: relative;
+  z-index: 1;
 }
 
 .landing__hero .site-eyebrow {
@@ -64,7 +41,7 @@
   margin: 0;
   font-family: var(--site-font-display);
   font-weight: 400;
-  font-size: clamp(3.5rem, 9vw, 7.5rem);
+  font-size: clamp(3.5rem, 7.5vw, 7rem);
   line-height: 0.92;
   letter-spacing: 0.005em;
   text-transform: uppercase;
@@ -95,49 +72,59 @@
 .landing__install {
   display: block;
   width: 100%;
-  backdrop-filter: blur(8px);
 }
 
-/* The caption row is the page container too, so the pill's right edge meets the header's. */
-.landing__caption-row {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: calc(36px + var(--tp-space-4));
-  display: flex;
-  justify-content: flex-end;
-  pointer-events: none;
-}
-
-.landing__caption {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--tp-space-2);
-  margin: 0;
-  padding: var(--tp-space-1-5) var(--tp-space-3);
-  border: var(--tp-border-width) solid var(--tp-border);
-  border-radius: var(--tp-radius-full);
-  background: color-mix(in srgb, var(--tp-background) 70%, transparent);
-  backdrop-filter: blur(6px);
-  color: var(--tp-muted-foreground);
-  font-family: var(--tp-font-mono);
-  font-size: var(--tp-text-xs);
-}
-
-.landing__footer {
+/*
+ * The mission: not full width. It bleeds past the container's right edge to the window, and a
+ * vignette mask fades every edge into the page background, so the scene blends into the page.
+ */
+.landing__mission {
   position: relative;
+  align-self: stretch;
+  min-height: min(80vh, 46rem);
+  margin-right: calc(-1 * max(var(--site-gutter), (100vw - var(--site-max)) / 2 + var(--site-gutter)));
+}
+
+.mission {
+  position: relative;
+  container-type: inline-size;
+}
+
+.mission__scene {
+  position: absolute;
+  inset: 0;
+  -webkit-mask-image: radial-gradient(ellipse 72% 68% at 52% 50%, #000 52%, transparent 100%);
+  mask-image: radial-gradient(ellipse 72% 68% at 52% 50%, #000 52%, transparent 100%);
+}
+
+.mission__scene canvas {
+  display: block;
+}
+
+/* Without WebGL the box would be an empty hole; let the hero have the space. */
+.mission[data-failed] {
+  display: none;
 }
 
 .landing__footer .site-footer {
   background: transparent;
 }
 
+/* Narrow screens: the mission stacks under the hero as its own box, so the HUD stays legible. */
 @media (max-width: 860px) {
-  .landing__veil {
-    background: color-mix(in srgb, var(--tp-background) 45%, transparent);
+  .landing__body {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--tp-space-6);
   }
 
-  .landing__caption-row {
-    display: none;
+  .landing__mission {
+    min-height: 0;
+    height: min(64vh, 34rem);
+    margin-inline: calc(-1 * var(--site-gutter));
+  }
+
+  .mission__scene {
+    -webkit-mask-image: radial-gradient(ellipse 80% 72% at 50% 50%, #000 55%, transparent 100%);
+    mask-image: radial-gradient(ellipse 80% 72% at 50% 50%, #000 55%, transparent 100%);
   }
 }

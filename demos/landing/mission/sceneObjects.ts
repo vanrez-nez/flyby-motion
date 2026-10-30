@@ -1,0 +1,123 @@
+import * as THREE from 'three';
+import { createDrone, createTargetView, type DroneView } from './drone';
+import { createScenePanel, createSpires, createWaypointPin, makeDotTexture, type ScenePanel, type WaypointPin } from './markers';
+import type { Mission } from './missionScript';
+import type { MissionPalette } from './palette';
+import { createGrid, createTerrain } from './terrain';
+import { terrainHeight } from './world';
+
+/** Everything drawn in the mission scene, built once, recolored when the theme changes. */
+export interface SceneObjects {
+  root: THREE.Group;
+  drone: DroneView;
+  target: ReturnType<typeof createTargetView>;
+  pins: Map<string, WaypointPin>;
+  panel: ScenePanel;
+  trail: { line: THREE.Line; push(point: number[]): void; reset(): void };
+  applyPalette(palette: MissionPalette): void;
+  dispose(): void;
+}
+
+export interface Detail {
+  terrainRows: number;
+  terrainSamples: number;
+  pointsPerSpire: number;
+}
+
+export function createSceneObjects(mission: Mission, palette: MissionPalette, detail: Detail, fontFamily: string): SceneObjects {
+  const root = new THREE.Group();
+  const { world } = mission;
+
+  const terrainMaterial = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.55, fog: true });
+  const gridMaterial = new THREE.LineBasicMaterial({ transparent: true, opacity: 0.12, fog: true });
+  const terrain = createTerrain(detail.terrainRows, detail.terrainSamples, terrainMaterial);
+  const grid = createGrid(gridMaterial);
+
+  const dot = makeDotTexture();
+  const spireMaterial = new THREE.PointsMaterial({ size: 0.32, map: dot, transparent: true, depthWrite: false, opacity: 0.85, fog: true, sizeAttenuation: true });
+  const spires = createSpires(world.spires, detail.pointsPerSpire, spireMaterial);
+  root.add(grid, terrain, spires);
+
+  const pins = new Map<string, WaypointPin>();
+  for (const waypoint of world.waypoints) {
+    const [x, , z] = waypoint.position;
+    const pin = createWaypointPin(waypoint, terrainHeight(x, z), palette.line);
+    pins.set(waypoint.id, pin);
+    root.add(pin.group);
+  }
+
+  const drone = createDrone(mission.drone, palette.line, palette.accent);
+  const target = createTargetView(mission.target, palette.accent);
+  root.add(drone.group, target.group);
+
+  const panel = createScenePanel(fontFamily, palette.css);
+  root.add(panel.sprite);
+
+  // Trail behind the drone: a fixed-length ring buffer of recent positions.
+  const TRAIL = 90;
+  const trailPositions = new Float32Array(TRAIL * 3);
+  const trailGeometry = new THREE.BufferGeometry();
+  trailGeometry.setAttribute('position', new THREE.BufferAttribute(trailPositions, 3));
+  trailGeometry.setDrawRange(0, 0);
+  const trailMaterial = new THREE.LineBasicMaterial({ transparent: true, opacity: 0.4, fog: true });
+  const trailLine = new THREE.Line(trailGeometry, trailMaterial);
+  root.add(trailLine);
+  let trailCount = 0;
+  const trail = {
+    line: trailLine,
+    push(point: number[]) {
+      // Shift by one point; small enough that a copy is cheaper than a ring index for drawing.
+      trailPositions.copyWithin(3, 0, (TRAIL - 1) * 3);
+      trailPositions[0] = point[0];
+      trailPositions[1] = point[1];
+      trailPositions[2] = point[2];
+      trailCount = Math.min(TRAIL, trailCount + 1);
+      trailGeometry.setDrawRange(0, trailCount);
+      trailGeometry.attributes.position.needsUpdate = true;
+    },
+    reset() {
+      trailCount = 0;
+      trailGeometry.setDrawRange(0, 0);
+    },
+  };
+
+  const applyPalette = (p: MissionPalette) => {
+    gridMaterial.color.copy(p.line);
+    terrainMaterial.color.copy(p.line);
+    spireMaterial.color.copy(p.line);
+    trailMaterial.color.copy(p.accent);
+    // Additive glow reads on dark; on light, normal blending keeps lines dark on white.
+    spireMaterial.blending = p.dark ? THREE.AdditiveBlending : THREE.NormalBlending;
+    spireMaterial.needsUpdate = true;
+  };
+  applyPalette(palette);
+
+  return {
+    root,
+    drone,
+    target,
+    pins,
+    panel,
+    trail,
+    applyPalette,
+    dispose() {
+      terrain.geometry.dispose();
+      grid.geometry.dispose();
+      spires.geometry.dispose();
+      trailGeometry.dispose();
+      [terrainMaterial, gridMaterial, spireMaterial, trailMaterial].forEach((m) => m.dispose());
+      dot.dispose();
+      drone.dispose();
+      target.dispose();
+      panel.dispose();
+      root.traverse((object) => {
+        const mesh = object as THREE.Mesh;
+        if (mesh.isMesh || (object as THREE.Line).isLine) {
+          mesh.geometry?.dispose();
+          const material = mesh.material as THREE.Material | THREE.Material[];
+          (Array.isArray(material) ? material : [material]).forEach((m) => m?.dispose());
+        }
+      });
+    },
+  };
+}
