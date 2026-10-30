@@ -1,56 +1,48 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useLayoutEffect } from 'react';
+import { SiteHeader } from './components/SiteHeader';
 import { DemoFooter } from './components/DemoFooter';
-import logoUrl from '../flyby-logo.svg';
+import { counterpartPath, demoDimension, demoLinks, withBase, type DemoKey } from './routes';
 import './DemoBase.css';
 
-export type DemoKey =
-  | 'forces'
-  | 'behaviors'
-  | 'modifiers'
-  | 'custom'
-  | 'three-forces'
-  | 'three-behaviors'
-  | 'three-modifiers'
-  | 'three-custom';
+export type { DemoKey } from './routes';
 
-
-const twoDLinks: Array<{ key: DemoKey; label: string; href: string }> = [
-  { key: 'forces', label: 'Forces', href: '/2d/forces' },
-  { key: 'behaviors', label: 'Behaviors', href: '/2d/behaviors' },
-  { key: 'modifiers', label: 'Modifiers', href: '/2d/modifiers' },
-  { key: 'custom', label: 'Custom', href: '/2d/custom' },
-];
-
-const threeDLinks: Array<{ key: DemoKey; label: string; href: string }> = [
-  { key: 'three-forces', label: 'Forces', href: '/3d/forces' },
-  { key: 'three-behaviors', label: 'Behaviors', href: '/3d/behaviors' },
-  { key: 'three-modifiers', label: 'Modifiers', href: '/3d/modifiers' },
-  { key: 'three-custom', label: 'Custom', href: '/3d/custom' },
-];
-
-const DemoHeader: React.FC<{ active?: DemoKey }> = ({ active }) => {
-  const links = active?.startsWith('three-') ? threeDLinks : twoDLinks;
+/** Sub-navigation of the demo pages: the four demos of the current dimension and a 2D / 3D switch. */
+const DemoToolbar: React.FC<{ active?: DemoKey }> = ({ active }) => {
+  const dimension = demoDimension(active);
+  const links = demoLinks[dimension];
 
   return (
-    <header className="demo-ui demo-ui__header">
-      <a className="demo-ui__title" href="/">
-        <img src={logoUrl} alt="Flyby Library" className="demo-ui__logo" />
-      </a>
-      <nav className="demo-ui__nav" aria-label="Demo navigation">
+    <div className="demo-toolbar">
+      <tp-button-group label={`${dimension.toUpperCase()} demos`} class="demo-toolbar__demos">
         {links.map((link) => (
-          <a
+          <tp-button
             key={link.key}
-            href={link.href}
+            size="sm"
+            variant={link.key === active ? 'secondary' : 'ghost'}
+            href={withBase(link.path)}
             aria-current={link.key === active ? 'page' : undefined}
           >
             {link.label}
-          </a>
+          </tp-button>
         ))}
-      </nav>
-    </header>
+      </tp-button-group>
+
+      <tp-button-group label="Dimension" joined class="demo-toolbar__dimension">
+        {(['2d', '3d'] as const).map((d) => (
+          <tp-button
+            key={d}
+            size="sm"
+            variant={d === dimension ? 'secondary' : 'outline'}
+            href={withBase(counterpartPath(active, d))}
+            aria-current={d === dimension ? 'page' : undefined}
+          >
+            {d.toUpperCase()}
+          </tp-button>
+        ))}
+      </tp-button-group>
+    </div>
   );
 };
-
 
 export interface DemoBaseProps {
   activeDemo?: DemoKey;
@@ -59,17 +51,24 @@ export interface DemoBaseProps {
 }
 
 export const DemoBase: React.FC<DemoBaseProps> = ({ activeDemo, sidebar, children }) => {
+  // The demo frame fills the viewport; document scrolling is locked only while it is mounted.
+  useLayoutEffect(() => {
+    document.documentElement.classList.add('site-fixed-viewport');
+    return () => document.documentElement.classList.remove('site-fixed-viewport');
+  }, []);
+
   return (
     <div className="demo-base">
       <div className="demo-base__header">
-        <DemoHeader active={activeDemo} />
+        <SiteHeader active={demoDimension(activeDemo)} />
+        <DemoToolbar active={activeDemo} />
       </div>
-      
+
       <div className="demo-base__body">
         <main className="demo-base__content">
           {children}
         </main>
-        
+
         {sidebar && (
           <aside className="demo-base__sidebar">
             {sidebar}
@@ -83,4 +82,3 @@ export const DemoBase: React.FC<DemoBaseProps> = ({ activeDemo, sidebar, childre
     </div>
   );
 };
-

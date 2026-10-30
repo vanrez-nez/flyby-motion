@@ -3,8 +3,9 @@
   flex-direction: column;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
-  background: var(--background);
+  background: var(--tp-background);
 }
 
 .demo-base__header {
@@ -30,6 +31,25 @@
   flex: 1 1 auto;
   position: relative;
   overflow: hidden;
+  /* The canvases stay black in both themes: the scenes and the Tweakpane theme are tuned for it. */
+  background: #000;
+}
+
+/*
+ * The Tweakpane container: 2dDemo.css / 3dDemo.css place it 44px from the top of the window,
+ * i.e. 12px under the old 32px header. Anchor it to the canvas area instead, so it keeps that
+ * 12px inset under the taller header + demo toolbar. Size and contents are untouched.
+ */
+.demo-base__content #tp-container {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+}
+
+@media (max-width: 560px) {
+  .demo-base__content #tp-container {
+    left: 10px;
+  }
 }
 
 .demo-base__sidebar {
@@ -42,69 +62,26 @@
   z-index: 20;
 }
 
-/* Ported from demoUi.css */
-.demo-ui {
+/* Demo sub-navigation */
+.demo-toolbar {
   display: flex;
   align-items: center;
-  min-height: 32px;
-  padding: 0 14px;
-  background: var(--background);
-  color: var(--text-secondary);
-  font: 500 11px/1.2 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-}
-
-.demo-ui a {
-  color: var(--text-muted);
-  text-decoration: none;
-}
-
-.demo-ui a:hover,
-.demo-ui a[aria-current="page"] {
-  color: var(--text-primary);
-}
-
-.demo-ui__header {
   justify-content: space-between;
-  gap: 16px;
-  border-bottom: 1px solid var(--border);
+  gap: var(--tp-space-3);
+  min-height: 44px;
+  padding: var(--tp-space-1-5) var(--tp-space-6);
+  border-bottom: var(--tp-border-width) solid var(--tp-border);
+  background: var(--tp-background);
+  overflow-x: auto;
 }
 
-.demo-ui__title {
-  flex: 0 0 auto;
-  letter-spacing: 0;
-}
-
-.demo-ui__logo {
-  height: 16px;
-  display: block;
-  margin-inline: 1rem;
-}
-
-.demo-ui__nav {
+.demo-toolbar__demos {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 12px;
-  text-align: right;
+  gap: var(--tp-space-1);
 }
 
-.demo-ui__footer {
-  justify-content: space-between;
-  border-top: 1px solid var(--border);
-}
-
-@media (max-width: 560px) {
-  .demo-ui {
-    min-height: 36px;
-    padding: 0 10px;
-    font-size: 10px;
-  }
-
-  .demo-ui__header {
-    gap: 10px;
-  }
-
-  .demo-ui__nav {
-    gap: 8px;
+@media (max-width: 640px) {
+  .demo-toolbar {
+    padding-inline: var(--tp-space-3);
   }
 }

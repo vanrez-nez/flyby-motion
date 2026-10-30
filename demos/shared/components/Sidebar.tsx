@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { useMarkdown, highlightCode } from '../hooks/useMarkdown';
+import { useMarkdown } from '../hooks/useMarkdown';
+import { xIcon } from '../icons';
 import './Sidebar.css';
 
 export interface SidebarSource {
@@ -170,45 +171,52 @@ export const Sidebar: React.FC<SidebarProps> = ({ markdown, sources = [] }) => {
           aria-orientation={isPortrait ? 'horizontal' : 'vertical'}
           tabIndex={0}
         />
-        <button
-          type="button"
-          className="demo-sidebar__close"
-          aria-label="Close sidebar"
-          onClick={toggleOpen}
-        >
-          &times;
-        </button>
-        <div className="demo-sidebar__content" ref={contentRef}>
-          <article className="markdown-body" dangerouslySetInnerHTML={{ __html: htmlContent }} />
-          {sources.length > 0 && (
-            <div className="demo-sidebar__sources markdown-body">
-              {sources.map((source, idx) => {
-                const lang = source.language || 'typescript';
-                return (
-                  <details key={idx} className="demo-sidebar__source">
-                    <summary>{source.label}</summary>
-                    <pre>
-                      <code 
-                        className={`language-${lang} hljs`}
-                        dangerouslySetInnerHTML={{ __html: highlightCode(source.code, lang) }}
-                      />
-                    </pre>
-                  </details>
-                );
-              })}
-            </div>
-          )}
+        <div className="demo-sidebar__panel">
+          <div className="demo-sidebar__bar">
+            <span className="site-eyebrow">Guide</span>
+            <span className="demo-sidebar__hint">
+              <tp-key-hint>?</tp-key-hint> toggles
+            </span>
+            <tp-button
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Close sidebar"
+              onClick={toggleOpen}
+            >
+              <tp-icon slot="icon-start" icon={xIcon}></tp-icon>
+              Close
+            </tp-button>
+          </div>
+          <div className="demo-sidebar__content" ref={contentRef}>
+            <article className="markdown-body" dangerouslySetInnerHTML={{ __html: htmlContent }} />
+            {sources.length > 0 && (
+              <div className="demo-sidebar__sources">
+                {sources.map((source, idx) => (
+                  <tp-collapsible key={idx} class="demo-sidebar__source">
+                    <span slot="label" className="demo-sidebar__source-label">Source · {source.label}</span>
+                    <tp-code-block
+                      language={source.language || 'typescript'}
+                      label={source.label}
+                      code={source.code}
+                      line-numbers
+                    ></tp-code-block>
+                  </tp-collapsible>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </aside>
 
-      <button
-        type="button"
-        className={`demo-sidebar__reopen ${!layout.open ? 'is-visible' : ''}`}
+      <tp-button
+        variant="outline"
+        size="sm"
+        class={`demo-sidebar__reopen ${!layout.open ? 'is-visible' : ''}`}
         aria-label="Open sidebar"
         onClick={toggleOpen}
       >
-        Docs
-      </button>
+        Guide
+      </tp-button>
     </>
   );
 };
