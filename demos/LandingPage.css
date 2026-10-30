@@ -12,16 +12,20 @@
   position: relative;
 }
 
-/* Hero on the left, the mission on the right; both in the page container. */
+/*
+ * Hero on the left, the mission on the right; both in the page container. The hero column is
+ * kept narrow (it scales with the window, 22–28rem), so the mission gets most of the width.
+ */
 .landing__body {
   flex: 1 0 auto;
   display: grid;
-  grid-template-columns: minmax(0, 36rem) minmax(0, 1fr);
+  grid-template-columns: minmax(0, clamp(22rem, 30vw, 28rem)) minmax(0, 1fr);
   align-items: center;
-  gap: clamp(1rem, 3vw, 3rem);
+  gap: clamp(1rem, 2vw, 2rem);
   padding-block: var(--tp-space-8);
 }
 
+/* Above the mission where the two overlap (the mission bleeds under the hero's right edge). */
 .landing__hero {
   display: flex;
   flex-direction: column;
@@ -41,7 +45,7 @@
   margin: 0;
   font-family: var(--site-font-display);
   font-weight: 400;
-  font-size: clamp(3.5rem, 7.5vw, 7rem);
+  font-size: clamp(3.25rem, 6vw, 6rem);
   line-height: 0.92;
   letter-spacing: 0.005em;
   text-transform: uppercase;
@@ -55,10 +59,9 @@
 }
 
 .landing__lead {
-  max-width: 34rem;
   margin: 0;
   color: var(--tp-muted-foreground);
-  font-size: var(--tp-text-lg);
+  font-size: var(--tp-text-base);
   line-height: var(--tp-leading-relaxed);
 }
 
@@ -75,26 +78,36 @@
 }
 
 /*
- * The mission: not full width. It bleeds past the container's right edge to the window, and a
- * vignette mask fades every edge into the page background, so the scene blends into the page.
+ * The mission: not full width. It bleeds past the container's right edge to the window and
+ * overlaps the hero column a little, and a vignette fades every edge into the page background, so
+ * the scene has no hard edge anywhere.
+ *
+ * The vignette is two masks multiplied (`mask-composite: intersect`): a horizontal and a vertical
+ * fade, each opaque in the middle and transparent at the edges. Unlike one radial gradient, this
+ * fades all four sides evenly and keeps the corners soft, whatever the box's aspect ratio.
  */
 .landing__mission {
   position: relative;
   align-self: stretch;
-  min-height: min(80vh, 46rem);
+  min-height: min(84vh, 50rem);
+  margin-left: calc(-1 * clamp(2rem, 6vw, 6rem));
   margin-right: calc(-1 * max(var(--site-gutter), (100vw - var(--site-max)) / 2 + var(--site-gutter)));
 }
 
 .mission {
+  --vignette-x: linear-gradient(to right, transparent 0%, #000 22%, #000 80%, transparent 100%);
+  --vignette-y: linear-gradient(to bottom, transparent 0%, #000 18%, #000 80%, transparent 100%);
   position: relative;
   container-type: inline-size;
+  -webkit-mask-image: var(--vignette-x), var(--vignette-y);
+  -webkit-mask-composite: source-in;
+  mask-image: var(--vignette-x), var(--vignette-y);
+  mask-composite: intersect;
 }
 
 .mission__scene {
   position: absolute;
   inset: 0;
-  -webkit-mask-image: radial-gradient(ellipse 72% 68% at 52% 50%, #000 52%, transparent 100%);
-  mask-image: radial-gradient(ellipse 72% 68% at 52% 50%, #000 52%, transparent 100%);
 }
 
 .mission__scene canvas {
@@ -119,12 +132,13 @@
 
   .landing__mission {
     min-height: 0;
-    height: min(64vh, 34rem);
+    height: min(68vh, 36rem);
     margin-inline: calc(-1 * var(--site-gutter));
   }
 
-  .mission__scene {
-    -webkit-mask-image: radial-gradient(ellipse 80% 72% at 50% 50%, #000 55%, transparent 100%);
-    mask-image: radial-gradient(ellipse 80% 72% at 50% 50%, #000 55%, transparent 100%);
+  /* Full width on phones: fade top and bottom, and only lightly at the sides. */
+  .mission {
+    --vignette-x: linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%);
+    --vignette-y: linear-gradient(to bottom, transparent 0%, #000 14%, #000 84%, transparent 100%);
   }
 }

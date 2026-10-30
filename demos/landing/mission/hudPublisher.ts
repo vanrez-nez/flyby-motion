@@ -6,6 +6,7 @@ import { terrainHeight } from './world';
 /** Builds the HUD snapshot from the mission (throttled) and projects the HUD anchors (every frame). */
 export function createHudPublisher(mission: Mission, camera: THREE.Camera, container: HTMLElement, onSnapshot: (snapshot: HudSnapshot) => void) {
   const projected = new THREE.Vector3();
+  const forward = new THREE.Vector3();
   let lastPublish = -Infinity;
 
   const project = (point: number[], out: { x: number; y: number; visible: boolean }) => {
@@ -20,6 +21,9 @@ export function createHudPublisher(mission: Mission, camera: THREE.Camera, conta
       project(mission.drone.position, anchors.drone);
       project(mission.target.position, anchors.target);
       anchors.target.visible = anchors.target.visible && targetShown;
+      // Compass: where the camera looks, on the ground plane. North is −z, east +x, clockwise.
+      camera.getWorldDirection(forward);
+      anchors.heading = (THREE.MathUtils.radToDeg(Math.atan2(forward.x, -forward.z)) + 360) % 360;
     },
     publish(state: MissionState, t: number, force = false) {
       if (!force && t - lastPublish < 0.1) return;

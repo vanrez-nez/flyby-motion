@@ -30,7 +30,8 @@ export function createSceneObjects(mission: Mission, palette: MissionPalette, de
   const root = new THREE.Group();
   const { world } = mission;
 
-  const terrainMaterial = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.55, fog: true });
+  // Lighter per line than before: twice as many contour lines, about the same overall brightness.
+  const terrainMaterial = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.42, fog: true });
   const gridMaterial = new THREE.LineBasicMaterial({ transparent: true, opacity: 0.12, fog: true });
   const terrain = createTerrain(detail.terrainRows, detail.terrainSamples, terrainMaterial);
   const grid = createGrid(gridMaterial);

@@ -10,6 +10,11 @@
   --hud-lock: var(--site-accent);
   --hud-warn: light-dark(#d6336c, #ff6b8b);
   --hud-tone: var(--hud-fg);
+  /* Where the vignette is fully opaque (LandingPage.css): the HUD stays inside it. */
+  --hud-inset-left: 22%;
+  --hud-inset-right: 20%;
+  --hud-inset-top: 18%;
+  --hud-inset-bottom: 20%;
 
   position: absolute;
   inset: 0;
@@ -31,9 +36,9 @@
  */
 .hud__bar {
   position: absolute;
-  top: 9%;
-  left: 9%;
-  right: 9%;
+  top: var(--hud-inset-top);
+  left: var(--hud-inset-left);
+  right: var(--hud-inset-right);
   display: flex;
   justify-content: center;
   gap: 0.5em;
@@ -79,6 +84,12 @@
 
 .hud-reticle .hud-reticle__brackets { stroke: var(--hud-tone); }
 
+/* The compass ring reads a step brighter than the rest of the reticle; north and the index in the accent. */
+.hud-reticle__compass { color: var(--hud-dim); }
+.hud-reticle__compass text { font-family: var(--tp-font-mono); letter-spacing: 0; }
+.hud-reticle__north,
+.hud-reticle__index { color: var(--hud-lock); }
+
 .hud__lock {
   display: grid;
   justify-items: center;
@@ -98,7 +109,7 @@
 /* Side panels */
 .hud__panel {
   position: absolute;
-  top: 24%;
+  top: calc(var(--hud-inset-top) + 3.5em);
   width: clamp(11rem, 26cqi, 15rem);
   padding: 0.8em 0.9em;
   border: 1px solid var(--hud-faint);
@@ -118,8 +129,8 @@
 .hud__panel::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
 .hud__panel::after { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
 
-.hud__panel--forces { left: 9%; }
-.hud__panel--telemetry { right: 9%; width: clamp(8.5rem, 18cqi, 11rem); }
+.hud__panel--forces { left: var(--hud-inset-left); }
+.hud__panel--telemetry { right: var(--hud-inset-right); width: clamp(8.5rem, 18cqi, 11rem); }
 
 .hud__heading {
   margin: 0 0 0.7em;
@@ -211,9 +222,9 @@
 /* Ticker: a fixed full-width row; the message is centred inside it, so the row never moves. */
 .hud__ticker {
   position: absolute;
-  bottom: 10%;
-  left: 9%;
-  right: 9%;
+  bottom: var(--hud-inset-bottom);
+  left: var(--hud-inset-left);
+  right: var(--hud-inset-right);
   display: flex;
   justify-content: center;
 }
@@ -243,8 +254,7 @@
 
 /* Narrow boxes: just the reticle, lock, current mode and ticker. */
 @container (max-width: 560px) {
+  .hud { --hud-inset-left: 8%; --hud-inset-right: 8%; --hud-inset-top: 14%; --hud-inset-bottom: 16%; }
   .hud__panel { display: none; }
   .hud__chip:not(.hud__chip--mode):not(.hud__chip--clock) { display: none; }
-  .hud__bar { top: 6%; }
-  .hud__ticker { bottom: 6%; }
 }

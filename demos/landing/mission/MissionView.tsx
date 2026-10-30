@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createMissionScene, type MissionScene } from './missionScene';
 import type { HudAnchors, HudMessage, HudSnapshot } from './hudState';
 import { Hud } from './hud/Hud';
+import { createGlitch } from './glitch';
 
 const MAX_MESSAGES = 6;
 
@@ -14,6 +15,7 @@ export const MissionView: React.FC<{ className?: string }> = ({ className }) => 
   const anchorsRef = useRef<HudAnchors>({
     drone: { x: 0, y: 0, visible: false },
     target: { x: 0, y: 0, visible: false },
+    heading: 0,
   });
   const [snapshot, setSnapshot] = useState<HudSnapshot | null>(null);
   const [messages, setMessages] = useState<HudMessage[]>([]);
@@ -24,12 +26,16 @@ export const MissionView: React.FC<{ className?: string }> = ({ className }) => 
     if (!container) return;
     const aborter = new AbortController();
     let scene: MissionScene | null = null;
+    const glitch = createGlitch(container, () => container.parentElement?.querySelector<HTMLElement>('.hud') ?? null);
 
     createMissionScene({
       container,
       anchors: anchorsRef.current,
       onSnapshot: setSnapshot,
-      onMessage: (message) => setMessages((list) => [...list.slice(-(MAX_MESSAGES - 1)), message]),
+      onMessage: (message) => {
+        setMessages((list) => [...list.slice(-(MAX_MESSAGES - 1)), message]);
+        glitch.event(message.tone);
+      },
     }, aborter.signal)
       .then((created) => {
         if (aborter.signal.aborted) created.dispose();
@@ -44,6 +50,7 @@ export const MissionView: React.FC<{ className?: string }> = ({ className }) => 
 
     return () => {
       aborter.abort();
+      glitch.dispose();
       scene?.dispose();
     };
   }, []);

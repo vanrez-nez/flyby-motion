@@ -27,10 +27,14 @@ export interface MissionScene {
 
 const COMPACT_QUERY = '(max-width: 860px)';
 
+/**
+ * Contour density: rows are the lines across the valley, samples the points along each line.
+ * Denser on desktop (~0.9 m between rows); phones keep a lighter mesh. All of it is one draw call.
+ */
 function detailFor(compact: boolean): Detail {
   return compact
-    ? { terrainRows: 42, terrainSamples: 70, pointsPerSpire: 70 }
-    : { terrainRows: 72, terrainSamples: 120, pointsPerSpire: 140 };
+    ? { terrainRows: 80, terrainSamples: 110, pointsPerSpire: 80 }
+    : { terrainRows: 150, terrainSamples: 200, pointsPerSpire: 160 };
 }
 
 export async function createMissionScene(options: MissionSceneOptions, signal: AbortSignal): Promise<MissionScene> {

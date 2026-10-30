@@ -1,9 +1,9 @@
 /*
- * HUD motion, kept quiet so text stays readable: the reticle rings turn slowly, new messages and
+ * HUD motion, kept quiet so text stays readable: the compass ring turns only with the camera's
+ * heading (driven from Hud.tsx, not animated here), the middle ring turns slowly, new messages and
  * force rows fade in (no movement), the lock bracket snaps in once, and each event sweeps a single
  * thin scan line across the box.
  */
-.hud-reticle .hud-reticle__ticks { transform-origin: 50px 50px; animation: hud-spin 60s linear infinite; }
 .hud-reticle .hud-reticle__ring { transform-origin: 50px 50px; animation: hud-spin 30s linear infinite reverse; }
 
 .hud__lock[data-locked='true'] .hud-lock { animation: hud-lock-in 0.45s var(--tp-easing-enter) both; }

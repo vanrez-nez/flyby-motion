@@ -37,4 +37,6 @@ export interface HudMessage {
 export interface HudAnchors {
   drone: { x: number; y: number; visible: boolean };
   target: { x: number; y: number; visible: boolean };
+  /** The camera's compass heading in degrees: 0 = north (−z), clockwise. Drives the compass ring. */
+  heading: number;
 }

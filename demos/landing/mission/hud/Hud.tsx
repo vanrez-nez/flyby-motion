@@ -24,12 +24,20 @@ export const Hud: React.FC<{
   anchors: HudAnchors;
 }> = ({ snapshot, messages, anchors }) => {
   const lockRef = useRef<HTMLDivElement>(null);
+  const compassRef = useRef<SVGGElement>(null);
 
   useEffect(() => {
     let frame = 0;
     const shown = { x: 0, y: 0, ready: false };
+    let ring = 0;
     const tick = () => {
       frame = requestAnimationFrame(tick);
+      // Compass: the ring turns against the heading, so the current bearing sits under the index.
+      // Unwrapped (shortest way round), so crossing north never spins the ring a full turn.
+      // The camera's heading is already smoothed, so the ring moves only when the view does.
+      const delta = ((-anchors.heading - ring + 540) % 360) - 180;
+      ring += delta;
+      compassRef.current?.setAttribute('transform', `rotate(${ring.toFixed(2)} 50 50)`);
       const lock = lockRef.current;
       if (!lock) return;
       const { x, y, visible } = anchors.target;
@@ -69,7 +77,7 @@ export const Hud: React.FC<{
       </div>
 
       <div className="hud__reticle">
-        <Reticle className="hud-reticle" />
+        <Reticle className="hud-reticle" compassRef={compassRef} />
       </div>
 
       <div className="hud__lock" ref={lockRef} data-locked={String(!!snapshot?.targetLocked)}>

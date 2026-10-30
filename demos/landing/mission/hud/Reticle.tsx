@@ -1,29 +1,55 @@
 import React from 'react';
 
+const CARDINALS: Array<[string, number]> = [['N', 0], ['E', 90], ['S', 180], ['W', 270]];
+
+/** A point on the ring at a compass bearing (0 = up/north, clockwise), radius `r`. */
+const onRing = (bearing: number, r: number) => {
+  const a = ((bearing - 90) * Math.PI) / 180;
+  return [50 + Math.cos(a) * r, 50 + Math.sin(a) * r] as const;
+};
+
 /**
- * The center reticle, after the HUD ring sheet: an outer ring of ticks, a broken middle ring
- * with four brackets, and an inner circle with a crosshair. Pure SVG, styled by `currentColor`.
+ * The center reticle, after the HUD ring sheet: an outer compass ring (ticks every 5°, longer
+ * every 30°, N/E/S/W), a broken middle ring with four brackets, and an inner crosshair.
+ *
+ * The compass ring is the only part driven by the scene: Hud.tsx rotates `compassRef` so the
+ * camera's heading sits under the fixed index mark at the top. Pure SVG, styled by `currentColor`.
  */
-export const Reticle: React.FC<{ className?: string }> = ({ className }) => {
+export const Reticle: React.FC<{ className?: string; compassRef?: React.Ref<SVGGElement> }> = ({ className, compassRef }) => {
   const ticks = Array.from({ length: 72 }, (_, i) => {
-    const angle = (i / 72) * Math.PI * 2;
-    const long = i % 6 === 0;
-    const r1 = long ? 43 : 45;
-    return (
-      <line
-        key={i}
-        x1={50 + Math.cos(angle) * r1}
-        y1={50 + Math.sin(angle) * r1}
-        x2={50 + Math.cos(angle) * 47}
-        y2={50 + Math.sin(angle) * 47}
-        strokeWidth={long ? 0.6 : 0.3}
-      />
-    );
+    const bearing = i * 5;
+    const long = bearing % 30 === 0;
+    const [x1, y1] = onRing(bearing, long ? 43 : 45);
+    const [x2, y2] = onRing(bearing, 47);
+    return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} strokeWidth={long ? 0.6 : 0.3} />;
   });
 
   return (
-    <svg className={className} viewBox="0 0 100 100" fill="none" stroke="currentColor" aria-hidden="true">
-      <g className="hud-reticle__ticks">{ticks}</g>
+    <svg className={className} viewBox="0 0 100 100" fill="none" stroke="currentColor" aria-hidden="true" overflow="visible">
+      <g className="hud-reticle__compass" ref={compassRef}>
+        {ticks}
+        {CARDINALS.map(([label, bearing]) => {
+          const [x, y] = onRing(bearing, 39.5);
+          return (
+            <text
+              key={label}
+              x={x}
+              y={y}
+              className={label === 'N' ? 'hud-reticle__north' : undefined}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fill="currentColor"
+              stroke="none"
+              fontSize="4.2"
+              transform={`rotate(${bearing} ${x} ${y})`}
+            >
+              {label}
+            </text>
+          );
+        })}
+      </g>
+      {/* Fixed index mark: the heading under it is the camera's. */}
+      <path className="hud-reticle__index" d="M 48 -1.5 L 52 -1.5 L 50 2" fill="currentColor" stroke="none" />
       <g className="hud-reticle__ring">
         <path d="M 50 14 A 36 36 0 0 1 82 34" strokeWidth="0.7" />
         <path d="M 86 50 A 36 36 0 0 1 66 82" strokeWidth="0.7" />
