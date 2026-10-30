@@ -33,7 +33,8 @@
 @keyframes hud-spin { to { rotate: 360deg; } }
 @keyframes hud-blink { 50% { opacity: 0; } }
 @keyframes hud-fade { from { opacity: 0; } to { opacity: 1; } }
-@keyframes hud-lock-in { from { scale: 1.6; opacity: 0; } to { scale: 1; opacity: 1; } }
+/* `transform`, not `scale`: the `scale` property is the holding/acting size (Hud.css). */
+@keyframes hud-lock-in { from { transform: scale(1.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 @keyframes hud-scan { 0% { top: 0; opacity: 0.6; } 100% { top: 100%; opacity: 0; } }
 
 @media (prefers-reduced-motion: reduce) {

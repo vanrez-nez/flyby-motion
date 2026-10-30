@@ -103,6 +103,11 @@ describe('drone mission', () => {
     expect(clearance).toBeGreaterThan(0);
   });
 
+  it('holds only while hovering at launch and orbiting the target', () => {
+    const holding = new Set(run.samples.filter((s) => s.state.holding).map((s) => s.state.phaseCode));
+    expect([...holding].sort()).toEqual(['LAUNCH', 'ORBIT']);
+  });
+
   it('emits the mission messages', () => {
     const texts = run.events.map((e) => e.text);
     for (const text of ['SYSTEMS ONLINE', 'OBSTACLES AHEAD', 'REROUTING', 'TARGET ACQUIRED', 'HOLDING 10M · ORBIT', 'TARGET RELEASED · RTB']) {

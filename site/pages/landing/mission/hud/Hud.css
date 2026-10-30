@@ -65,12 +65,16 @@
 .hud__chip--mode { color: var(--hud-tone); border-color: var(--hud-tone); }
 .hud__chip--clock { font-variant-numeric: tabular-nums; }
 
-/* Reticle: fixed at the centre, where the chase camera keeps the drone. */
+/* Reticle: on the drone, moved by Hud.tsx; hidden until the drone has a screen position. */
 .hud__reticle {
   position: absolute;
-  top: 50%;
-  left: 50%;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  will-change: transform;
 }
+
+.hud__reticle[data-visible='true'] { opacity: 1; }
 
 .hud-reticle {
   display: block;
@@ -78,6 +82,19 @@
   translate: -50% -50%;
   color: var(--hud-faint);
 }
+
+/*
+ * Behavior: while the drone holds a position or a distance (hovering, orbiting) the reticle and the
+ * lock widen; while it carries out an action they close in to their working size. `scale` is its
+ * own property, so it composes with the positioning `translate` and the lock's entry animation.
+ */
+.hud-reticle,
+.hud-lock {
+  transition: scale 0.7s var(--tp-easing-standard);
+}
+
+.hud[data-holding='true'] .hud-reticle { scale: 2; }
+.hud[data-holding='true'] .hud-lock { scale: 2; }
 
 /* Lock bracket: the one element that tracks the scene, glided by Hud.tsx. */
 .hud__lock {

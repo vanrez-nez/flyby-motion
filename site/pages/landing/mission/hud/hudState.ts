@@ -23,6 +23,8 @@ export interface HudSnapshot {
   thrust: number;
   targetDistance: number | null;
   targetLocked: boolean;
+  /** Holding a position or distance rather than carrying out an action: the reticle widens. */
+  holding: boolean;
   waypoint: string | null;
 }
 

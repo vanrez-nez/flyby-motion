@@ -13,7 +13,7 @@ export type { HudEvent, HudTone, Phase, PhaseContext, PhaseScratch } from './pha
 export function createPhases(): Phase[] {
   return [
     {
-      code: 'LAUNCH', title: 'Systems online', duration: 4, targetVisible: false, targetLocked: false,
+      code: 'LAUNCH', title: 'Systems online', duration: 4, targetVisible: false, targetLocked: false, holding: true,
       enter: (ctx) => {
         ctx.emit({ text: 'SYSTEMS ONLINE', tone: 'info' });
         const [bx, by, bz] = ctx.world.base;
@@ -66,7 +66,7 @@ export function createPhases(): Phase[] {
       },
     },
     {
-      code: 'ORBIT', title: 'Keep distance', duration: 10, targetVisible: true, targetLocked: true,
+      code: 'ORBIT', title: 'Keep distance', duration: 10, targetVisible: true, targetLocked: true, holding: true,
       enter: (ctx) => {
         ctx.emit({ text: 'HOLDING 10M · ORBIT', tone: 'lock' });
         // The target has stopped: keep-distance holds the 9–11 m ring, tangentialAround circles it.

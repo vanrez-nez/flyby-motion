@@ -46,6 +46,7 @@ export function createHudPublisher(mission: Mission, camera: THREE.Camera, conta
           ? Math.hypot(x - target.position[0], y - target.position[1], z - target.position[2])
           : null,
         targetLocked: state.targetLocked,
+        holding: state.holding,
         waypoint: state.waypoint?.label ?? null,
       });
     },

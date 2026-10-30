@@ -29,6 +29,11 @@ export interface Phase {
   duration: number;
   targetVisible: boolean;
   targetLocked: boolean;
+  /**
+   * The drone holds a position or a distance instead of going somewhere (hovering, orbiting).
+   * The HUD widens its reticle and lock while holding.
+   */
+  holding?: boolean;
   /** The waypoint the phase flies to, highlighted in the scene and drawn as a goal line. */
   waypoint?: string;
   /** Returns the drone's forces for the phase; the HUD lists exactly these. */

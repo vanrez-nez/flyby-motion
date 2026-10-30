@@ -12,9 +12,10 @@ function missionClock(seconds: number): string {
 
 
 /**
- * The HUD over the scene. Everything with text stays fixed in place: the bar, the panels, the
- * ticker and the reticle (screen centre, where the chase camera keeps the drone). The only thing
- * that tracks the scene is the target lock bracket, smoothed so it glides instead of jittering.
+ * The HUD over the scene. Everything with text stays fixed in place: the bar, the panels and the
+ * ticker. Two things track the scene: the reticle sits on the drone (the chase camera looks a
+ * little ahead of it, so the drone isn't at the screen centre), and the target lock bracket
+ * glides after the target. Both widen while the drone holds a position instead of acting.
  */
 export const Hud: React.FC<{
   snapshot: HudSnapshot | null;
@@ -22,6 +23,7 @@ export const Hud: React.FC<{
   anchors: HudAnchors;
 }> = ({ snapshot, messages, anchors }) => {
   const lockRef = useRef<HTMLDivElement>(null);
+  const reticleRef = useRef<HTMLDivElement>(null);
   const compassRef = useRef<SVGGElement>(null);
 
   useEffect(() => {
@@ -36,6 +38,13 @@ export const Hud: React.FC<{
       const delta = ((-anchors.heading - ring + 540) % 360) - 180;
       ring += delta;
       compassRef.current?.setAttribute('transform', `rotate(${ring.toFixed(2)} 50 50)`);
+      // Reticle: on the drone. Its screen position is already smooth (the camera is a spring),
+      // so it follows exactly; it stays where it was while the drone is off screen.
+      const reticle = reticleRef.current;
+      if (reticle && anchors.drone.visible) {
+        reticle.style.transform = `translate3d(${anchors.drone.x.toFixed(1)}px, ${anchors.drone.y.toFixed(1)}px, 0)`;
+        reticle.dataset.visible = 'true';
+      }
       const lock = lockRef.current;
       if (!lock) return;
       const { x, y, visible } = anchors.target;
@@ -62,7 +71,7 @@ export const Hud: React.FC<{
   const background = snapshot?.forces.filter((force) => force.kind === 'stabilize') ?? [];
 
   return (
-    <div className="hud" data-tone={tone} aria-hidden="true">
+    <div className="hud" data-tone={tone} data-holding={String(!!snapshot?.holding)} aria-hidden="true">
       {/* Re-keyed per message, so its one-shot glitch animation replays on each event. */}
       <div className="hud__scan" key={latest?.id ?? 0} />
 
@@ -77,7 +86,7 @@ export const Hud: React.FC<{
         )}
       </div>
 
-      <div className="hud__reticle">
+      <div className="hud__reticle" ref={reticleRef}>
         <Reticle className="hud-reticle" compassRef={compassRef} />
       </div>
 
