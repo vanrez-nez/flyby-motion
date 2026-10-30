@@ -7,8 +7,8 @@ import { createGlitch } from './glitch';
 const MAX_MESSAGES = 6;
 
 /**
- * The landing's drone mission: the Three.js scene and the HUD over it, inside a vignette that
- * fades the box into the page. Disposes everything on unmount.
+ * The landing's drone mission: the Three.js scene (its post pass fades the box into the page) and
+ * the HUD over it. Disposes everything on unmount.
  */
 export const MissionView: React.FC<{ className?: string }> = ({ className }) => {
   const sceneRef = useRef<HTMLDivElement>(null);
@@ -26,7 +26,10 @@ export const MissionView: React.FC<{ className?: string }> = ({ className }) => 
     if (!container) return;
     const aborter = new AbortController();
     let scene: MissionScene | null = null;
-    const glitch = createGlitch(container, () => container.parentElement?.querySelector<HTMLElement>('.hud') ?? null);
+    const glitch = createGlitch(
+      (intensity, duration) => scene?.glitch(intensity, duration),
+      () => container.parentElement?.querySelector<HTMLElement>('.hud') ?? null,
+    );
 
     createMissionScene({
       container,

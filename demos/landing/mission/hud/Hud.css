@@ -10,11 +10,17 @@
   --hud-lock: var(--site-accent);
   --hud-warn: light-dark(#d6336c, #ff6b8b);
   --hud-tone: var(--hud-fg);
-  /* Where the vignette is fully opaque (LandingPage.css): the HUD stays inside it. */
+  /*
+   * The bar and ticker sit where the scene is fully opaque (the post pass's vignette). The side
+   * panels sit further out, over the faded edges, so they never cover the drone: the left one just
+   * clear of the hero the box overlaps (`--mission-overlap`, LandingPage.css).
+   */
   --hud-inset-left: 22%;
   --hud-inset-right: 20%;
   --hud-inset-top: 18%;
   --hud-inset-bottom: 20%;
+  --hud-side-left: calc(var(--mission-overlap, 0px) + 2.5cqi);
+  --hud-side-right: 4cqi;
 
   position: absolute;
   inset: 0;
@@ -106,15 +112,13 @@
   translate: 0 -50%;
 }
 
-/* Side panels */
+/* Side panels: corner brackets only, no fill, over the faded edges of the scene. */
 .hud__panel {
   position: absolute;
   top: calc(var(--hud-inset-top) + 3.5em);
-  width: clamp(11rem, 26cqi, 15rem);
-  padding: 0.8em 0.9em;
-  border: 1px solid var(--hud-faint);
-  background: color-mix(in srgb, var(--tp-background) 50%, transparent);
-  backdrop-filter: blur(3px);
+  width: clamp(10rem, 19cqi, 12.5rem);
+  padding: 0.7em 0.8em;
+  font-size: 0.92em;
 }
 
 .hud__panel::before,
@@ -129,8 +133,8 @@
 .hud__panel::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
 .hud__panel::after { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
 
-.hud__panel--forces { left: var(--hud-inset-left); }
-.hud__panel--telemetry { right: var(--hud-inset-right); width: clamp(8.5rem, 18cqi, 11rem); }
+.hud__panel--forces { left: var(--hud-side-left); }
+.hud__panel--telemetry { right: var(--hud-side-right); width: clamp(7.5rem, 13cqi, 9rem); }
 
 .hud__heading {
   margin: 0 0 0.7em;
@@ -140,7 +144,7 @@
 
 .hud__forces {
   display: grid;
-  gap: 0.65em;
+  gap: 0.55em;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -194,9 +198,18 @@
   text-transform: none;
 }
 
+/* Altitude hold and damping: always on, not drawn, so one dim line instead of a row each. */
+.hud__forces-base {
+  margin: 0.7em 0 0;
+  padding-top: 0.5em;
+  border-top: 1px solid var(--hud-faint);
+  color: var(--hud-dim);
+  font-size: 0.85em;
+}
+
 .hud__readouts {
   display: grid;
-  gap: 0.45em;
+  gap: 0.35em;
   margin: 0;
 }
 

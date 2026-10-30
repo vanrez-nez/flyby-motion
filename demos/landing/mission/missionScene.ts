@@ -8,6 +8,7 @@ import { createMission, type HudEvent, type MissionState } from './missionScript
 import { BEACON_DROP } from './markers';
 import { createObjectives } from './objectives';
 import { readPalette } from './palette';
+import { createPostPass } from './postPass';
 import { createSceneObjects, type Detail } from './sceneObjects';
 import { createWorld } from './world';
 
@@ -24,6 +25,8 @@ export interface MissionSceneOptions {
 }
 
 export interface MissionScene {
+  /** A glitch tear across the scene, `duration` ms long (see postPass.ts). */
+  glitch(intensity: number, duration: number): void;
   dispose(): void;
 }
 
@@ -46,12 +49,15 @@ export async function createMissionScene(options: MissionSceneOptions, signal: A
   const compactQuery = window.matchMedia(COMPACT_QUERY);
   let compact = compactQuery.matches;
 
-  const renderer = new THREE.WebGLRenderer({ antialias: !compact, alpha: true, powerPreference: 'low-power' });
+  // Antialiasing happens on the pass's render target (MSAA), not the canvas: the canvas only
+  // receives the full-screen pass.
+  const renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true, powerPreference: 'low-power' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, compact ? 1.25 : 1.75));
   renderer.setSize(size.width, size.height);
   renderer.setClearColor(0x000000, 0);
   renderer.domElement.setAttribute('aria-hidden', 'true');
   container.appendChild(renderer.domElement);
+  const post = createPostPass(renderer, compact, !compact);
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(compact ? 62 : 55, size.width / size.height, 0.1, 260);
@@ -71,7 +77,7 @@ export async function createMissionScene(options: MissionSceneOptions, signal: A
     palette = readPalette(container);
     (scene.fog as THREE.Fog).color.copy(palette.background);
     objects.applyPalette(palette);
-    if (reducedMotion) renderer.render(scene, camera);
+    if (reducedMotion) post.render(scene, camera);
   });
   schemeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'style'] });
 
@@ -81,7 +87,8 @@ export async function createMissionScene(options: MissionSceneOptions, signal: A
     renderer.setSize(width, height);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
-    if (reducedMotion) renderer.render(scene, camera);
+    post.resize();
+    if (reducedMotion) post.render(scene, camera);
   });
   resizeObserver.observe(container);
   const onCompactChange = () => {
@@ -89,6 +96,7 @@ export async function createMissionScene(options: MissionSceneOptions, signal: A
     camera.fov = compact ? 62 : 55;
     camera.updateProjectionMatrix();
     chase.setCompact(compact);
+    post.setCompact(compact);
   };
   compactQuery.addEventListener('change', onCompactChange);
 
@@ -141,7 +149,8 @@ export async function createMissionScene(options: MissionSceneOptions, signal: A
     objects.trail.push(mission.drone.position);
 
     chase.update(t, dt);
-    renderer.render(scene, camera);
+    post.update(dt);
+    post.render(scene, camera);
     hud.projectAnchors(anchors, targetShown);
     hud.publish(state, t);
   };
@@ -164,7 +173,7 @@ export async function createMissionScene(options: MissionSceneOptions, signal: A
     objects.arrows.update(state.activeForces, 1);
     objects.goalLine.set(mission.drone.position, goalOf(state));
     chase.snap();
-    renderer.render(scene, camera);
+    post.render(scene, camera);
     hud.projectAnchors(anchors, state.targetVisible);
     hud.publish(state, 30, true);
   } else {
@@ -182,10 +191,13 @@ export async function createMissionScene(options: MissionSceneOptions, signal: A
 
   // Dev-only hook for checking the scene from the browser console (stripped from production builds).
   if (import.meta.env.DEV) {
-    (container as HTMLElement & { __missionDebug?: unknown }).__missionDebug = { objects, mission, camera };
+    (container as HTMLElement & { __missionDebug?: unknown }).__missionDebug = { objects, mission, camera, post };
   }
 
   return {
+    glitch(intensity, duration) {
+      post.glitch(intensity, duration);
+    },
     dispose() {
       updater?.stop();
       visibility.disconnect();
@@ -194,6 +206,7 @@ export async function createMissionScene(options: MissionSceneOptions, signal: A
       compactQuery.removeEventListener('change', onCompactChange);
       objects.dispose();
       mission.dispose();
+      post.dispose();
       renderer.dispose();
       renderer.domElement.remove();
     },

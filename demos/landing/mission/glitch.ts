@@ -1,9 +1,9 @@
 /**
- * Glitch effects for the mission box, played with the Web Animations API so they never re-render
- * React or touch the canvas:
+ * Glitch timing for the mission box:
  *
  * - `event`: on each mission message. The scene tears into horizontal slices that jump sideways
- *   for ~0.4 s, and the HUD text gets a brief red/cyan channel split (it doesn't move).
+ *   for ~0.4 s (drawn by the scene's post pass), and the HUD text gets a brief red/cyan channel
+ *   split, played with the Web Animations API so it never re-renders React (the text doesn't move).
  * - `ambient`: a rarer, smaller tear of the scene alone, every 7–15 s, so the feed feels alive.
  *
  * Both are skipped when the user prefers reduced motion.
@@ -12,20 +12,6 @@
 type Tone = 'info' | 'lock' | 'warn';
 
 const step = { easing: 'steps(1, end)' } as const;
-
-/** Scene keyframes: each frame shows a different slice band, offset sideways. */
-function tearFrames(intensity: number): Keyframe[] {
-  const px = (n: number) => `${(n * intensity).toFixed(1)}px`;
-  return [
-    { ...step, transform: 'translateX(0)', clipPath: 'inset(0 0 0 0)', opacity: 1 },
-    { ...step, transform: `translateX(${px(-9)})`, clipPath: 'inset(8% 0 62% 0)' },
-    { ...step, transform: `translateX(${px(7)})`, clipPath: 'inset(44% 0 31% 0)' },
-    { ...step, transform: 'translateX(0)', clipPath: 'inset(0 0 0 0)', opacity: 0.82 },
-    { ...step, transform: `translateX(${px(-4)})`, clipPath: 'inset(71% 0 9% 0)' },
-    { ...step, transform: `translateX(${px(11)})`, clipPath: 'inset(22% 0 55% 0)' },
-    { ...step, transform: 'translateX(0)', clipPath: 'inset(0 0 0 0)', opacity: 1 },
-  ];
-}
 
 const SPLIT: Record<Tone, string> = {
   info: '1.5px 0 rgba(255, 60, 120, 0.55), -1.5px 0 rgba(60, 200, 255, 0.55)',
@@ -38,14 +24,11 @@ export interface GlitchPlayer {
   dispose(): void;
 }
 
-export function createGlitch(scene: HTMLElement, hud: () => HTMLElement | null): GlitchPlayer {
+/** `tear` draws a scene tear of the given intensity (~1) for `duration` ms. */
+export function createGlitch(tear: (intensity: number, duration: number) => void, hud: () => HTMLElement | null): GlitchPlayer {
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
   let lastEvent = 0;
   let timer = 0;
-
-  const tear = (intensity: number, duration: number) => {
-    scene.animate(tearFrames(intensity), { duration, fill: 'none' });
-  };
 
   const scheduleAmbient = () => {
     timer = window.setTimeout(() => {

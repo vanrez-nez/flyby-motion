@@ -79,30 +79,22 @@
 
 /*
  * The mission: not full width. It bleeds past the container's right edge to the window and
- * overlaps the hero column a little, and a vignette fades every edge into the page background, so
- * the scene has no hard edge anywhere.
- *
- * The vignette is two masks multiplied (`mask-composite: intersect`): a horizontal and a vertical
- * fade, each opaque in the middle and transparent at the edges. Unlike one radial gradient, this
- * fades all four sides evenly and keeps the corners soft, whatever the box's aspect ratio.
+ * overlaps the hero column a little (`--mission-overlap`, which the HUD keeps clear of). The
+ * scene's post pass (mission/postPass.ts) fades every edge into the page background, so the scene
+ * has no hard edge anywhere.
  */
 .landing__mission {
+  --mission-overlap: clamp(2rem, 6vw, 6rem);
   position: relative;
   align-self: stretch;
   min-height: min(84vh, 50rem);
-  margin-left: calc(-1 * clamp(2rem, 6vw, 6rem));
+  margin-left: calc(-1 * var(--mission-overlap));
   margin-right: calc(-1 * max(var(--site-gutter), (100vw - var(--site-max)) / 2 + var(--site-gutter)));
 }
 
 .mission {
-  --vignette-x: linear-gradient(to right, transparent 0%, #000 22%, #000 80%, transparent 100%);
-  --vignette-y: linear-gradient(to bottom, transparent 0%, #000 18%, #000 80%, transparent 100%);
   position: relative;
   container-type: inline-size;
-  -webkit-mask-image: var(--vignette-x), var(--vignette-y);
-  -webkit-mask-composite: source-in;
-  mask-image: var(--vignette-x), var(--vignette-y);
-  mask-composite: intersect;
 }
 
 .mission__scene {
@@ -131,14 +123,9 @@
   }
 
   .landing__mission {
+    --mission-overlap: 0px;
     min-height: 0;
     height: min(68vh, 36rem);
     margin-inline: calc(-1 * var(--site-gutter));
-  }
-
-  /* Full width on phones: fade top and bottom, and only lightly at the sides. */
-  .mission {
-    --vignette-x: linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%);
-    --vignette-y: linear-gradient(to bottom, transparent 0%, #000 14%, #000 84%, transparent 100%);
   }
 }

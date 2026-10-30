@@ -10,8 +10,6 @@ function missionClock(seconds: number): string {
   return `T+${pad(seconds / 60)}:${pad(seconds % 60)}`;
 }
 
-/** Force colors match the arrows in the scene. */
-const KIND_LABEL: Record<string, string> = { goal: 'goal', avoid: 'avoid', hold: 'hold', stabilize: '' };
 
 /**
  * The HUD over the scene. Everything with text stays fixed in place: the bar, the panels, the
@@ -59,6 +57,9 @@ export const Hud: React.FC<{
 
   const latest = messages[messages.length - 1];
   const tone = latest?.tone ?? 'info';
+  // Forces drawn as arrows get a row each; the always-on background ones share one line.
+  const drawn = snapshot?.forces.filter((force) => force.kind !== 'stabilize') ?? [];
+  const background = snapshot?.forces.filter((force) => force.kind === 'stabilize') ?? [];
 
   return (
     <div className="hud" data-tone={tone} aria-hidden="true">
@@ -88,17 +89,20 @@ export const Hud: React.FC<{
         <section className="hud__panel hud__panel--forces" aria-label="Active forces">
           <h3 className="hud__heading">Active forces</h3>
           <ul className="hud__forces">
-            {snapshot.forces.map((force) => (
+            {drawn.map((force) => (
               <li key={force.label} className="hud__force" data-kind={force.kind}>
                 <span className="hud__force-name">
                   <span className="hud__force-swatch" />
                   {force.label}
                 </span>
                 <span className="hud__force-bar"><span style={{ transform: `scaleX(${Math.max(0.02, force.level)})` }} /></span>
-                <span className="hud__force-recipe">{force.recipe}{KIND_LABEL[force.kind] ? '' : ' · not drawn'}</span>
+                <span className="hud__force-recipe">{force.recipe}</span>
               </li>
             ))}
           </ul>
+          {background.length > 0 && (
+            <p className="hud__forces-base">+ {background.map((force) => force.label).join(' · ')}</p>
+          )}
         </section>
       )}
 
