@@ -6,21 +6,21 @@ import react from '@vitejs/plugin-react'
 export default defineConfig(({ mode, command }) => {
   const isBuild = command === 'build';
 
-  if (mode === 'demos') {
+  if (mode === 'site') {
     return {
-      // Dev server config only: serves the demos
-      root: 'demos',
+      // The website (landing, docs, demos): served in dev, built for GitHub Pages
+      root: 'site',
       base: isBuild ? '/flyby-motion/' : '/',
       build: {
-        outDir: '../dist-demos',
+        outDir: '../dist-site',
         emptyOutDir: true,
       },
       plugins: [react(), dts({
-        // The library's own tsconfig: the root one includes the demos, which moves the emitted root.
-        // Absolute: in this mode `root` is `demos`, so a relative path would resolve inside it.
+        // The library's own tsconfig: the root one includes the site, which moves the emitted root.
+        // Absolute: in this mode `root` is `site`, so a relative path would resolve inside it.
         tsconfigPath: path.resolve(__dirname, 'tsconfig.lib.json'),
-        entryRoot: 'src',
-        outDir: 'dist',
+        entryRoot: path.resolve(__dirname, 'src'),
+        outDir: path.resolve(__dirname, 'dist'),
         include: ['src/**/*'],
         exclude: ['**/*.test.ts', '**/*.spec.ts'],
         insertTypesEntry: true,
@@ -30,7 +30,7 @@ export default defineConfig(({ mode, command }) => {
 
   return {
     plugins: [react(), dts({
-      // The library's own tsconfig: the root one includes the demos, which moves the emitted root.
+      // The library's own tsconfig: the root one includes the site, which moves the emitted root.
       tsconfigPath: './tsconfig.lib.json',
       entryRoot: 'src',
       outDir: 'dist',

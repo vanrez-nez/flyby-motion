@@ -17,10 +17,10 @@
     "dist"
   ],
   "scripts": {
-    "dev": "vite --mode demos",
+    "dev": "vite --mode site",
     "build": "vite build",
-    "build:demos": "vite build --mode demos",
-    "deploy": "npm run build:demos && npx -y gh-pages -d dist-demos -b docs",
+    "build:site": "vite build --mode site",
+    "deploy": "npm run build:site && npx -y gh-pages -d dist-site -b docs",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest"
