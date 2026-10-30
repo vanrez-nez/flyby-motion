@@ -1,16 +1,16 @@
 import React from 'react';
 import { SearchPalette } from './SearchPalette';
-import { GITHUB_URL, withBase } from '../routes';
+import { DEFAULT_DEMO_PATH, GITHUB_URL, withBase } from '../routes';
 import { githubIcon } from '../icons';
 import logoUrl from '../../flyby-logo.svg';
 import './SiteHeader.css';
 
-export type SiteSection = 'home' | 'docs' | '2d' | '3d';
+export type SiteSection = 'home' | 'docs' | 'demos';
 
+// One "Demos" entry: it opens the first demo, and the demo toolbar's 2D | 3D selector switches dimension.
 const sections: Array<{ key: Exclude<SiteSection, 'home'>; label: string; path: string }> = [
   { key: 'docs', label: 'Docs', path: '/docs' },
-  { key: '2d', label: '2D Demos', path: '/2d/forces' },
-  { key: '3d', label: '3D Demos', path: '/3d/forces' },
+  { key: 'demos', label: 'Demos', path: DEFAULT_DEMO_PATH },
 ];
 
 export interface SiteHeaderProps {

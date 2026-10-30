@@ -60,7 +60,7 @@ export const DemoBase: React.FC<DemoBaseProps> = ({ activeDemo, sidebar, childre
   return (
     <div className="demo-base">
       <div className="demo-base__header">
-        <SiteHeader active={demoDimension(activeDemo)} />
+        <SiteHeader active="demos" />
         <DemoToolbar active={activeDemo} />
       </div>
 

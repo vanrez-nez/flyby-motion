@@ -4,7 +4,6 @@ import { useMarkdown, getMarkdownSections, type MarkdownSection } from './shared
 import { useElementEvent } from './shared/hooks/useElementEvent';
 import { SiteHeader } from './shared/components/SiteHeader';
 import { DemoFooter } from './shared/components/DemoFooter';
-import { demoLinks, navigate } from './shared/routes';
 import tutorialMarkdown from '../TUTORIAL.md?raw';
 import './DocsPage.css';
 
@@ -52,19 +51,15 @@ export const DocsPage: React.FC = () => {
 
   useFragmentScroll();
 
-  // The tree's items carry the destination: `#id` for a section, `/path` for a demo.
+  // Section items carry their heading as `#id`; folders (`group:…`) only expand.
   useElementEvent<CustomEvent<{ value: string }>>(treeRef, 'tp-action', (event) => {
     const value = event.detail.value;
-    if (value.startsWith('group:')) return; // folders only expand
-    if (value.startsWith('#')) {
-      document.getElementById(value.slice(1))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      window.history.replaceState({}, '', value);
-    } else {
-      navigate(value);
-    }
+    if (!value.startsWith('#')) return;
+    document.getElementById(value.slice(1))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    window.history.replaceState({}, '', value);
   });
 
-  const defaultExpanded = JSON.stringify([...groups.map((g) => `group:${g.section.id}`), 'group:2d', 'group:3d']);
+  const defaultExpanded = JSON.stringify(groups.map((g) => `group:${g.section.id}`));
 
   return (
     <div className="docs">
@@ -84,14 +79,6 @@ export const DocsPage: React.FC = () => {
                 <tp-tree-item value={`#${group.section.id}`}>Overview</tp-tree-item>
                 {group.children.map((child) => (
                   <tp-tree-item key={child.id} value={`#${child.id}`}>{child.text}</tp-tree-item>
-                ))}
-              </tp-tree-item>
-            ))}
-            {(['2d', '3d'] as const).map((dimension) => (
-              <tp-tree-item key={dimension} value={`group:${dimension}`}>
-                {dimension.toUpperCase()} Demos
-                {demoLinks[dimension].map((link) => (
-                  <tp-tree-item key={link.key} value={link.path}>{link.label}</tp-tree-item>
                 ))}
               </tp-tree-item>
             ))}

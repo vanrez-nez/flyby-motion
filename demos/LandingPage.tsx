@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { SiteHeader } from './shared/components/SiteHeader';
 import { DemoFooter } from './shared/components/DemoFooter';
 import { FlybyField3D } from './landing/FlybyField3D';
-import { withBase } from './shared/routes';
+import { DEFAULT_DEMO_PATH, withBase } from './shared/routes';
 import { arrowRightIcon } from './shared/icons';
 import logoUrl from './flyby-logo.svg';
-import pkg from '../package.json';
+import { version } from '../package.json';
 import './LandingPage.css';
 
 const INSTALL_COMMAND = 'npm install flyby-motion';
@@ -21,7 +21,7 @@ export const LandingPage: React.FC = () => {
       <SiteHeader active="home" variant="overlay" />
 
       <main className="landing__hero">
-        <p className="site-eyebrow">flyby-motion {pkg.version}</p>
+        <p className="site-eyebrow">flyby-motion {version}</p>
         <h1 className="landing__title">
           <span className="landing__title-line">Motion,</span>
           <span className="landing__title-line landing__title-line--outline">in flight</span>
@@ -34,7 +34,7 @@ export const LandingPage: React.FC = () => {
 
         <div className="landing__actions">
           <tp-button size="lg" href={withBase('/docs')}>Get started</tp-button>
-          <tp-button size="lg" variant="outline" href={withBase('/3d/forces')}>
+          <tp-button size="lg" variant="outline" href={withBase(DEFAULT_DEMO_PATH)}>
             Demos
             <tp-icon slot="icon-end" icon={arrowRightIcon}></tp-icon>
           </tp-button>

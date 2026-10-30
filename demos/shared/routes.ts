@@ -31,6 +31,9 @@ export const demoLinks: Record<DemoDimension, DemoLink[]> = {
   ],
 };
 
+/** Where every "Demos" entry point lands: the 2D demos are preselected. */
+export const DEFAULT_DEMO_PATH = demoLinks['2d'][0].path;
+
 export const GITHUB_URL = 'https://github.com/vanrez-nez/flyby-motion';
 
 /** Base path the site is served from, without a trailing slash ('' in dev, '/flyby-motion' on GitHub Pages). */
