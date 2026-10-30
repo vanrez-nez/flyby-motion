@@ -1,6 +1,5 @@
 import * as PIXI from 'pixi.js';
 import { useEffect, useState } from 'react';
-import { demoColors } from '../helpers2d';
 import { waitForStableSize } from '../../../../lib/waitForStableSize';
 
 export function usePixiDemo(playAreaRef: React.RefObject<HTMLDivElement | null>) {
@@ -18,7 +17,8 @@ export function usePixiDemo(playAreaRef: React.RefObject<HTMLDivElement | null>)
     // scene laid out from `app.screen`) already uses it instead of a zero-width canvas.
     waitForStableSize(playArea, aborter.signal)
       .then(({ width, height }) => newApp.init({
-        backgroundColor: demoColors.bg,
+        // Transparent: the play area's dotted grid shows through (demo2d.css).
+        backgroundAlpha: 0,
         antialias: true,
         width,
         height,

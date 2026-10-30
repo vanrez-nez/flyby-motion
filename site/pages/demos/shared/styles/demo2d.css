@@ -18,6 +18,38 @@ html, body {
   height: 100%;
 }
 
+/*
+ * The 2D demos' background: a dotted grid in the theme's colors, behind the transparent Pixi
+ * canvas. Dots are the foreground faded into the background, so they recolor with the theme. They
+ * show only around the agents, fading with distance: FeatureDemo2D sets `--demo-dot-mask` to one
+ * radial gradient per agent every frame (none until the agents exist).
+ */
+.demo-play-area--dotted {
+  --demo-dot-gap: 24px;
+  background-color: var(--tp-background);
+}
+
+.demo-play-area--dotted::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(
+    circle,
+    color-mix(in oklab, var(--tp-foreground) 34%, transparent) 1px,
+    transparent 1.5px
+  );
+  background-size: var(--demo-dot-gap) var(--demo-dot-gap);
+  background-position: center;
+  -webkit-mask-image: var(--demo-dot-mask, linear-gradient(transparent, transparent));
+  mask-image: var(--demo-dot-mask, linear-gradient(transparent, transparent));
+}
+
+/* Positioned, so the canvas paints over the dots layer. */
+.demo-play-area--dotted canvas {
+  position: relative;
+}
+
 #tp-container {
   position: absolute;
   top: 44px;

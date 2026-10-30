@@ -75,6 +75,9 @@ const AGENT_STYLE = {
 };
 
 const TRAIL_LIMIT = 95;
+/** Radius (px) of the patch of background dots each agent reveals around itself. */
+const DOT_REVEAL_RADIUS = 240;
+const NO_DOTS = 'linear-gradient(transparent, transparent)';
 const WORLD: Record<string, unknown> = {};
 
 interface InternalAgentEntry extends DemoAgentEntry {
@@ -89,10 +92,9 @@ export const FeatureDemo2D: React.FC<{ config: FeatureDemoConfig, sidebarConfig:
 
   const app = usePixiDemo(playAreaRef);
   const pane = useTweakpane(tpContainerRef);
-  // The palette follows the site theme; shapes redraw from it every frame, the background is set here.
-  useDemoTheme(() => {
-    if (app) app.renderer.background.color = demoColors.bg;
-  });
+  // The palette follows the site theme; shapes redraw from it every frame. The background is the
+  // play area's dotted grid (demo2d.css), behind a transparent canvas.
+  useDemoTheme();
 
   useEffect(() => {
     if (!app || !pane) return;
@@ -307,6 +309,19 @@ export const FeatureDemo2D: React.FC<{ config: FeatureDemoConfig, sidebarConfig:
         drawAgentDot(entry.graphics, entry.agent.position, { ...AGENT_STYLE, fill: demoColors.agent, stroke: demoColors.trail });
         drawMotionVectors(entry.graphics, entry.agent.position, AGENT_STYLE.radius, entry.agent.velocity, entry.force);
       });
+      revealDots();
+    }
+
+    // The background dots show only around the agents, fading with distance: one soft radial
+    // gradient per agent, as the dots' mask (demo2d.css), moved with them every frame.
+    function revealDots(): void {
+      const playArea = playAreaRef.current;
+      if (!playArea) return;
+      const mask = entries
+        .map(({ agent: { position: [x, y] } }) =>
+          `radial-gradient(circle ${DOT_REVEAL_RADIUS}px at ${x.toFixed(1)}px ${y.toFixed(1)}px, #000, rgb(0 0 0 / 0.35) 45%, transparent)`)
+        .join(', ');
+      playArea.style.setProperty('--demo-dot-mask', mask || NO_DOTS);
     }
 
     mountPane();
@@ -368,7 +383,7 @@ export const FeatureDemo2D: React.FC<{ config: FeatureDemoConfig, sidebarConfig:
 
   return (
     <DemoBase activeDemo={config.active} sidebar={<Sidebar {...sidebarConfig} />}>
-      <div id="play-area" ref={playAreaRef}></div>
+      <div id="play-area" ref={playAreaRef} className="demo-play-area--dotted"></div>
       <div id="tp-container" ref={tpContainerRef}></div>
     </DemoBase>
   );
