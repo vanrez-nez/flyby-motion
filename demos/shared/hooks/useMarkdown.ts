@@ -1,28 +1,44 @@
 import { useMemo } from 'react';
-import { marked } from 'marked';
-import hljs from 'highlight.js/lib/core';
-import javascript from 'highlight.js/lib/languages/javascript';
-import typescript from 'highlight.js/lib/languages/typescript';
-import xml from 'highlight.js/lib/languages/xml';
+import { Marked, type Tokens } from 'marked';
 
-hljs.registerLanguage('javascript', javascript);
-hljs.registerLanguage('js', javascript);
-hljs.registerLanguage('typescript', typescript);
-hljs.registerLanguage('ts', typescript);
-hljs.registerLanguage('tsx', typescript);
-hljs.registerLanguage('html', xml);
+/**
+ * Markdown rendering for the docs and the demo mini-guides.
+ *
+ * The markdown text is rendered as written; only the chrome changes:
+ * - fenced code becomes a `<tp-code-block>` (syntax colors, language label, copy action),
+ * - headings get stable ids, so the table of contents and the side nav can target them.
+ */
 
-marked.use({
-  gfm: true,
-  breaks: false,
-});
-
-function slugify(text: string): string {
+export function slugify(text: string): string {
   return text
     .toLowerCase()
     .replace(/[^\w]+/g, '-')
     .replace(/^-+|-+$/g, '');
 }
+
+function escapeAttribute(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+const markdown = new Marked({ gfm: true, breaks: false });
+
+markdown.use({
+  renderer: {
+    code({ text, lang }: Tokens.Code): string {
+      const language = (lang ?? '').trim().split(/\s+/)[0] || 'plaintext';
+      // The block reads its source from the `code` attribute, so the snippet is never parsed as markup.
+      return `<tp-code-block class="markdown-code" language="${escapeAttribute(language)}" code="${escapeAttribute(text)}"></tp-code-block>\n`;
+    },
+    heading({ tokens, depth, text }: Tokens.Heading): string {
+      const inner = this.parser.parseInline(tokens);
+      return `<h${depth} id="${slugify(text)}">${inner}</h${depth}>\n`;
+    },
+  },
+});
 
 export interface MarkdownSection {
   id: string;
@@ -30,9 +46,9 @@ export interface MarkdownSection {
   level: number;
 }
 
-export function getMarkdownSections(markdown: string): MarkdownSection[] {
+export function getMarkdownSections(source: string): MarkdownSection[] {
   const sections: MarkdownSection[] = [];
-  const lines = markdown.split('\n');
+  const lines = source.split('\n');
   let inCodeBlock = false;
 
   for (const line of lines) {
@@ -47,53 +63,16 @@ export function getMarkdownSections(markdown: string): MarkdownSection[] {
     if (match) {
       const level = match[1].length;
       const text = match[2].trim();
-      sections.push({
-        id: slugify(text),
-        text,
-        level,
-      });
+      sections.push({ id: slugify(text), text, level });
     }
   }
   return sections;
 }
 
-export function useMarkdown(markdown: string): string {
-  return useMemo(() => {
-    const rawHtml = marked.parse(markdown, { async: false }) as string;
-    
-    // We parse the HTML into a DOM element to run highlight.js on the code blocks
-    const div = document.createElement('div');
-    div.innerHTML = rawHtml;
-    
-    // Add IDs to headings for navigation
-    div.querySelectorAll('h1, h2, h3').forEach((h) => {
-      const element = h as HTMLElement;
-      if (!element.id) {
-        element.id = slugify(element.textContent ?? '');
-      }
-    });
-    
-    div.querySelectorAll('pre code').forEach((block) => {
-      const element = block as HTMLElement;
-      const cls = Array.from(element.classList).find((c) => c.startsWith('language-'));
-      const lang = cls ? cls.slice('language-'.length) : undefined;
-      const validLang = lang && hljs.getLanguage(lang) ? lang : undefined;
-
-      if (validLang) {
-        element.classList.add(`language-${validLang}`);
-        const result = hljs.highlight(element.textContent ?? '', { language: validLang, ignoreIllegals: true });
-        element.innerHTML = result.value;
-      } else {
-        element.innerHTML = hljs.highlightAuto(element.textContent ?? '').value;
-      }
-      element.classList.add('hljs');
-    });
-
-    return div.innerHTML;
-  }, [markdown]);
+export function renderMarkdown(source: string): string {
+  return markdown.parse(source, { async: false }) as string;
 }
 
-export function highlightCode(code: string, language: string = 'typescript'): string {
-  const lang = hljs.getLanguage(language) ? language : 'typescript';
-  return hljs.highlight(code, { language: lang, ignoreIllegals: true }).value;
+export function useMarkdown(source: string): string {
+  return useMemo(() => renderMarkdown(source), [source]);
 }
